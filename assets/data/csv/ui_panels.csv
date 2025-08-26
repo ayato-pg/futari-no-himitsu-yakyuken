@@ -1,0 +1,5 @@
+﻿panel_id,panel_image,x_position,y_position,width,height,opacity,z_index
+dialogue_box,panel_dialogue_adult.png,50,500,700,150,0.9,100
+status_panel_top,panel_status_misaki.png,10,10,780,120,0.8,90
+status_panel_bottom,panel_status_player.png,10,620,780,80,0.8,90
+misaki_display,panel_transparent.png,200,130,400,450,0,80

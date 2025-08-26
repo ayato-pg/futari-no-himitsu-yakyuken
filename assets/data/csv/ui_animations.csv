@@ -1,0 +1,7 @@
+﻿animation_id,animation_type,duration_ms,easing,loop,trigger_event
+btn_hover,scale,200,ease-out,false,mouseenter
+text_appear,fade_in,500,ease-in,false,scene_start
+costume_change,dissolve,800,ease-in-out,false,round_lose
+victory_bounce,bounce,1000,ease-out,false,player_win
+defeat_shake,shake,500,ease-out,false,player_lose
+blush,fade_red,300,ease-in,false,embarrassed

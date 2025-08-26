@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2人の秘密、野球拳。- テスト版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        #game-container {
+            text-align: center;
+            background: rgba(0,0,0,0.3);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #ff6b7d 0%, #c44569 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(196, 69, 105, 0.3);
+            margin: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(196, 69, 105, 0.4);
+        }
+        
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        
+        #status {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            font-family: monospace;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #7ed6c4;
+            padding-left: 10px;
+        }
+        
+        .error {
+            color: #ff6b7d;
+            border-left-color: #ff6b7d;
+        }
+        
+        .success {
+            color: #7ed6c4;
+            border-left-color: #7ed6c4;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>2人の秘密、野球拳。</h1>
+        <p>システムテスト版</p>
+        
+        <div>
+            <button onclick="testCSVLoader()">CSVローダーテスト</button>
+            <button onclick="testAudioManager()">オーディオテスト</button>
+            <button onclick="testSaveSystem()">セーブシステムテスト</button>
+            <button onclick="startFullGame()">ゲーム起動</button>
+        </div>
+        
+        <div id="status"></div>
+    </div>
+    
+    <script>
+        // ログ表示
+        function log(message, type = 'info') {
+            const status = document.getElementById('status');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            status.appendChild(entry);
+            status.scrollTop = status.scrollHeight;
+            console.log(message);
+        }
+        
+        // CSVローダーテスト
+        async function testCSVLoader() {
+            log('CSVローダーテスト開始...');
+            
+            try {
+                // 簡易CSVローダー
+                const csvFiles = ['scenes.csv', 'characters.csv'];
+                
+                for (const file of csvFiles) {
+                    try {
+                        const response = await fetch(`./assets/data/csv/${file}`);
+                        if (response.ok) {
+                            log(`✓ ${file} 読み込み成功`, 'success');
+                        } else {
+                            log(`✗ ${file} 読み込み失敗 (404)`, 'error');
+                        }
+                    } catch (error) {
+                        log(`✗ ${file} 読み込みエラー: ${error.message}`, 'error');
+                    }
+                }
+                
+                log('CSVローダーテスト完了');
+            } catch (error) {
+                log(`CSVローダーエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // オーディオマネージャーテスト
+        function testAudioManager() {
+            log('オーディオマネージャーテスト開始...');
+            
+            try {
+                const audio = new Audio();
+                audio.volume = 0.1;
+                
+                // ダミー音声を生成（ビープ音）
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = context.createOscillator();
+                const gainNode = context.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(context.destination);
+                
+                oscillator.frequency.value = 440; // A4音
+                gainNode.gain.value = 0.1;
+                
+                oscillator.start();
+                setTimeout(() => {
+                    oscillator.stop();
+                    log('✓ オーディオシステム正常', 'success');
+                }, 200);
+                
+            } catch (error) {
+                log(`✗ オーディオエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // セーブシステムテスト
+        function testSaveSystem() {
+            log('セーブシステムテスト開始...');
+            
+            try {
+                // LocalStorageテスト
+                const testData = {
+                    test: true,
+                    timestamp: new Date().toISOString()
+                };
+                
+                localStorage.setItem('yakyuken_test', JSON.stringify(testData));
+                const loaded = JSON.parse(localStorage.getItem('yakyuken_test'));
+                
+                if (loaded && loaded.test === true) {
+                    log('✓ LocalStorage 書き込み/読み込み成功', 'success');
+                    localStorage.removeItem('yakyuken_test');
+                } else {
+                    log('✗ LocalStorage 読み込み失敗', 'error');
+                }
+                
+                log('セーブシステムテスト完了');
+            } catch (error) {
+                log(`✗ セーブシステムエラー: ${error.message}`, 'error');
+            }
+        }
+        
+        // フルゲーム起動
+        function startFullGame() {
+            log('ゲーム起動準備中...');
+            
+            // index.htmlに遷移
+            setTimeout(() => {
+                log('index.htmlへ遷移します...');
+                window.location.href = './index.html';
+            }, 1000);
+        }
+        
+        // 初期メッセージ
+        window.onload = () => {
+            log('システムテスト準備完了');
+            log('各ボタンをクリックしてテストを実行してください');
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+﻿screen_size,scene_id,scale_factor,layout_type,font_scale,button_scale,misaki_scale
+1920x1080,all,1.0,default,1.0,1.0,1.0
+1366x768,all,0.8,compact,0.9,0.85,0.85
+1024x768,all,0.7,compact,0.85,0.8,0.75
+mobile,all,0.5,vertical,0.8,1.2,0.6

@@ -1,0 +1,3 @@
+﻿ending_id,ending_name,title_text,condition,bg_image,bgm_file,cg_image,special_text
+true_end,TRUE ENDING,大人になった二人の約束,player_wins_5,bg_sunrise.png,eternal_summer.mp3,cg_true_adult.png,これから二人の新しい関係が始まる...
+bad_end,BAD ENDING,完敗...また今度ね,player_loses_5,bg_night.png,game_over.mp3,cg_bad.png,あらあら、まだまだ子供ね♪

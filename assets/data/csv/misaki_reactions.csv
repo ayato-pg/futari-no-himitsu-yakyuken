@@ -1,0 +1,9 @@
+﻿reaction_id,trigger,costume_level,dialogue,emotion,voice_file
+win_1,misaki_wins,1,ふふっ、私の勝ちね,confident,v_win1.mp3
+win_2,misaki_wins,2,あら、まだまだかな？,playful,v_win2.mp3
+win_3,misaki_wins,3,強がってもダメよ,teasing,v_win3.mp3
+lose_1,misaki_loses,1,きゃっ！ちょっと待って...,surprised,v_lose1.mp3
+lose_2,misaki_loses,2,も、もう...恥ずかしい,embarrassed,v_lose2.mp3
+lose_3,misaki_loses,3,こ、これ以上は...,very_embarrassed,v_lose3.mp3
+lose_4,misaki_loses,4,見ないで...,shy,v_lose4.mp3
+lose_5,misaki_loses,5,あなたの勝ちよ...,defeated,v_lose5.mp3

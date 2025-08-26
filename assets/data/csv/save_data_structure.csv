@@ -1,0 +1,5 @@
+﻿save_slot,timestamp,scene_id,player_hp,misaki_hp,player_wins,misaki_wins,current_round,unlocked_cg,flags
+slot_01,2024-01-20T20:30:00,game,4,3,2,3,5,cg_001;cg_002,first_game
+slot_02,2024-01-20T21:45:00,game,2,1,4,4,8,cg_001;cg_002;cg_003,near_end
+slot_03,2024-01-20T22:00:00,ending,0,0,5,4,9,all,true_ending
+auto,2024-01-20T22:05:00,title,5,5,0,0,0,,new_game

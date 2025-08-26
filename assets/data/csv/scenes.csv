@@ -1,0 +1,5 @@
+﻿scene_id,scene_name,background_image,bgm_file,ambient_sound,transition_type
+title,タイトル画面,bg_title_adult.png,nostalgic_summer.mp3,cicada_evening.mp3,fade
+living,リビング,bg_living_night.png,reunion.mp3,,slide
+misaki_room,美咲の部屋,bg_room_adult.png,intimate.mp3,night_breeze.mp3,fade
+game,じゃんけんバトル,bg_game_room.png,battle_sexy.mp3,,fade

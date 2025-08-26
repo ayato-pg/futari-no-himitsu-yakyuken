@@ -1,0 +1,18 @@
+﻿dialogue_id,scene_id,character_id,text,emotion,costume,voice_file,next_id
+d001,living,player,よっ、美咲。今日もプリン作ったー？,,,v_001.mp3,d002
+d002,living,misaki,作ったけど、あげるかどうかは気分次第かな～♪,,,,d003
+d003,living,player_thought,"美咲は小学校の頃から家族ぐるみで付き合いのある""親友の姉""。",,,,d004
+d004,living,player_thought,面倒見がよくて、ちょっとだけ意地悪だ。今は学校の先生をやっている。――親友はまだ帰って来てないようだ。,,,,d005
+d005,living,misaki,ねぇ、あ～んする？,teasing,casual,v_004.mp3,d006
+d006,living,player_thought,急に来た問いに戸惑ってしまう。,,,,d007
+d007,living,player_thought,昔、1つのプリンを美咲と二人で食べていたころが懐かしい。鼻先をかすめた甘い匂いは、あの頃と同じだ。,,,,d008
+d008,living,player,"何か勝負で勝てたら、ちゃんと""あ～ん""して。",,,,d008a
+d008a,living,misaki,じゃあ何で勝負するー？ 前にやった腕相撲とか？,playful,casual,,d009
+d009,living,player_thought,美咲は、笑いながら話してくる…。美咲の腕相撲には勝ったことがない…。,,,d009a,
+d009a,living,player,腕相撲で秒殺されたのはトラウマだ…,,,d010,
+d010,living,misaki,弱すぎるのよ♪,confident,casual,v_007.mp3,d011
+d011,living,player,弱かったんじゃなくて油断してただけなんだよ！,,,d012,
+d012,living,misaki,はいはい、負け惜しみ～♪,teasing,casual,v_008.mp3,d013
+d013,living,misaki,じゃあ、野球拳で勝負する？,seductive,casual,v_009.mp3,d014
+d014,living,player_thought,野球拳...昔やったけど、今は...,,,d015,
+d015,living,player,野球拳...やってみようか,,,game_start,

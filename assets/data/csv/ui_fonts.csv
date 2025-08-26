@@ -1,0 +1,4 @@
+﻿font_id,font_family,font_size,font_color,font_weight,text_shadow,line_height
+dialogue_text,Noto Sans JP,18,#FFFFFF,normal,2px 2px 4px rgba(0,0,0,0.5),1.5
+character_name,Noto Sans JP,22,#FFB6C1,bold,3px 3px 5px rgba(0,0,0,0.7),1.2
+result_text,Noto Sans JP,32,#FFD700,bold,4px 4px 6px rgba(0,0,0,0.8),1

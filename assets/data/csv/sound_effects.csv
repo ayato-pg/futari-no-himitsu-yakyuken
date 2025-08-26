@@ -1,0 +1,9 @@
+﻿sound_id,file_name,volume,category,loop,trigger_event
+click,se_click.mp3,0.5,ui,false,button_click
+janken_win,se_win.mp3,0.7,game,false,round_win
+janken_lose,se_lose.mp3,0.6,game,false,round_lose
+cloth_rustle,se_cloth.mp3,0.4,game,false,costume_change
+heart_beat,se_heartbeat.mp3,0.8,game,true,final_round
+embarrassed,se_embarrassed.mp3,0.5,voice,false,misaki_lose
+victory_fanfare,se_victory.mp3,0.9,game,false,game_win
+defeat_sound,se_defeat.mp3,0.7,game,false,game_lose

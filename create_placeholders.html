@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プレースホルダー画像生成</title>
+</head>
+<body>
+    <h1>プレースホルダー画像・音声ファイル作成のための説明</h1>
+    
+    <h2>必要なディレクトリ構造</h2>
+    <pre>
+assets/
+├── images/
+│   ├── backgrounds/
+│   │   ├── bg_title_adult.png
+│   │   ├── bg_living_night.png
+│   │   ├── bg_room_adult.png
+│   │   ├── bg_game_room.png
+│   │   ├── bg_sunrise.png
+│   │   └── bg_night.png
+│   ├── characters/
+│   │   └── misaki/
+│   │       ├── misaki_adult_normal.png
+│   │       ├── misaki_suit_normal.png
+│   │       ├── misaki_suit_confident.png
+│   │       ├── misaki_casual_normal.png
+│   │       ├── misaki_roomwear_flirty.png
+│   │       ├── misaki_camisole_embarrassed.png
+│   │       └── misaki_towel_very_embarrassed.png
+│   ├── ui/
+│   │   ├── rock.png
+│   │   ├── scissors.png
+│   │   ├── paper.png
+│   │   ├── heart_full.png
+│   │   └── heart_empty.png
+│   └── cg/
+│       ├── cg_true_adult.png
+│       └── cg_bad.png
+└── audio/
+    ├── bgm/
+    │   ├── nostalgic_summer.mp3
+    │   ├── reunion.mp3
+    │   ├── battle_sexy.mp3
+    │   └── eternal_summer.mp3
+    ├── se/
+    │   ├── se_click.mp3
+    │   ├── se_win.mp3
+    │   ├── se_lose.mp3
+    │   ├── se_cloth.mp3
+    │   └── se_victory.mp3
+    └── voice/
+        ├── v_001.mp3
+        ├── v_002.mp3
+        └── v_003.mp3
+    </pre>
+    
+    <h2>画像仕様</h2>
+    <ul>
+        <li>背景画像: 1920x1080 JPG</li>
+        <li>キャラクター画像: 透明背景PNG、縦600px程度</li>
+        <li>UI画像: 60x60 PNG</li>
+        <li>CG画像: 800x600 PNG</li>
+    </ul>
+    
+    <h2>音声仕様</h2>
+    <ul>
+        <li>BGM: OGG Vorbis推奨、ループ対応</li>
+        <li>効果音: MP3、1-2秒程度</li>
+        <li>ボイス: MP3、2-5秒程度</li>
+    </ul>
+    
+    <h2>プレースホルダーファイルについて</h2>
+    <p>
+        ゲームは画像・音声ファイルがなくてもプレースホルダーで動作します。<br>
+        実際の素材は後から差し替え可能です。
+    </p>
+    
+    <h2>ゲーム起動方法</h2>
+    <ol>
+        <li>コマンドプロンプトで「2人の秘密、野球拳。」フォルダに移動</li>
+        <li><code>npm install</code>でElectronをインストール</li>
+        <li><code>npm start</code>でゲーム起動</li>
+    </ol>
+</body>
+</html>

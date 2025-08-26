@@ -1,0 +1,45 @@
+{
+  "name": "futari-no-himitsu-yakyuken",
+  "version": "1.0.0",
+  "description": "2人の秘密、野球拳。- Visual Novel Game with Janken Battle",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "dev": "electron . --dev"
+  },
+  "dependencies": {
+    "electron": "^27.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.claude.yakyuken",
+    "productName": "2人の秘密、野球拳。",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    }
+  },
+  "keywords": [
+    "electron",
+    "visual novel",
+    "game",
+    "janken",
+    "japanese"
+  ],
+  "author": "Claude Code",
+  "license": "MIT"
+}

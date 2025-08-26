@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2人の秘密、野球拳。</title>
+    <link rel="stylesheet" href="./src/styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <!-- ローディング画面 -->
+        <div id="loading-screen" class="screen active">
+            <div class="loading-content">
+                <h1>2人の秘密、野球拳。</h1>
+                <div class="loading-spinner"></div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <!-- タイトル画面 -->
+        <div id="title-screen" class="screen">
+            <div class="background" id="title-bg"></div>
+            <div class="title-content">
+                <!-- 左側：美咲の立ち絵表示エリア -->
+                <div class="misaki-display">
+                    <img id="misaki-title" src="assets/images/characters/misaki/misaki_adult_normal.png" alt="美咲お姉ちゃん">
+                </div>
+
+                <!-- 右側：タイトルとメニュー -->
+                <div class="title-main-content">
+                    <div class="game-logo">
+                        <h1>2人の秘密、野球拳。</h1>
+                        <div class="subtitle">～大人になった二人の秘密～</div>
+                    </div>
+                    
+                    <div class="menu-buttons">
+                        <button class="game-btn" id="btn-new-game">はじめる</button>
+                        <button class="game-btn" id="btn-howtoplay">遊び方</button>
+                        <button class="game-btn" id="btn-gallery" disabled>ギャラリー</button>
+                        <button class="game-btn" id="btn-settings">設定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 会話シーン -->
+        <div id="dialogue-screen" class="screen">
+            <div class="background" id="dialogue-bg"></div>
+            <button class="return-to-title-btn" id="dialogue-return-btn">タイトルへ戻る</button>
+            <div class="misaki-large-display">
+                <img id="misaki-dialogue" src="assets/images/characters/misaki/misaki_dialogue_normal.png" alt="美咲">
+            </div>
+            <div class="dialogue-box">
+                <div class="character-name">美咲</div>
+                <div class="dialogue-text" id="dialogue-text"></div>
+                <div class="dialogue-controls">
+                    <button class="control-btn" id="btn-skip">Skip</button>
+                    <button class="control-btn" id="btn-auto">Auto</button>
+                    <button class="control-btn" id="btn-log">Log</button>
+                    <button class="control-btn" id="btn-save">Save</button>
+                    <button class="control-btn" id="btn-menu">Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- メインゲーム画面 -->
+        <div id="game-screen" class="screen">
+            <div class="background" id="game-bg"></div>
+            <button class="return-to-title-btn" id="game-return-btn">タイトルへ戻る</button>
+            
+            <!-- 上部ステータス -->
+            <div class="status-top">
+                <div class="round-info">ラウンド <span id="current-round">1</span>/9</div>
+                <div class="win-condition">勝利条件: 5勝先取</div>
+            </div>
+
+            <!-- 美咲のステータスとHP -->
+            <div class="misaki-status">
+                <div class="character-name">美咲</div>
+                <div class="hp-display">
+                    <div class="hp-hearts" id="misaki-hearts"></div>
+                    <div class="defeat-count">敗北数: <span id="misaki-defeats">0</span></div>
+                </div>
+            </div>
+
+            <!-- 美咲の大型立ち絵表示 -->
+            <div class="misaki-game-display">
+                <img id="misaki-game" src="assets/images/characters/misaki/misaki_suit.png" alt="美咲">
+            </div>
+
+            <!-- バトル結果表示 -->
+            <div class="battle-result" id="battle-result">
+                <div class="result-text" id="result-text"></div>
+                <div class="hands-display">
+                    <div class="hand-result">美咲: <span id="misaki-hand"></span></div>
+                    <div class="vs">VS</div>
+                    <div class="hand-result">あなた: <span id="player-hand"></span></div>
+                </div>
+            </div>
+
+            <!-- プレイヤーのステータス -->
+            <div class="player-status">
+                <div class="character-name">あなた</div>
+                <div class="hp-display">
+                    <div class="hp-hearts" id="player-hearts"></div>
+                    <div class="victory-count">勝利数: <span id="player-victories">0</span></div>
+                </div>
+            </div>
+
+            <!-- じゃんけん選択ボタン -->
+            <div class="janken-controls">
+                <div class="hand-buttons">
+                    <button class="hand-btn" id="btn-rock">
+                        <img src="assets/images/ui/rock.png" alt="グー">
+                        <span>グー</span>
+                    </button>
+                    <button class="hand-btn" id="btn-scissors">
+                        <img src="assets/images/ui/scissors.png" alt="チョキ">
+                        <span>チョキ</span>
+                    </button>
+                    <button class="hand-btn" id="btn-paper">
+                        <img src="assets/images/ui/paper.png" alt="パー">
+                        <span>パー</span>
+                    </button>
+                </div>
+                <div class="instruction">選択してください</div>
+            </div>
+
+            <!-- ゲーム制御ボタン -->
+            <div class="game-controls">
+                <button class="control-btn" id="btn-special" disabled>必殺技: 未使用</button>
+                <button class="control-btn" id="btn-hint">ヒント</button>
+                <button class="control-btn" id="btn-surrender">降参</button>
+            </div>
+        </div>
+
+        <!-- エンディング画面 -->
+        <div id="ending-screen" class="screen">
+            <div class="background" id="ending-bg"></div>
+            <button class="return-to-title-btn" id="ending-return-btn">タイトルへ戻る</button>
+            <div class="ending-content">
+                <div class="ending-title" id="ending-title"></div>
+                <div class="ending-cg">
+                    <img id="ending-image" src="" alt="エンディング">
+                </div>
+                <div class="ending-text" id="ending-text"></div>
+                <div class="ending-controls">
+                    <button class="game-btn" id="btn-title-return">タイトルに戻る</button>
+                    <button class="game-btn" id="btn-replay">もう一度プレイ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="src/systems/CSVLoader.js"></script>
+    <script src="src/systems/SaveSystem.js"></script>
+    <script src="src/systems/AudioManager.js"></script>
+    <script src="src/systems/CostumeSystem.js"></script>
+    <script src="src/systems/ClickAreaSystem.js"></script>
+    <script src="src/scenes/TitleScene.js"></script>
+    <script src="src/scenes/DialogueScene.js"></script>
+    <script src="src/scenes/GameScene.js"></script>
+    <script src="src/scenes/EndingScene.js"></script>
+    <script src="src/game.js"></script>
+</body>
+</html>

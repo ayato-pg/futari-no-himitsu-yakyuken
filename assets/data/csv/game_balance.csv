@@ -1,0 +1,6 @@
+﻿parameter_id,value,min_value,max_value,increment,description
+initial_hp,5,1,10,1,開始時のHP
+win_threshold,5,3,7,1,勝利に必要な勝ち数
+lose_threshold,5,3,7,1,敗北となる負け数
+special_cooldown,3,1,5,1,必殺技のクールダウン
+ai_difficulty_increment,0.1,0,0.2,0.05,ラウンドごとの難易度上昇

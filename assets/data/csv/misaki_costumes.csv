@@ -1,0 +1,6 @@
+﻿level,costume_image,costume_name,hp_required,description,emotion_modifier
+1,misaki_suit.png,OLスーツ,5,仕事帰りの美咲さん,confident
+2,misaki_casual.png,カジュアル服,4,リラックスした私服姿,relaxed
+3,misaki_roomwear.png,大人の部屋着,3,セクシーなルームウェア,flirty
+4,misaki_camisole.png,キャミソール,2,恥ずかしがる美咲,embarrassed
+5,misaki_towel.png,バスタオル,1,とても恥ずかしい姿,very_embarrassed

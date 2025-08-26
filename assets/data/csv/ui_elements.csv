@@ -1,0 +1,6 @@
+﻿element_id,element_type,image_normal,image_hover,image_pressed,width,height,tooltip
+btn_start,button,btn_start_n.png,btn_start_h.png,btn_start_p.png,200,60,ゲームを始める
+btn_continue,button,btn_continue_n.png,btn_continue_h.png,btn_continue_p.png,200,60,続きから
+btn_rock,button,btn_rock_n.png,btn_rock_h.png,btn_rock_p.png,120,120,グーを出す
+btn_scissors,button,btn_scissors_n.png,btn_scissors_h.png,btn_scissors_p.png,120,120,チョキを出す
+btn_paper,button,btn_paper_n.png,btn_paper_h.png,btn_paper_p.png,120,120,パーを出す

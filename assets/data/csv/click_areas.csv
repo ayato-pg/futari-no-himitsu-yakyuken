@@ -1,0 +1,3 @@
+﻿area_id,scene_id,x,y,width,height,action_type,action_param,cursor_type,hover_effect
+area_misaki_body,game,200,130,400,450,view_costume,current,pointer,glow_pink
+area_secret,misaki_room,750,450,50,50,unlock_cg,secret_adult_01,help,sparkle

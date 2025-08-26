@@ -1,0 +1,1139 @@
+/* 2人の秘密、野球拳。 - メインスタイルシート */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: #1a1a2e;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 共通スクリーン設定 */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+/* キラキラエフェクト用キーフレーム */
+@keyframes sparkle {
+    0% { opacity: 0; transform: scale(0) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1) rotate(180deg); }
+    100% { opacity: 0; transform: scale(0) rotate(360deg); }
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
+/* 美咲ホバーエフェクト用キーフレーム */
+@keyframes misaki-glow {
+    0% { filter: drop-shadow(2px 2px 10px rgba(255, 182, 193, 0.3)); }
+    50% { filter: drop-shadow(4px 4px 20px rgba(255, 182, 193, 0.8)); }
+    100% { filter: drop-shadow(2px 2px 10px rgba(255, 182, 193, 0.3)); }
+}
+
+@keyframes misaki-smile {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.screen.active {
+    display: block;
+    opacity: 1;
+}
+
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 1;
+}
+
+/* ローディング画面 */
+#loading-screen {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.loading-content h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 背景アニメーション - 削除済み */
+
+/* タイトル登場アニメーション */
+@keyframes titleDrop {
+    0% {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.8);
+        filter: blur(10px);
+    }
+    50% {
+        filter: blur(0px);
+    }
+    70% {
+        transform: translateY(5px) scale(1.05);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0px);
+    }
+}
+
+@keyframes subtitleFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+        letter-spacing: 0.5rem;
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        letter-spacing: normal;
+    }
+}
+
+@keyframes buttonSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(50px) scale(0.9);
+    }
+    60% {
+        transform: translateX(-5px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes titleShine {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+@keyframes logoGlow {
+    0%, 100% {
+        box-shadow: 
+            0 0 20px rgba(139, 0, 0, 0.5),
+            inset 0 0 20px rgba(255, 255, 255, 0.1);
+    }
+    50% {
+        box-shadow: 
+            0 0 40px rgba(139, 0, 0, 0.8),
+            inset 0 0 30px rgba(255, 255, 255, 0.2);
+    }
+}
+
+@keyframes buttonPulse {
+    0% {
+        box-shadow: 0 4px 15px rgba(196, 69, 105, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(196, 69, 105, 0.5);
+    }
+    100% {
+        box-shadow: 0 4px 15px rgba(196, 69, 105, 0.3);
+    }
+}
+
+/* タイトル画面 */
+#title-screen {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+#title-bg {
+    background-image: url('../../assets/images/backgrounds/bg_title_adult.png');
+}
+
+/* 夏の夕暮れエフェクト - 無効化 */
+
+.title-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.misaki-display {
+    position: absolute;
+    left: 5%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.title-main-content {
+    position: absolute;
+    right: 10%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.game-logo {
+    text-align: center;
+    position: relative;
+}
+
+.game-logo h1 {
+    font-size: 3.2rem;
+    font-weight: 700;
+    color: #8b0000;
+    text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+    margin-bottom: 0.5rem;
+    border: 4px solid #8b0000;
+    padding: 1rem 2rem;
+    background: linear-gradient(
+        90deg,
+        rgba(255,255,255,0.9) 0%,
+        rgba(255,255,255,0.9) 40%,
+        rgba(255,240,240,1) 50%,
+        rgba(255,255,255,0.9) 60%,
+        rgba(255,255,255,0.9) 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 20px;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+}
+
+/* タイトル画面表示時のアニメーション */
+.screen.active .game-logo h1 {
+    animation: 
+        titleDrop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards,
+        logoGlow 3s ease-in-out infinite 1.2s,
+        titleShine 4s linear infinite 2s;
+}
+
+/* タイトル周りの光輪エフェクト - 削除済み */
+
+/* タイトルコンテンツ全体の登場演出 */
+.screen.active .title-main-content {
+    animation: titleContentRise 1s ease-out 0.5s both;
+}
+
+@keyframes titleContentRise {
+    0% {
+        opacity: 0;
+        transform: translateY(-50%) translateY(30px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(-50%) translateY(0) scale(1);
+    }
+}
+
+.subtitle {
+    font-size: 1.4rem;
+    color: #ff6b9d;
+    font-weight: 700;
+    opacity: 0;
+    text-shadow: 
+        2px 2px 0px #4a0e2d,
+        -1px -1px 0px #4a0e2d,
+        1px -1px 0px #4a0e2d,
+        -1px 1px 0px #4a0e2d,
+        3px 3px 8px rgba(0,0,0,0.9),
+        0 0 20px rgba(255,182,193,0.8),
+        0 0 30px rgba(255,105,157,0.6);
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+}
+
+.screen.active .subtitle {
+    animation: subtitleFadeIn 1s ease-out 0.8s forwards, youthfulGlow 3s ease-in-out infinite 2s;
+}
+
+@keyframes youthfulGlow {
+    0%, 100% {
+        text-shadow: 
+            2px 2px 0px #4a0e2d,
+            -1px -1px 0px #4a0e2d,
+            1px -1px 0px #4a0e2d,
+            -1px 1px 0px #4a0e2d,
+            3px 3px 8px rgba(0,0,0,0.9),
+            0 0 20px rgba(255,182,193,0.8),
+            0 0 30px rgba(255,105,157,0.6);
+    }
+    50% {
+        text-shadow: 
+            2px 2px 0px #4a0e2d,
+            -1px -1px 0px #4a0e2d,
+            1px -1px 0px #4a0e2d,
+            -1px 1px 0px #4a0e2d,
+            3px 3px 8px rgba(0,0,0,0.9),
+            0 0 25px rgba(255,182,193,1),
+            0 0 40px rgba(255,105,157,0.9),
+            0 0 60px rgba(255,182,193,0.5);
+    }
+}
+
+.misaki-display img {
+    max-height: 600px;
+    filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.3));
+    transition: all 0.3s ease;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.screen.active .misaki-display img {
+    animation: misakiFadeIn 1.2s ease-out 0.3s forwards;
+}
+
+@keyframes misakiFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+        filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.3)) blur(8px);
+    }
+    50% {
+        filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.3)) blur(2px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.3)) blur(0px);
+    }
+}
+
+.misaki-display img:hover {
+    transform: scale(1.02);
+    animation: misaki-glow 2s infinite, misaki-smile 1s ease-in-out;
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    z-index: 20;
+}
+
+/* ゲーム共通ボタン */
+.game-btn {
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #ff6b7d 0%, #c44569 100%);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(196, 69, 105, 0.3);
+    min-width: 250px;
+    font-family: 'Noto Sans JP', sans-serif;
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(50px);
+}
+
+/* メニューボタンの順次表示アニメーション */
+.screen.active .game-btn:nth-child(1) {
+    animation: buttonSlideIn 0.6s ease-out 1.4s forwards, buttonPulse 2s ease-in-out infinite 2.5s;
+}
+
+.screen.active .game-btn:nth-child(2) {
+    animation: buttonSlideIn 0.6s ease-out 1.7s forwards, buttonPulse 2s ease-in-out infinite 2.8s;
+}
+
+.screen.active .game-btn:nth-child(3) {
+    animation: buttonSlideIn 0.6s ease-out 2.0s forwards, buttonPulse 2s ease-in-out infinite 3.1s;
+}
+
+.screen.active .game-btn:nth-child(4) {
+    animation: buttonSlideIn 0.6s ease-out 2.3s forwards, buttonPulse 2s ease-in-out infinite 3.4s;
+}
+
+.game-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s;
+}
+
+.game-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(196, 69, 105, 0.4);
+}
+
+.game-btn:hover::before {
+    left: 100%;
+}
+
+.game-btn:hover::after {
+    content: '✨';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 1.5rem;
+    animation: sparkle 1s infinite;
+}
+
+.game-btn:active {
+    transform: translateY(0);
+}
+
+.game-btn:disabled {
+    background: #999;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* 会話シーン */
+#dialogue-screen {
+    background: #2c2c2c;
+}
+
+#dialogue-bg {
+    background-image: url('../../assets/images/backgrounds/bg_living_night.png');
+}
+
+.misaki-large-display {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate3d(-50%, -50%, 0);
+    z-index: 5;
+    will-change: transform, opacity;
+}
+
+.misaki-large-display img {
+    max-height: 850px;
+    height: 85vh;
+    object-fit: contain;
+    filter: drop-shadow(2px 2px 15px rgba(0,0,0,0.7));
+    cursor: pointer;
+    will-change: transform, opacity;
+    transform: translateZ(0); /* GPU加速を強制 */
+    backface-visibility: hidden; /* ちらつき防止 */
+    -webkit-font-smoothing: antialiased;
+}
+
+.misaki-large-display img:hover {
+    transform: translateZ(0) scale(1.03);
+    transition: transform 0.3s ease;
+}
+
+.misaki-large-display img:hover::after {
+    animation: misaki-glow 2s infinite;
+}
+
+/* 美咲立ち絵のスムーズなエントランスアニメーション */
+.misaki-large-display.entrance img {
+    animation: misaki-smooth-entrance 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes misaki-smooth-entrance {
+    0% {
+        opacity: 0;
+        transform: translateZ(0) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateZ(0) scale(1);
+    }
+}
+
+/* 衣装変更時のアニメーション（タイトル画面と同じ） */
+.misaki-costume-change {
+    animation: misakiCostumeChange 1.2s ease-out forwards !important;
+}
+
+@keyframes misakiCostumeChange {
+    0% {
+        opacity: 0;
+        transform: translateZ(0) scale(0.95);
+        filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.3)) blur(8px);
+    }
+    50% {
+        filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.3)) blur(2px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateZ(0) scale(1);
+        filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.3)) blur(0px);
+    }
+}
+
+.dialogue-box {
+    position: absolute;
+    bottom: 30px;
+    left: 50px;
+    right: 50px;
+    background: rgba(0,0,0,0.9);
+    border-radius: 15px;
+    padding: 20px;
+    z-index: 15;
+    border: 2px solid #ff6b7d;
+    backdrop-filter: blur(5px);
+    transform: translateZ(0); /* GPU加速 */
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+}
+
+.character-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffb6c1;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+}
+
+/* 心の声用スタイル */
+.character-name[style*="italic"] {
+    font-size: 1.1rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.character-name[style*="italic"]::before {
+    content: "💭 ";
+    opacity: 0.7;
+}
+
+.dialogue-text {
+    font-size: 1.1rem;
+    color: white;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    min-height: 60px;
+}
+
+.dialogue-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.control-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    color: white;
+    background: rgba(255, 107, 125, 0.7);
+    border: 1px solid #ff6b7d;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Noto Sans JP', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.control-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.3s;
+}
+
+.control-btn:hover {
+    background: rgba(255, 107, 125, 0.9);
+}
+
+.control-btn:hover::before {
+    left: 100%;
+}
+
+.control-btn:hover::after {
+    content: '⭐';
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    font-size: 0.8rem;
+    animation: sparkle 1s infinite;
+}
+
+/* ゲームUIアニメーション */
+@keyframes slideInLeft {
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInUp {
+    0% { transform: translateY(100%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInDown {
+    0% { transform: translateY(-100%); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    0% { transform: translateY(30px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    14% { transform: scale(1.1); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.1); }
+    70% { transform: scale(1); }
+}
+
+/* メインゲーム画面 */
+#game-screen {
+    background: #1a1a2e;
+}
+
+/* UI要素の段階的表示 */
+.screen.active .status-top {
+    animation: slideInDown 0.6s ease-out 0.2s both;
+}
+
+.screen.active .misaki-status {
+    animation: slideInLeft 0.6s ease-out 0.4s both;
+}
+
+.screen.active .player-status {
+    animation: slideInLeft 0.6s ease-out 0.6s both;
+}
+
+.screen.active .misaki-game-display {
+    animation: fadeInUp 0.8s ease-out 0.3s both;
+}
+
+.screen.active .janken-controls {
+    animation: slideInUp 0.6s ease-out 0.8s both;
+}
+
+.screen.active .game-controls {
+    animation: fadeInUp 0.6s ease-out 1.0s both;
+}
+
+#game-bg {
+    background-image: url('../../assets/images/backgrounds/bg_game_room.png');
+}
+
+.status-top {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2rem;
+    z-index: 10;
+    background: rgba(0,0,0,0.7);
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 2px solid #ff6b7d;
+}
+
+.round-info, .win-condition {
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.misaki-status {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    background: rgba(255, 107, 125, 0.9);
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 10;
+}
+
+.player-status {
+    position: absolute;
+    bottom: 200px;
+    left: 20px;
+    background: rgba(126, 214, 196, 0.9);
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 10;
+}
+
+.hp-display {
+    margin-top: 5px;
+}
+
+.hp-hearts {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.heart {
+    width: 24px;
+    height: 24px;
+    background: url('../../assets/images/ui/heart_full.png') no-repeat center;
+    background-size: contain;
+}
+
+.heart.empty {
+    background-image: url('../../assets/images/ui/heart_empty.png');
+}
+
+.defeat-count, .victory-count {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: white;
+}
+
+.misaki-game-display {
+    position: absolute;
+    right: 10%;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+}
+
+.misaki-game-display img {
+    max-height: 650px;
+    filter: drop-shadow(3px 3px 15px rgba(0,0,0,0.6));
+    transition: all 0.5s ease;
+    cursor: pointer;
+}
+
+.misaki-game-display img:hover {
+    transform: scale(1.03);
+    animation: misaki-glow 2.5s infinite, misaki-smile 2s ease-in-out;
+}
+
+.battle-result {
+    position: absolute;
+    top: 50%;
+    left: 20%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.8);
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid #ffd700;
+    z-index: 15;
+    min-width: 300px;
+    text-align: center;
+    display: none;
+}
+
+.battle-result.show {
+    display: block;
+}
+
+.result-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffd700;
+    margin-bottom: 15px;
+}
+
+.hands-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.vs {
+    font-weight: 700;
+    color: #ff6b7d;
+}
+
+.janken-controls {
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 10;
+}
+
+.hand-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.hand-btn {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #7ed6c4 0%, #48a999 100%);
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(126, 214, 196, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.hand-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.hand-btn img {
+    width: 60px;
+    height: 60px;
+}
+
+.hand-btn span {
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+
+.hand-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(126, 214, 196, 0.4);
+}
+
+.hand-btn:hover::before {
+    left: 100%;
+}
+
+.hand-btn:hover::after {
+    content: '💎';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 1.2rem;
+    animation: sparkle 1.5s infinite;
+}
+
+.hand-btn:active {
+    transform: translateY(-2px);
+}
+
+.instruction {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.game-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 15px;
+    z-index: 10;
+}
+
+/* タイトルへ戻るボタン */
+.return-to-title-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: rgba(139, 0, 0, 0.8);
+    color: white;
+    border: 2px solid #ff6b7d;
+    border-radius: 10px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+.return-to-title-btn:hover {
+    background: rgba(139, 0, 0, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 125, 0.4);
+}
+
+.return-to-title-btn:hover::after {
+    content: '🏠';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 1rem;
+    animation: sparkle 1s infinite;
+}
+
+/* エンディング画面 */
+#ending-screen {
+    background: #1a1a2e;
+}
+
+#ending-bg {
+    background-image: url('../../assets/images/backgrounds/bg_sunrise.png');
+}
+
+.ending-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+}
+
+.ending-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+    margin-bottom: 2rem;
+}
+
+.ending-cg {
+    margin-bottom: 2rem;
+}
+
+.ending-cg img {
+    max-width: 600px;
+    max-height: 400px;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+}
+
+.ending-text {
+    font-size: 1.3rem;
+    color: white;
+    line-height: 1.6;
+    margin-bottom: 3rem;
+    max-width: 800px;
+    background: rgba(0,0,0,0.7);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.ending-controls {
+    display: flex;
+    gap: 2rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 1024px) {
+    .game-logo h1 {
+        font-size: 2.5rem;
+    }
+    
+    .misaki-display img {
+        max-height: 500px;
+    }
+    
+    .misaki-large-display img {
+        max-height: 700px;
+        height: 80vh;
+    }
+    
+    .misaki-game-display img {
+        max-height: 600px;
+    }
+    
+    .hand-btn {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .hand-btn img {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+@media (max-width: 768px) {
+    .title-content {
+        padding: 1rem;
+    }
+    
+    .game-logo h1 {
+        font-size: 2rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .misaki-display {
+        position: static;
+        transform: none;
+        margin: 2rem 0;
+    }
+    
+    .misaki-display img {
+        max-height: 300px;
+    }
+    
+    .misaki-large-display {
+        position: absolute;
+        left: 50%;
+        top: 45%;
+        transform: translate3d(-50%, -50%, 0);
+        will-change: transform, opacity;
+    }
+    
+    .misaki-large-display img {
+        max-height: 600px;
+        height: 70vh;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+    
+    .dialogue-box {
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        padding: 15px;
+    }
+    
+    .hand-buttons {
+        gap: 10px;
+    }
+    
+    .hand-btn {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .hand-btn img {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* アニメーション */
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.heart.pulse {
+    animation: heartbeat 1s infinite;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+.bounce {
+    animation: bounce 1s ease-in-out;
+}

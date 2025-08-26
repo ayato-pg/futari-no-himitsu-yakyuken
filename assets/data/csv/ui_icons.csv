@@ -1,0 +1,6 @@
+﻿icon_id,icon_image,icon_size,tooltip_text,animation_type
+heart_full,heart_full.png,32,HP満タン,pulse
+heart_empty,heart_empty.png,32,HPなし,none
+star,star.png,24,達成度,rotate
+clothing,clothing.png,28,衣装レベル,none
+victory,victory.png,32,勝利,bounce

@@ -1,0 +1,5 @@
+﻿character_id,name,default_image,voice_actor,personality,age
+misaki,美咲,misaki_adult_normal.png,voice_001,大人のお姉さん,25
+player,あなた,,,大学生,22
+player_thought,心の声,,,内なる声,
+misaki_thought,美咲の心の声,,,内なる声,
