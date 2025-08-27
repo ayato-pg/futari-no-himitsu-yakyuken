@@ -105,6 +105,24 @@ class TitleScene {
             });
         }
 
+        // CSV更新 ボタン（開発用）
+        const csvReloadBtn = document.getElementById('btn-csv-reload');
+        if (csvReloadBtn) {
+            csvReloadBtn.style.display = 'block'; // 確実に表示
+            csvReloadBtn.addEventListener('click', async () => {
+                console.log('🔄 CSV強制リロードボタンが押されました');
+                try {
+                    await this.game.forceReloadAllCSV();
+                } catch (error) {
+                    console.error('❌ CSV更新エラー:', error);
+                    alert('❌ CSV更新に失敗しました: ' + error.message);
+                }
+            });
+            console.log('✅ CSV更新ボタンが設定されました');
+        } else {
+            console.warn('❌ CSV更新ボタンが見つかりませんでした');
+        }
+
         // ボタンホバー効果
         this.menuButtonElements.forEach(button => {
             if (button) {

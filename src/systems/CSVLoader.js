@@ -76,23 +76,32 @@ class CSVLoader {
         }
         
         try {
-            // 強力なキャッシュバスティング（ランダム値＋タイムスタンプ）
-            const cacheBuster = new Date().getTime() + '_' + Math.random().toString(36).substring(7);
-            const filePathWithCache = `${filePath}?v=${cacheBuster}&_=${Date.now()}`;
+            // 超強力なキャッシュバスティング（複数のランダム値＋タイムスタンプ＋ミリ秒）
+            const now = Date.now();
+            const random1 = Math.random().toString(36).substring(2, 15);
+            const random2 = Math.random().toString(36).substring(2, 15);
+            const cacheBuster = `${now}_${random1}_${random2}_${performance.now()}`;
+            const filePathWithCache = `${filePath}?v=${cacheBuster}&nocache=${now}&rand=${random1}`;
             
             console.log(`🔄 CSV読み込み試行: ${filePathWithCache}`);
             
-            // 強制的なキャッシュ無効化ヘッダー
-            const response = await fetch(filePathWithCache, {
+            // 強制的なキャッシュ無効化ヘッダー（file://でも動作するように最適化）
+            const fetchOptions = {
                 method: 'GET',
-                headers: {
+                cache: 'no-store'
+            };
+            
+            // http/httpsプロトコルの場合のみヘッダーを追加
+            if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+                fetchOptions.headers = {
                     'Content-Type': 'text/csv',
                     'Cache-Control': 'no-cache, no-store, must-revalidate',
                     'Pragma': 'no-cache',
                     'Expires': '0'
-                },
-                cache: 'no-store' // より強力なキャッシュ無効化
-            });
+                };
+            }
+            
+            const response = await fetch(filePathWithCache, fetchOptions);
             
             if (!response.ok) {
                 throw new Error(`CSVファイル '${filePath}' が見つかりません (${response.status})`);
@@ -118,8 +127,21 @@ class CSVLoader {
             if (tableName === 'dialogues') {
                 console.log('📋 読み込んだdialoguesデータ:');
                 parsedData.slice(0, 5).forEach((row, index) => {
-                    console.log(`  ${index + 1}. ${row.dialogue_id}: ${row.character_id} - ${row.text?.substring(0, 30)}...`);
+                    console.log(`  ${index + 1}. ${row.dialogue_id}: ${row.character_id} - ${row.text?.substring(0, 30)}... - sprite_file: [${row.sprite_file}]`);
                 });
+                
+                // d022のデータを特別に確認
+                const d022Data = parsedData.find(row => row.dialogue_id === 'd022');
+                if (d022Data) {
+                    console.log('🔍 d022データの詳細確認:');
+                    console.log('  dialogue_id:', d022Data.dialogue_id);
+                    console.log('  character_id:', d022Data.character_id);
+                    console.log('  sprite_file:', `[${d022Data.sprite_file}]`);
+                    console.log('  sprite_file type:', typeof d022Data.sprite_file);
+                    console.log('  sprite_file length:', d022Data.sprite_file ? d022Data.sprite_file.length : 'undefined');
+                } else {
+                    console.warn('⚠️ d022データが見つかりませんでした');
+                }
             }
             
         } catch (error) {

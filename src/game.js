@@ -120,37 +120,66 @@ class GameController {
      * デバッグ用キーボードショートカットを設定
      */
     setupDebugKeyboardShortcuts() {
-        document.addEventListener('keydown', async (event) => {
+        // より確実なイベントリスナー登録
+        const handleKeyDown = async (event) => {
+            console.log(`🔑 キー押下: ${event.ctrlKey ? 'Ctrl+' : ''}${event.key}`);
+            
             // Ctrl + R で CSV強制リロード
             if (event.ctrlKey && event.key === 'r' && !event.shiftKey) {
                 event.preventDefault();
+                event.stopPropagation();
                 console.log('🔄 デバッグ: CSV強制リロードを実行');
                 
                 try {
-                    await this.csvLoader.forceReloadCSV('dialogues.csv');
-                    console.log('✅ dialogues.csvの強制リロードが完了しました');
-                    
-                    // 現在が会話シーンの場合、データを再読み込み
-                    if (this.currentScene === 'dialogue' && this.scenes.dialogue.isActive) {
-                        console.log('🔄 会話シーンのデータを再読み込みします');
-                        this.scenes.dialogue.loadDialogueData('living');
-                    }
+                    await this.forceReloadAllCSV();
                 } catch (error) {
                     console.error('❌ CSV強制リロードに失敗:', error);
+                    alert('❌ CSV更新に失敗しました: ' + error.message);
                 }
             }
             
             // Ctrl + D で CSV デバッグ情報表示
             if (event.ctrlKey && event.key === 'd') {
                 event.preventDefault();
+                event.stopPropagation();
                 console.log('🐛 デバッグ: CSV情報を表示');
-                this.csvLoader.debugInfo();
+                if (this.csvLoader) this.csvLoader.debugInfo();
             }
-        });
+        };
+        
+        // 複数の方法でイベントリスナーを登録
+        document.addEventListener('keydown', handleKeyDown, true);
+        window.addEventListener('keydown', handleKeyDown, true);
+        document.body.addEventListener('keydown', handleKeyDown, true);
         
         console.log('🎮 デバッグキーボードショートカットを設定:');
         console.log('  - Ctrl + R: CSV強制リロード');
         console.log('  - Ctrl + D: CSV情報表示');
+    }
+
+    /**
+     * CSV強制リロードを実行（UI用）
+     */
+    async forceReloadAllCSV() {
+        console.log('🔄 CSV強制リロード開始...');
+        
+        if (!this.csvLoader) {
+            throw new Error('CSVLoaderが初期化されていません');
+        }
+        
+        await this.csvLoader.loadAllCSV(true);
+        console.log('✅ 全CSVファイルの強制リロードが完了しました');
+        
+        // 現在が会話シーンの場合、データを再読み込み
+        if (this.currentScene === 'dialogue' && this.scenes.dialogue && this.scenes.dialogue.isActive) {
+            console.log('🔄 会話シーンのデータを再読み込みします');
+            this.scenes.dialogue.loadDialogueData('living');
+        }
+        
+        // ユーザーに通知
+        alert('✅ CSVファイルを更新しました！');
+        
+        return true;
     }
 
     /**

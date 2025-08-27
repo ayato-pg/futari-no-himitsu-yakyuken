@@ -21,6 +21,12 @@ class DialogueScene {
         // 美咲の現在の衣装を記録
         this.currentCostume = 'normal';
         
+        // 前回表示した画像名を記録（同じ画像の再読み込みを防ぐ）
+        this.lastDisplayedImage = '';
+        
+        // 前回指定されたsprite_file名を記録（継続使用のため）
+        this.lastSpecifiedSprite = '';
+        
         // DOM要素への参照
         this.dialogueScreen = null;
         this.misakiDisplay = null;
@@ -333,6 +339,68 @@ class DialogueScene {
     }
     
     /**
+     * 美咲の立ち絵を直接ファイル名で変更（CSVのsprite_file用）
+     * @param {string} spriteName - 画像ファイル名（拡張子付き）
+     */
+    changeMisakiSpriteDirectly(spriteName) {
+        if (!this.misakiDisplay) {
+            console.error(`❌ misakiDisplay要素が見つかりません`);
+            return;
+        }
+        
+        // 🔍 同じ画像の場合はスキップ（アニメーションも実行しない）
+        if (this.lastDisplayedImage === spriteName) {
+            console.log(`🔒 【画像維持】同じ画像のため変更をスキップ: ${spriteName}`);
+            return;
+        }
+        
+        // 現在の画像を記録
+        this.lastDisplayedImage = spriteName;
+        
+        // キャッシュバスター追加（画像更新を即反映）
+        const cacheBuster = `?v=${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const imagePath = `assets/images/characters/misaki/${spriteName}${cacheBuster}`;
+        
+        console.log(`📸 【直接指定画像変更】: ${spriteName}`);
+        console.log(`📁 【画像パス】: ${imagePath}`);
+        
+        // 画像のプリロード処理
+        const tempImage = new Image();
+        
+        tempImage.onload = () => {
+            console.log(`✅ 【画像読み込み成功】: ${spriteName}`);
+            
+            // タイトル画面と同じアニメーション適用
+            this.misakiDisplay.style.transition = '';
+            this.misakiDisplay.style.opacity = '';
+            this.misakiDisplay.classList.remove('misaki-costume-change');
+            
+            // 画像を変更
+            this.misakiDisplay.src = tempImage.src;
+            
+            // アニメーション適用
+            requestAnimationFrame(() => {
+                this.misakiDisplay.classList.add('misaki-costume-change');
+                setTimeout(() => {
+                    this.misakiDisplay.classList.remove('misaki-costume-change');
+                }, 1200);
+            });
+        };
+        
+        tempImage.onerror = () => {
+            console.error(`❌ 【画像読み込み失敗】: ${spriteName}`);
+            console.error(`📁 【失敗パス】: ${imagePath}`);
+            console.error(`🔍 【ファイル存在確認】以下のパスに画像ファイルが存在するか確認してください:`);
+            console.error(`    C:\\Users\\PC-user\\Claude\\2人の秘密、野球拳。\\assets\\images\\characters\\misaki\\${spriteName}`);
+            console.log(`⚠️ 現在の画像を維持します`);
+        };
+        
+        // 画像読み込み開始
+        tempImage.src = imagePath;
+        console.log(`📤 【画像読み込み開始】: ${spriteName}`);
+    }
+    
+    /**
      * 美咲の衣装変更
      * @param {string} costume - 衣装タイプ (normal, casual, roomwear等)
      * @param {string} emotion - 表情
@@ -343,12 +411,29 @@ class DialogueScene {
             return;
         }
         
+        // 衣装と表情を組み合わせた画像名
+        let imageName;
+        if (!emotion || emotion === 'normal' || emotion === null) {
+            // emotionがない場合は衣装名のみ
+            imageName = `misaki_dialogue_${costume}.png`;
+        } else {
+            // emotionがある場合は衣装名_表情
+            imageName = `misaki_dialogue_${costume}_${emotion}.png`;
+        }
+        
+        // 🔍 同じ画像の場合はスキップ（アニメーションも実行しない）
+        if (this.lastDisplayedImage === imageName) {
+            console.log(`🔒 【画像維持】同じ画像のため変更をスキップ: ${imageName}`);
+            return;
+        }
+        
         // 現在の衣装を記録
         this.currentCostume = costume;
+        this.lastDisplayedImage = imageName;
         
-        // 衣装と表情を組み合わせた画像名
-        let imageName = `misaki_dialogue_${costume}_${emotion}.png`;
-        const imagePath = `assets/images/characters/misaki/${imageName}`;
+        // キャッシュバスター追加（画像更新を即反映）
+        const cacheBuster = `?v=${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const imagePath = `assets/images/characters/misaki/${imageName}${cacheBuster}`;
         
         console.log(`👗 【衣装変更開始】: ${costume} + ${emotion}`);
         console.log(`📁 【画像パス】: ${imagePath}`);
@@ -391,11 +476,11 @@ class DialogueScene {
         tempImage.onerror = () => {
             console.error(`❌ 【画像読み込み失敗】: ${imagePath}`);
             
-            // 段階的フォールバック戦略
+            // 段階的フォールバック戦略（キャッシュバスター付き）
             const fallbackOptions = [
-                `assets/images/characters/misaki/misaki_dialogue_${costume}.png`, // 表情なし版
-                `assets/images/characters/misaki/misaki_dialogue_normal.png`,     // 基本画像
-                `assets/images/characters/misaki/misaki_adult_normal.png`         // 最終手段
+                `assets/images/characters/misaki/misaki_dialogue_${costume}.png${cacheBuster}`, // 表情なし版
+                `assets/images/characters/misaki/misaki_dialogue_normal.png${cacheBuster}`,     // 基本画像
+                `assets/images/characters/misaki/misaki_adult_normal.png${cacheBuster}`         // 最終手段
             ];
             
             console.warn(`⚠️ 【フォールバック開始】元画像: ${imageName}`);
@@ -434,8 +519,8 @@ class DialogueScene {
             this.misakiDisplay.style.opacity = '';
             this.misakiDisplay.classList.remove('misaki-costume-change');
             
-            // 画像を変更
-            this.misakiDisplay.src = fallbackPath;
+            // 画像を変更（すでにキャッシュバスター付き）
+            this.misakiDisplay.src = fallbackImg.src;
             
             // アニメーション適用
             requestAnimationFrame(() => {
@@ -495,6 +580,10 @@ class DialogueScene {
      */
     loadDialogueData(sceneId) {
         console.log(`🔄 会話データを読み込み開始: ${sceneId}`);
+        
+        // 画像記録をリセット（新しい会話データ読み込み時）
+        this.lastDisplayedImage = '';
+        this.lastSpecifiedSprite = '';
         
         if (!this.game.csvLoader) {
             console.warn('❌ CSVLoaderが初期化されていません。フォールバックデータを使用します。');
@@ -639,6 +728,10 @@ class DialogueScene {
                 this.characterName.textContent = '美咲の心の声';
                 this.characterName.style.color = '#ff9999';
                 this.characterName.style.fontStyle = 'italic';
+            } else if (dialogue.character_id === 'sound_effect') {
+                this.characterName.textContent = ''; // 効果音は名前表示なし
+                this.characterName.style.color = '#ffffff';
+                this.characterName.style.fontStyle = 'normal';
             } else {
                 this.characterName.textContent = 'あなた';
                 this.characterName.style.color = '#7ed6c4';
@@ -646,40 +739,38 @@ class DialogueScene {
             }
         }
         
-        // 美咲の立ち絵変更（衣装と表情）- 美咲の台詞の時のみ
-        if (dialogue.character_id === 'misaki') {
-            console.log(`🔍 【美咲台詞】処理開始 - currentCostume: ${this.currentCostume}`);
-            
-            // 🚨 緊急修正：特定のdialogue_idで強制的に衣装変更
-            const forceCostumeMap = {
-                'd005': { costume: 'casual', emotion: 'teasing' },
-                'd008a': { costume: 'casual', emotion: 'playful' },
-                'd010': { costume: 'casual', emotion: 'confident' },
-                'd012': { costume: 'casual', emotion: 'teasing' },
-                'd013': { costume: 'casual', emotion: 'seductive' }
-            };
-            
-            // 強制衣装変更チェック
-            if (forceCostumeMap[dialogue.dialogue_id]) {
-                const forceData = forceCostumeMap[dialogue.dialogue_id];
-                console.log(`🔧 【強制修正】${dialogue.dialogue_id}: ${forceData.costume} + ${forceData.emotion}`);
-                this.changeMisakiCostume(forceData.costume, forceData.emotion);
-            }
-            // 通常のCSVデータ処理
-            else if (dialogue.costume && dialogue.costume.trim() !== '') {
-                console.log(`👗 【衣装変更】実行: ${dialogue.costume} + ${dialogue.emotion || 'normal'}`);
-                this.changeMisakiCostume(dialogue.costume, dialogue.emotion || 'normal');
-            }
-            // それ以外は一切画像変更しない
-            else {
-                console.log(`🔒 【画像維持】costume指定なし - 現在の画像を維持`);
-                console.log(`    - emotion: ${dialogue.emotion || 'なし'}`);
-                console.log(`    - costume: ${dialogue.costume || 'なし'}`);
-            }
+        // 🎨 CSV sprite_fileカラムによる立ち絵制御（継続使用システム付き）
+        
+        
+        // sprite_fileが指定されている場合：新しい画像として記録
+        if (dialogue.sprite_file && dialogue.sprite_file.trim() !== '') {
+            const spriteName = dialogue.sprite_file.trim();
+            this.lastSpecifiedSprite = spriteName;  // 継続使用のために記録
+            console.log(`📸 【CSV新規指定】${dialogue.dialogue_id}: ${spriteName}`);
+            this.changeMisakiSpriteDirectly(spriteName);
         }
-        // プレイヤーや心の声の時は立ち絵を維持（何もしない）
+        // sprite_fileが空欄で、前回指定があった場合：継続使用
+        else if (this.lastSpecifiedSprite !== '') {
+            console.log(`🔄 【CSV継続使用】${dialogue.dialogue_id}: ${this.lastSpecifiedSprite} (前回指定の継続)`);
+            this.changeMisakiSpriteDirectly(this.lastSpecifiedSprite);
+        }
+        // 従来のcostume/emotionシステム（フォールバック）
+        else if (dialogue.character_id === 'misaki' && dialogue.costume && dialogue.costume.trim() !== '') {
+            console.log(`👗 【CSV衣装】${dialogue.costume} + ${dialogue.emotion || 'normal'}`);
+            this.changeMisakiCostume(dialogue.costume, dialogue.emotion || 'normal');
+        }
+        // それ以外は現在の立ち絵を維持
         else {
-            console.log(`🎭 【${dialogue.character_id}】- 美咲の立ち絵は維持`);
+            console.log(`🔒 【画像維持】現在の立ち絵を継続表示`);
+        }
+        
+
+        // 効果音テキストの判定と特殊スタイル適用
+        const isSoundEffect = this.isSoundEffectText(dialogue.text);
+        if (isSoundEffect) {
+            this.dialogueText.classList.add('sound-effect');
+        } else {
+            this.dialogueText.classList.remove('sound-effect');
         }
 
         // ボイス再生
@@ -762,6 +853,26 @@ class DialogueScene {
             this.playDialogueSE('text_advance');
             this.showNextDialogue();
         }
+    }
+
+    /**
+     * 効果音テキストかどうかを判定
+     * @param {string} text - テキスト
+     * @returns {boolean} 効果音テキストかどうか
+     */
+    isSoundEffectText(text) {
+        // 効果音機能は現在無効化（すべて通常テキストとして表示）
+        return false;
+        
+        /*
+        // 効果音パターンの判定（必要に応じて有効化）
+        const soundPatterns = [
+            /^[\(\（].+[\)\）]$/, // (カチャ) などの括弧内擬音のみ
+            /^[♪♫♬♩].+/, // 音楽記号で始まる
+        ];
+        
+        return soundPatterns.some(pattern => pattern.test(text.trim()));
+        */
     }
 
     /**
