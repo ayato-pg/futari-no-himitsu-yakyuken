@@ -90,14 +90,14 @@ class GameScene {
      * @param {number} playerWins - プレイヤーの勝利数 (0-5)
      */
     updateMisakiSprite(playerWins) {
-        // 勝利数に応じた立ち絵マッピング（5段階）
+        // 勝利数に応じた立ち絵マッピング（6段階）
         const spriteMapping = {
-            0: 'misaki_adult_normal.png',              // 初期状態：自信満々
-            1: 'misaki_dialogue_casual_smile.png',     // 1勝：まだ余裕
-            2: 'misaki_dialogue_casual_teasing.png',   // 2勝：ちょっと焦り
-            3: 'misaki_dialogue_casual_seductive.png', // 3勝：必死に誘惑
-            4: 'misaki_dialogue_casual_shy.png',       // 4勝：恥ずかしがり
-            5: 'misaki_dialogue_normal.png'            // 5勝：完全敗北
+            0: 'misaki_game_stage1.png',  // 初期状態：自信満々
+            1: 'misaki_game_stage2.png',  // 1勝：少し焦り始める
+            2: 'misaki_game_stage3.png',  // 2勝：明確に焦る
+            3: 'misaki_game_stage4.png',  // 3勝：必死になる
+            4: 'misaki_game_stage5.png',  // 4勝：かなり恥ずかしい
+            5: 'misaki_game_stage6.png'   // 5勝：完全敗北（最終段階）
         };
         
         const spriteName = spriteMapping[playerWins] || spriteMapping[0];

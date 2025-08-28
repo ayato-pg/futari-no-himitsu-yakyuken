@@ -790,11 +790,11 @@ body {
     top: 50% !important; /* 画面の完全な中心に配置 */
     transform: translate(-50%, -50%) !important;
     z-index: 5;
-    max-width: 350px;
+    max-width: 550px; /* さらにコンテナを拡大 */
 }
 
 .misaki-game-display img {
-    max-height: 550px; /* 黄色い枠に合わせてサイズアップ */
+    max-height: 750px; /* さらに立ち絵を大きく表示 */
     width: auto;
     filter: drop-shadow(3px 3px 15px rgba(0,0,0,0.6));
     transition: all 0.5s ease;
@@ -1051,11 +1051,11 @@ body {
         left: 30% !important; /* タブレットでも右に5%移動 */
         top: 50% !important;
         transform: translate(-50%, -50%) !important;
-        max-width: 280px; /* タブレット用に幅を調整 */
+        max-width: 420px; /* タブレット用に幅をさらに拡大 */
     }
     
     .misaki-game-display img {
-        max-height: 420px; /* タブレット用に高さを調整 */
+        max-height: 620px; /* タブレット用に高さをさらに拡大 */
     }
     
     .hand-btn {
@@ -1108,11 +1108,11 @@ body {
         left: 30% !important; /* モバイルでも右に5%移動 */
         top: 50% !important; /* モバイルでも画面中心に配置 */
         transform: translate(-50%, -50%) !important;
-        max-width: 220px; /* モバイル用にさらに幅を制限 */
+        max-width: 320px; /* モバイル用の幅をさらに拡大 */
     }
     
     .misaki-game-display img {
-        max-height: 320px; /* モバイル用に高さを制限 */
+        max-height: 480px; /* モバイル用の高さをさらに拡大 */
         backface-visibility: hidden;
     }
     
