@@ -785,15 +785,17 @@ body {
 }
 
 .misaki-game-display {
-    position: absolute;
-    right: 10%;
-    top: 50%;
-    transform: translateY(-50%);
+    position: fixed !important; /* absoluteではなくfixedで画面基準に配置 */
+    left: 30% !important; /* 右に5%移動 (25% → 30%) */
+    top: 50% !important; /* 画面の完全な中心に配置 */
+    transform: translate(-50%, -50%) !important;
     z-index: 5;
+    max-width: 350px;
 }
 
 .misaki-game-display img {
-    max-height: 650px;
+    max-height: 550px; /* 黄色い枠に合わせてサイズアップ */
+    width: auto;
     filter: drop-shadow(3px 3px 15px rgba(0,0,0,0.6));
     transition: all 0.5s ease;
     cursor: pointer;
@@ -806,15 +808,16 @@ body {
 
 .battle-result {
     position: absolute;
-    top: 50%;
-    left: 20%;
-    transform: translateY(-50%);
-    background: rgba(0,0,0,0.8);
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.9);
     padding: 20px;
     border-radius: 15px;
     border: 2px solid #ffd700;
-    z-index: 15;
+    z-index: 20; /* 立ち絵より前に表示 */
     min-width: 300px;
+    max-width: 400px;
     text-align: center;
     display: none;
 }
@@ -1043,8 +1046,16 @@ body {
         height: 80vh;
     }
     
+    .misaki-game-display {
+        position: fixed !important;
+        left: 30% !important; /* タブレットでも右に5%移動 */
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        max-width: 280px; /* タブレット用に幅を調整 */
+    }
+    
     .misaki-game-display img {
-        max-height: 600px;
+        max-height: 420px; /* タブレット用に高さを調整 */
     }
     
     .hand-btn {
@@ -1090,6 +1101,18 @@ body {
         max-height: 600px;
         height: 70vh;
         transform: translateZ(0);
+    }
+    
+    .misaki-game-display {
+        position: fixed !important;
+        left: 30% !important; /* モバイルでも右に5%移動 */
+        top: 50% !important; /* モバイルでも画面中心に配置 */
+        transform: translate(-50%, -50%) !important;
+        max-width: 220px; /* モバイル用にさらに幅を制限 */
+    }
+    
+    .misaki-game-display img {
+        max-height: 320px; /* モバイル用に高さを制限 */
         backface-visibility: hidden;
     }
     

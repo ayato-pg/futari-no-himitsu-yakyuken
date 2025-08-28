@@ -34,6 +34,10 @@ class GameScene {
         this.handButtons = {};
         this.statusElements = {};
         
+        // 立ち絵管理
+        this.currentMisakiSprite = '';
+        this.lastDisplayedSprite = '';
+        
         this.initialize();
     }
 
@@ -68,7 +72,107 @@ class GameScene {
         };
         
         this.setupEventListeners();
+        // 初期立ち絵を設定
+        this.initializeMisakiSprite();
+        
         console.log('GameScene初期化完了');
+    }
+
+    /**
+     * 美咲の初期立ち絵を設定
+     */
+    initializeMisakiSprite() {
+        this.updateMisakiSprite(0); // 勝利数0の初期状態
+    }
+
+    /**
+     * プレイヤーの勝利数に応じて美咲の立ち絵を更新
+     * @param {number} playerWins - プレイヤーの勝利数 (0-5)
+     */
+    updateMisakiSprite(playerWins) {
+        // 勝利数に応じた立ち絵マッピング（5段階）
+        const spriteMapping = {
+            0: 'misaki_adult_normal.png',              // 初期状態：自信満々
+            1: 'misaki_dialogue_casual_smile.png',     // 1勝：まだ余裕
+            2: 'misaki_dialogue_casual_teasing.png',   // 2勝：ちょっと焦り
+            3: 'misaki_dialogue_casual_seductive.png', // 3勝：必死に誘惑
+            4: 'misaki_dialogue_casual_shy.png',       // 4勝：恥ずかしがり
+            5: 'misaki_dialogue_normal.png'            // 5勝：完全敗北
+        };
+        
+        const spriteName = spriteMapping[playerWins] || spriteMapping[0];
+        
+        // 同じ画像の場合は変更しない
+        if (this.lastDisplayedSprite === spriteName) {
+            return;
+        }
+        
+        this.currentMisakiSprite = spriteName;
+        this.lastDisplayedSprite = spriteName;
+        
+        console.log(`📸 美咲の立ち絵更新: ${playerWins}勝 → ${spriteName}`);
+        
+        this.changeMisakiGameSprite(spriteName);
+    }
+
+    /**
+     * ゲーム画面の美咲立ち絵を変更（アニメーション付き）
+     * @param {string} spriteName - 画像ファイル名
+     */
+    changeMisakiGameSprite(spriteName) {
+        if (!this.misakiGameDisplay) {
+            console.error('❌ 美咲の表示要素が見つかりません');
+            return;
+        }
+
+        const imagePath = `assets/images/characters/misaki/${spriteName}`;
+        
+        // 画像のプリロード処理
+        const tempImage = new Image();
+        tempImage.onload = () => {
+            // アニメーション付きで画像を変更
+            this.misakiGameDisplay.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            this.misakiGameDisplay.style.opacity = '0';
+            this.misakiGameDisplay.style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                // 画像を変更
+                this.misakiGameDisplay.src = tempImage.src;
+                
+                // フェードインアニメーション
+                this.misakiGameDisplay.style.opacity = '1';
+                this.misakiGameDisplay.style.transform = 'scale(1)';
+                
+                // 勝利時の特別エフェクト
+                this.addSpriteChangeEffect();
+                
+                setTimeout(() => {
+                    this.misakiGameDisplay.style.transition = '';
+                }, 300);
+                
+            }, 300);
+        };
+        
+        tempImage.onerror = () => {
+            console.error(`❌ 立ち絵が見つかりません: ${spriteName}`);
+        };
+        
+        tempImage.src = imagePath;
+    }
+
+    /**
+     * 立ち絵変更時の特別エフェクト
+     */
+    addSpriteChangeEffect() {
+        if (!this.misakiGameDisplay) return;
+        
+        // グロー効果を一時的に追加
+        this.misakiGameDisplay.style.filter = 'drop-shadow(0 0 20px rgba(255, 107, 125, 0.8))';
+        
+        // 2秒後に通常に戻す
+        setTimeout(() => {
+            this.misakiGameDisplay.style.filter = 'drop-shadow(3px 3px 15px rgba(0,0,0,0.6))';
+        }, 2000);
     }
 
     /**
@@ -202,6 +306,10 @@ class GameScene {
         this.playerHand = null;
         this.misakiHand = null;
         
+        // 立ち絵を初期状態にリセット
+        this.lastDisplayedSprite = '';
+        this.updateMisakiSprite(0);
+        
         console.log('ゲーム状態をリセット');
     }
 
@@ -217,6 +325,10 @@ class GameScene {
         this.misakiWins = data.misakiWins || 0;
         this.consecutiveWins = data.consecutiveWins || 0;
         this.specialMoveAvailable = data.specialMoveAvailable || false;
+        
+        // 復元されたプレイヤー勝利数に応じて立ち絵を更新
+        this.lastDisplayedSprite = '';
+        this.updateMisakiSprite(this.playerWins);
         
         console.log('ゲーム状態を復元');
     }
@@ -511,6 +623,9 @@ class GameScene {
             this.misakiHP = Math.max(0, this.misakiHP - 1);
             this.playerWins++;
             this.consecutiveWins++;
+            
+            // 🎨 プレイヤー勝利時に美咲の立ち絵を更新
+            this.updateMisakiSprite(this.playerWins);
             
             // 3連勝で必殺技解放
             if (this.consecutiveWins >= 3) {
@@ -915,7 +1030,8 @@ class GameScene {
             playerWins: this.playerWins,
             misakiWins: this.misakiWins,
             consecutiveWins: this.consecutiveWins,
-            specialMoveAvailable: this.specialMoveAvailable
+            specialMoveAvailable: this.specialMoveAvailable,
+            currentMisakiSprite: this.currentMisakiSprite
         };
     }
 
@@ -931,6 +1047,11 @@ class GameScene {
         this.misakiWins = state.misakiWins || 0;
         this.consecutiveWins = state.consecutiveWins || 0;
         this.specialMoveAvailable = state.specialMoveAvailable || false;
+        
+        // 立ち絵状態も復元
+        this.currentMisakiSprite = state.currentMisakiSprite || '';
+        this.lastDisplayedSprite = '';
+        this.updateMisakiSprite(this.playerWins);
     }
 
     /**
