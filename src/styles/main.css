@@ -761,21 +761,210 @@ body {
     margin-top: 5px;
 }
 
-.hp-hearts {
+/* HPバー表示 */
+.hp-bar-container {
     display: flex;
+    flex-direction: column;
     gap: 5px;
-    margin-bottom: 5px;
+    min-width: 120px;
 }
 
-.heart {
-    width: 24px;
-    height: 24px;
-    background: url('../../assets/images/ui/heart_full.png') no-repeat center;
-    background-size: contain;
+.hp-bar-label {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
 }
 
-.heart.empty {
-    background-image: url('../../assets/images/ui/heart_empty.png');
+.hp-bar {
+    position: relative;
+    width: 120px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid #fff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.hp-bar-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #ff6b7d 0%, #ff8a9b 100%);
+    transition: width 0.5s ease, background-color 0.3s ease;
+    width: 100%;
+    position: relative;
+}
+
+.hp-bar-fill.player-hp {
+    background: linear-gradient(135deg, #7ed6c4 0%, #48a999 100%);
+}
+
+.hp-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.3) 50%, 
+        transparent 100%);
+    animation: hp-shine 2s infinite;
+}
+
+.hp-bar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+}
+
+/* アニメーション付きハート表示 */
+.misaki-hearts-display {
+    position: absolute;
+    top: 120px;
+    left: 35%;
+    transform: translateX(-50%);
+    z-index: 15;
+}
+
+.player-hearts-display {
+    position: absolute;
+    bottom: 300px;
+    left: 65%;
+    transform: translateX(-50%);
+    z-index: 15;
+}
+
+.hearts-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+.heart-animated {
+    width: 70px;
+    height: 70px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ff6b7d" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>') center/contain no-repeat;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: scale(0) rotate(180deg);
+    filter: drop-shadow(0 2px 8px rgba(255, 107, 125, 0.5));
+}
+
+.heart-animated.player {
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%237ed6c4" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>') center/contain no-repeat;
+    filter: drop-shadow(0 2px 8px rgba(126, 214, 196, 0.5));
+}
+
+.heart-animated.empty {
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23666" stroke="%23999" stroke-width="1" d="M12.1 18.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05zM16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.31C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3z"/></svg>') center/contain no-repeat;
+    filter: drop-shadow(0 1px 4px rgba(102, 102, 102, 0.3));
+}
+
+.heart-animated.show {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+}
+
+.heart-animated.pulse {
+    animation: heart-pulse 1.5s infinite;
+}
+
+.heart-animated.broken {
+    animation: heart-break 0.8s ease-out forwards;
+}
+
+.heart-animated:hover {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+/* ゲーム開始前の会話とボタン */
+.game-intro {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 20px;
+    padding: 30px;
+    border: 3px solid #ff6b7d;
+    box-shadow: 0 0 30px rgba(255, 107, 125, 0.5);
+    max-width: 600px;
+    width: 90%;
+}
+
+.intro-dialogue {
+    margin-bottom: 25px;
+}
+
+.dialogue-text {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.6;
+    background: linear-gradient(135deg, #ff6b7d 0%, #ffb6c1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 2px 4px rgba(255, 107, 125, 0.3);
+}
+
+.start-game-btn {
+    background: linear-gradient(135deg, #7ed6c4 0%, #48a999 100%);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(126, 214, 196, 0.4);
+    font-family: 'Noto Sans JP', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.start-game-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s;
+}
+
+.start-game-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 10px 30px rgba(126, 214, 196, 0.6);
+    background: linear-gradient(135deg, #48a999 0%, #7ed6c4 100%);
+}
+
+.start-game-btn:hover::before {
+    left: 100%;
+}
+
+.start-game-btn:active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+/* ゲーム開始後は非表示 */
+.game-intro.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.8);
+    transition: all 0.5s ease;
 }
 
 .defeat-count, .victory-count {
@@ -894,6 +1083,8 @@ body {
 .hand-btn img {
     width: 60px;
     height: 60px;
+    object-fit: cover;
+    transform: scale(1.5);
 }
 
 .hand-btn span {
@@ -1066,6 +1257,8 @@ body {
     .hand-btn img {
         width: 50px;
         height: 50px;
+        object-fit: cover;
+        transform: scale(1.5);
     }
 }
 
@@ -1135,17 +1328,66 @@ body {
     .hand-btn img {
         width: 40px;
         height: 40px;
+        object-fit: cover;
+        transform: scale(1.5);
     }
 }
 
 /* アニメーション */
+/* HP低下時の色変化とアニメーション */
+@keyframes hp-shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes hp-critical {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.hp-critical {
+    animation: hp-critical 1s infinite;
+}
+
+/* ハートアニメーション */
+@keyframes heart-pulse {
+    0%, 100% { 
+        transform: scale(1); 
+        filter: drop-shadow(0 2px 8px rgba(255, 107, 125, 0.5));
+    }
+    50% { 
+        transform: scale(1.15); 
+        filter: drop-shadow(0 4px 16px rgba(255, 107, 125, 0.8));
+    }
+}
+
+@keyframes heart-break {
+    0% { 
+        transform: scale(1) rotate(0deg); 
+        opacity: 1; 
+    }
+    25% { 
+        transform: scale(1.2) rotate(-10deg); 
+        opacity: 0.8; 
+    }
+    50% { 
+        transform: scale(0.8) rotate(10deg); 
+        opacity: 0.6; 
+    }
+    75% { 
+        transform: scale(0.3) rotate(-20deg); 
+        opacity: 0.3; 
+    }
+    100% { 
+        transform: scale(0) rotate(180deg); 
+        opacity: 0; 
+    }
+}
+
 @keyframes heartbeat {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
-}
-
-.heart.pulse {
-    animation: heartbeat 1s infinite;
 }
 
 @keyframes shake {

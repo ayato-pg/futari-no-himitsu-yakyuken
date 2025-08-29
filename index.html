@@ -78,11 +78,22 @@
                 <div class="win-condition">勝利条件: 5勝先取</div>
             </div>
 
+            <!-- 美咲のハート表示（ラウンド表示の下） -->
+            <div class="misaki-hearts-display" id="misaki-hearts-display">
+                <div class="hearts-container" id="misaki-hearts-container"></div>
+            </div>
+
             <!-- 美咲のステータスとHP -->
             <div class="misaki-status">
                 <div class="character-name">美咲</div>
                 <div class="hp-display">
-                    <div class="hp-hearts" id="misaki-hearts"></div>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-label">ライフ</div>
+                        <div class="hp-bar">
+                            <div class="hp-bar-fill" id="misaki-hp-bar"></div>
+                            <div class="hp-bar-text" id="misaki-hp-text">5/5</div>
+                        </div>
+                    </div>
                     <div class="defeat-count">敗北数: <span id="misaki-defeats">0</span></div>
                 </div>
             </div>
@@ -90,6 +101,16 @@
             <!-- 美咲の大型立ち絵表示 -->
             <div class="misaki-game-display">
                 <img id="misaki-game" src="assets/images/characters/misaki/misaki_game_stage1.png" alt="美咲">
+            </div>
+
+            <!-- ゲーム開始前の会話とボタン -->
+            <div class="game-intro" id="game-intro">
+                <div class="intro-dialogue" id="intro-dialogue">
+                    <div class="dialogue-text" id="dialogue-text">
+                        美咲：「じゃ、じゃあ始めるよ？…」
+                    </div>
+                </div>
+                <button class="start-game-btn" id="start-game-btn">ゲーム開始</button>
             </div>
 
             <!-- バトル結果表示 -->
@@ -106,9 +127,20 @@
             <div class="player-status">
                 <div class="character-name">あなた</div>
                 <div class="hp-display">
-                    <div class="hp-hearts" id="player-hearts"></div>
+                    <div class="hp-bar-container">
+                        <div class="hp-bar-label">ライフ</div>
+                        <div class="hp-bar">
+                            <div class="hp-bar-fill player-hp" id="player-hp-bar"></div>
+                            <div class="hp-bar-text" id="player-hp-text">5/5</div>
+                        </div>
+                    </div>
                     <div class="victory-count">勝利数: <span id="player-victories">0</span></div>
                 </div>
+            </div>
+
+            <!-- プレイヤーのハート表示（じゃんけんボタンの上） -->
+            <div class="player-hearts-display" id="player-hearts-display">
+                <div class="hearts-container" id="player-hearts-container"></div>
             </div>
 
             <!-- じゃんけん選択ボタン -->
@@ -132,7 +164,6 @@
 
             <!-- ゲーム制御ボタン -->
             <div class="game-controls">
-                <button class="control-btn" id="btn-special" disabled>必殺技: 未使用</button>
                 <button class="control-btn" id="btn-hint">ヒント</button>
                 <button class="control-btn" id="btn-surrender">降参</button>
             </div>

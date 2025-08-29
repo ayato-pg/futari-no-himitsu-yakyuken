@@ -23,14 +23,13 @@ class GameScene {
         this.isPlayingRound = false;
         this.canMakeChoice = false;
         
-        // 必殺技
-        this.specialMoveAvailable = false;
-        this.consecutiveWins = 0;
+        // 必殺技機能を削除
         
         // DOM要素への参照
         this.gameScreen = null;
         this.misakiGameDisplay = null;
         this.battleResult = null;
+        this.gameIntro = null;
         this.handButtons = {};
         this.statusElements = {};
         
@@ -48,17 +47,22 @@ class GameScene {
         this.gameScreen = document.getElementById('game-screen');
         this.misakiGameDisplay = document.getElementById('misaki-game');
         this.battleResult = document.getElementById('battle-result');
+        this.gameIntro = document.getElementById('game-intro');
         
         // ステータス表示要素
         this.statusElements = {
             currentRound: document.getElementById('current-round'),
-            misakiHearts: document.getElementById('misaki-hearts'),
+            misakiHPBar: document.getElementById('misaki-hp-bar'),
+            misakiHPText: document.getElementById('misaki-hp-text'),
             misakiDefeats: document.getElementById('misaki-defeats'),
-            playerHearts: document.getElementById('player-hearts'),
+            playerHPBar: document.getElementById('player-hp-bar'),
+            playerHPText: document.getElementById('player-hp-text'),
             playerVictories: document.getElementById('player-victories'),
             resultText: document.getElementById('result-text'),
             misakiHandDisplay: document.getElementById('misaki-hand'),
-            playerHandDisplay: document.getElementById('player-hand')
+            playerHandDisplay: document.getElementById('player-hand'),
+            misakiHeartsContainer: document.getElementById('misaki-hearts-container'),
+            playerHeartsContainer: document.getElementById('player-hearts-container')
         };
         
         // じゃんけんボタン
@@ -66,7 +70,6 @@ class GameScene {
             rock: document.getElementById('btn-rock'),
             scissors: document.getElementById('btn-scissors'),
             paper: document.getElementById('btn-paper'),
-            special: document.getElementById('btn-special'),
             hint: document.getElementById('btn-hint'),
             surrender: document.getElementById('btn-surrender')
         };
@@ -199,12 +202,6 @@ class GameScene {
         }
         
         // 制御ボタン
-        if (this.handButtons.special) {
-            this.handButtons.special.addEventListener('click', () => {
-                this.useSpecialMove();
-            });
-        }
-        
         if (this.handButtons.hint) {
             this.handButtons.hint.addEventListener('click', () => {
                 this.showHint();
@@ -230,6 +227,14 @@ class GameScene {
             returnBtn.addEventListener('click', () => {
                 this.game.audioManager.playSE('se_choice_select.mp3', 0.8);
                 this.returnToTitle();
+            });
+        }
+
+        // ゲーム開始ボタン
+        const startBtn = document.getElementById('start-game-btn');
+        if (startBtn) {
+            startBtn.addEventListener('click', () => {
+                this.startGameFromIntro();
             });
         }
 
@@ -273,10 +278,12 @@ class GameScene {
         this.gameScreen.classList.add('active');
         this.isActive = true;
         
-        // ゲーム開始メッセージ
-        setTimeout(() => {
-            this.startNewRound();
-        }, 1000);
+        // イントロダイアログを表示
+        if (this.gameIntro) {
+            this.gameIntro.classList.remove('hidden');
+            // 導入セリフを確実に設定
+            this.setIntroDialogue();
+        }
     }
 
     /**
@@ -301,8 +308,6 @@ class GameScene {
         this.misakiHP = 5;
         this.playerWins = 0;
         this.misakiWins = 0;
-        this.consecutiveWins = 0;
-        this.specialMoveAvailable = false;
         this.playerHand = null;
         this.misakiHand = null;
         
@@ -323,8 +328,6 @@ class GameScene {
         this.misakiHP = data.misakiHP || 5;
         this.playerWins = data.playerWins || 0;
         this.misakiWins = data.misakiWins || 0;
-        this.consecutiveWins = data.consecutiveWins || 0;
-        this.specialMoveAvailable = data.specialMoveAvailable || false;
         
         // 復元されたプレイヤー勝利数に応じて立ち絵を更新
         this.lastDisplayedSprite = '';
@@ -380,8 +383,11 @@ class GameScene {
             this.statusElements.currentRound.textContent = this.currentRound;
         }
         
-        // HP表示（ハート）
-        this.updateHearts();
+        // HP表示（バー）
+        this.updateHPBars();
+        
+        // ハート表示を更新
+        this.updateAnimatedHearts();
         
         // 勝利・敗北数表示
         if (this.statusElements.misakiDefeats) {
@@ -391,8 +397,7 @@ class GameScene {
             this.statusElements.playerVictories.textContent = this.playerWins;
         }
         
-        // 必殺技ボタンの状態
-        this.updateSpecialButton();
+        // 必殺技機能を削除
         
         // バトル結果を非表示
         if (this.battleResult) {
@@ -401,45 +406,273 @@ class GameScene {
     }
 
     /**
-     * ハート表示を更新
+     * HPバー表示を更新
      */
-    updateHearts() {
-        // 美咲のハート
-        if (this.statusElements.misakiHearts) {
-            this.statusElements.misakiHearts.innerHTML = '';
-            for (let i = 0; i < 5; i++) {
-                const heart = document.createElement('div');
-                heart.className = i < this.misakiHP ? 'heart' : 'heart empty';
-                this.statusElements.misakiHearts.appendChild(heart);
-            }
+    updateHPBars() {
+        // 美咲のHPバー
+        if (this.statusElements.misakiHPBar && this.statusElements.misakiHPText) {
+            const misakiHPPercent = (this.misakiHP / 5) * 100;
+            this.statusElements.misakiHPBar.style.width = `${misakiHPPercent}%`;
+            this.statusElements.misakiHPText.textContent = `${this.misakiHP}/5`;
+            
+            // HP低下時の色変化
+            this.updateHPBarColor(this.statusElements.misakiHPBar, this.misakiHP, false);
         }
         
-        // プレイヤーのハート
-        if (this.statusElements.playerHearts) {
-            this.statusElements.playerHearts.innerHTML = '';
-            for (let i = 0; i < 5; i++) {
-                const heart = document.createElement('div');
-                heart.className = i < this.playerHP ? 'heart' : 'heart empty';
-                this.statusElements.playerHearts.appendChild(heart);
+        // プレイヤーのHPバー
+        if (this.statusElements.playerHPBar && this.statusElements.playerHPText) {
+            const playerHPPercent = (this.playerHP / 5) * 100;
+            this.statusElements.playerHPBar.style.width = `${playerHPPercent}%`;
+            this.statusElements.playerHPText.textContent = `${this.playerHP}/5`;
+            
+            // HP低下時の色変化
+            this.updateHPBarColor(this.statusElements.playerHPBar, this.playerHP, true);
+        }
+    }
+
+    /**
+     * HPバーの色を更新
+     * @param {HTMLElement} hpBar - HPバー要素
+     * @param {number} hp - 現在のHP
+     * @param {boolean} isPlayer - プレイヤーかどうか
+     */
+    updateHPBarColor(hpBar, hp, isPlayer) {
+        // アニメーションクラスをリセット
+        hpBar.classList.remove('hp-critical');
+        
+        if (hp <= 2) {
+            // HP危険域（赤色 + 点滅）
+            if (isPlayer) {
+                hpBar.style.background = 'linear-gradient(135deg, #ff4500 0%, #ff6347 100%)';
+            } else {
+                hpBar.style.background = 'linear-gradient(135deg, #ff4500 0%, #ff6347 100%)';
+            }
+            hpBar.classList.add('hp-critical');
+        } else if (hp <= 3) {
+            // HP注意域（オレンジ色）
+            hpBar.style.background = 'linear-gradient(135deg, #ffa500 0%, #ffb347 100%)';
+        } else {
+            // HP正常域（元の色）
+            if (isPlayer) {
+                hpBar.style.background = 'linear-gradient(135deg, #7ed6c4 0%, #48a999 100%)';
+            } else {
+                hpBar.style.background = 'linear-gradient(135deg, #ff6b7d 0%, #ff8a9b 100%)';
             }
         }
     }
 
     /**
-     * 必殺技ボタンの状態を更新
+     * アニメーション付きハート表示を更新
      */
-    updateSpecialButton() {
-        if (this.handButtons.special) {
-            if (this.specialMoveAvailable) {
-                this.handButtons.special.disabled = false;
-                this.handButtons.special.textContent = '必殺技: 読心術';
-                this.handButtons.special.style.background = 'linear-gradient(135deg, #ffd700 0%, #ffb347 100%)';
-            } else {
-                this.handButtons.special.disabled = true;
-                this.handButtons.special.textContent = `必殺技: ${3 - this.consecutiveWins}連勝で発動`;
-                this.handButtons.special.style.background = '';
+    updateAnimatedHearts() {
+        // 美咲のハート表示
+        if (this.statusElements.misakiHeartsContainer) {
+            this.updateHeartsContainer(this.statusElements.misakiHeartsContainer, this.misakiHP, false);
+        }
+        
+        // プレイヤーのハート表示
+        if (this.statusElements.playerHeartsContainer) {
+            this.updateHeartsContainer(this.statusElements.playerHeartsContainer, this.playerHP, true);
+        }
+    }
+
+    /**
+     * ハートコンテナを更新
+     * @param {HTMLElement} container - ハートコンテナ要素
+     * @param {number} hp - 現在のHP
+     * @param {boolean} isPlayer - プレイヤーかどうか
+     */
+    updateHeartsContainer(container, hp, isPlayer) {
+        // 既存のハートを全て削除
+        container.innerHTML = '';
+        
+        // 5つのハートを作成
+        for (let i = 0; i < 5; i++) {
+            const heart = document.createElement('div');
+            heart.className = 'heart-animated';
+            
+            if (isPlayer) {
+                heart.classList.add('player');
+            }
+            
+            if (i >= hp) {
+                heart.classList.add('empty');
+            }
+            
+            // HP低下時の特別エフェクト
+            if (i < hp && hp <= 2) {
+                heart.classList.add('pulse');
+            }
+            
+            container.appendChild(heart);
+        }
+    }
+
+    /**
+     * ゲーム開始時のハートアニメーション
+     * @returns {Promise} アニメーション完了のPromise
+     */
+    async playHeartsStartAnimation() {
+        console.log('🎯 ハートアニメーション開始');
+        
+        // まず全てのハートを作成
+        this.updateAnimatedHearts();
+        
+        // 美咲のハートアニメーション
+        if (this.statusElements.misakiHeartsContainer) {
+            await this.animateHeartsAppear(this.statusElements.misakiHeartsContainer, 0);
+        }
+        
+        // 少し間を空けてプレイヤーのハートアニメーション
+        await this.sleep(300);
+        
+        if (this.statusElements.playerHeartsContainer) {
+            await this.animateHeartsAppear(this.statusElements.playerHeartsContainer, 0);
+        }
+        
+        console.log('✨ ハートアニメーション完了');
+    }
+
+    /**
+     * ハート出現アニメーション
+     * @param {HTMLElement} container - ハートコンテナ
+     * @param {number} delay - 開始遅延（ms）
+     * @returns {Promise} アニメーション完了のPromise
+     */
+    animateHeartsAppear(container, delay = 0) {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const hearts = container.querySelectorAll('.heart-animated');
+                let animationCount = 0;
+                
+                hearts.forEach((heart, index) => {
+                    setTimeout(() => {
+                        heart.classList.add('show');
+                        
+                        // 効果音（最初のハートのみ）
+                        if (index === 0) {
+                            this.game.audioManager.playSE('se_click.mp3', 0.3);
+                        }
+                        
+                        animationCount++;
+                        if (animationCount === hearts.length) {
+                            resolve();
+                        }
+                    }, index * 100); // 100msずつずらして表示
+                });
+                
+                // ハートが0個の場合は即座に解決
+                if (hearts.length === 0) {
+                    resolve();
+                }
+            }, delay);
+        });
+    }
+
+    /**
+     * HP減少時のハートアニメーション
+     * @param {number} newHP - 新しいHP
+     * @param {boolean} isPlayer - プレイヤーかどうか
+     * @returns {Promise} アニメーション完了のPromise
+     */
+    async animateHeartLoss(newHP, isPlayer) {
+        const container = isPlayer ? 
+            this.statusElements.playerHeartsContainer : 
+            this.statusElements.misakiHeartsContainer;
+            
+        if (!container) return;
+        
+        const hearts = container.querySelectorAll('.heart-animated:not(.empty)');
+        
+        if (hearts.length > newHP) {
+            // 失うハートにブレイクアニメーション適用
+            const heartToBreak = hearts[hearts.length - 1];
+            if (heartToBreak) {
+                heartToBreak.classList.add('broken');
+                
+                // 効果音
+                this.game.audioManager.playSE('se_lose.mp3', 0.5);
+                
+                // アニメーション完了後に更新
+                setTimeout(() => {
+                    this.updateAnimatedHearts();
+                }, 800);
             }
         }
+    }
+
+    /**
+     * スリープ関数
+     * @param {number} ms - 待機時間（ミリ秒）
+     * @returns {Promise}
+     */
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * 導入セリフを確実に設定（gi001のみ）
+     */
+    setIntroDialogue() {
+        const targetText = '美咲：「じゃ、じゃあ始めるよ？…」';
+        
+        console.log('🎭 導入セリフを強制設定中...');
+        
+        // 複数の方法で確実に設定
+        const dialogueElement = document.getElementById('dialogue-text');
+        
+        if (dialogueElement) {
+            // 方法1: textContentで設定
+            dialogueElement.textContent = targetText;
+            
+            // 方法2: innerHTMLで設定（念のため）
+            dialogueElement.innerHTML = targetText;
+            
+            console.log('✅ 導入セリフ設定完了:', targetText);
+        } else {
+            console.error('❌ dialogue-text要素が見つかりません');
+        }
+        
+        // 遅延再設定（他のコードが上書きする場合への対策）
+        setTimeout(() => {
+            const element = document.getElementById('dialogue-text');
+            if (element && element.textContent !== targetText) {
+                element.textContent = targetText;
+                element.innerHTML = targetText;
+                console.log('🔄 遅延再設定完了');
+            }
+        }, 500);
+        
+        // さらなる保険として1秒後にも再設定
+        setTimeout(() => {
+            const element = document.getElementById('dialogue-text');
+            if (element) {
+                element.textContent = targetText;
+                element.innerHTML = targetText;
+                console.log('🛡️ 最終保証設定完了');
+            }
+        }, 1000);
+    }
+
+    /**
+     * ゲーム開始ボタンからのゲーム開始処理
+     */
+    async startGameFromIntro() {
+        console.log('ゲーム開始ボタンが押されました');
+        
+        // 効果音
+        this.game.audioManager.playSE('se_click.mp3', 0.8);
+        
+        // イントロダイアログを非表示
+        if (this.gameIntro) {
+            this.gameIntro.classList.add('hidden');
+        }
+        
+        // 少し待ってからハートアニメーションとゲーム開始
+        setTimeout(async () => {
+            await this.playHeartsStartAnimation();
+            this.startNewRound();
+        }, 500);
     }
 
     /**
@@ -620,22 +853,27 @@ class GameScene {
      */
     updateHPByResult(result) {
         if (result === 'playerWin') {
+            const oldMisakiHP = this.misakiHP;
             this.misakiHP = Math.max(0, this.misakiHP - 1);
             this.playerWins++;
-            this.consecutiveWins++;
             
             // 🎨 プレイヤー勝利時に美咲の立ち絵を更新
             this.updateMisakiSprite(this.playerWins);
             
-            // 3連勝で必殺技解放
-            if (this.consecutiveWins >= 3) {
-                this.specialMoveAvailable = true;
+            // ハート減少アニメーション
+            if (oldMisakiHP > this.misakiHP) {
+                this.animateHeartLoss(this.misakiHP, false);
             }
             
         } else if (result === 'misakiWin') {
+            const oldPlayerHP = this.playerHP;
             this.playerHP = Math.max(0, this.playerHP - 1);
             this.misakiWins++;
-            this.consecutiveWins = 0; // 連勝リセット
+            
+            // ハート減少アニメーション
+            if (oldPlayerHP > this.playerHP) {
+                this.animateHeartLoss(this.playerHP, true);
+            }
         }
         // drawの場合はHP変化なし
     }
@@ -818,30 +1056,7 @@ class GameScene {
         }, 3000);
     }
 
-    /**
-     * 必殺技使用
-     */
-    useSpecialMove() {
-        if (!this.specialMoveAvailable || !this.canMakeChoice) {
-            return;
-        }
-        
-        console.log('必殺技「読心術」を使用');
-        
-        this.specialMoveAvailable = false;
-        this.consecutiveWins = 0;
-        
-        // 美咲の次の手を予告
-        const nextHand = this.decideMisakiHand();
-        const handName = this.getHandDisplayName(nextHand);
-        
-        this.showSpecialMoveEffect(`美咲の次の手は「${handName}」です！`);
-        
-        // 効果音
-        this.game.audioManager.playSE('se_special.mp3', 1.0);
-        
-        this.updateSpecialButton();
-    }
+    // 必殺技機能を削除
 
     /**
      * 必殺技エフェクト表示
@@ -955,11 +1170,7 @@ class GameScene {
             case 'Digit3':
                 this.makeChoice('paper');
                 break;
-            case 'KeyQ':
-                if (this.specialMoveAvailable) {
-                    this.useSpecialMove();
-                }
-                break;
+            // 必殺技機能を削除
             case 'KeyH':
                 this.showHint();
                 break;
@@ -1029,8 +1240,6 @@ class GameScene {
             misakiHP: this.misakiHP,
             playerWins: this.playerWins,
             misakiWins: this.misakiWins,
-            consecutiveWins: this.consecutiveWins,
-            specialMoveAvailable: this.specialMoveAvailable,
             currentMisakiSprite: this.currentMisakiSprite
         };
     }
@@ -1045,8 +1254,6 @@ class GameScene {
         this.misakiHP = state.misakiHP || 5;
         this.playerWins = state.playerWins || 0;
         this.misakiWins = state.misakiWins || 0;
-        this.consecutiveWins = state.consecutiveWins || 0;
-        this.specialMoveAvailable = state.specialMoveAvailable || false;
         
         // 立ち絵状態も復元
         this.currentMisakiSprite = state.currentMisakiSprite || '';
