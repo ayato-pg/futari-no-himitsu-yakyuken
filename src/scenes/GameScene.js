@@ -233,9 +233,35 @@ class GameScene {
         // ゲーム開始ボタン
         const startBtn = document.getElementById('start-game-btn');
         if (startBtn) {
+            console.log('✅ ゲーム開始ボタンのイベントリスナーを設定');
             startBtn.addEventListener('click', () => {
+                console.log('🔘 ゲーム開始ボタンがクリックされました');
                 this.startGameFromIntro();
             });
+            
+            // デバッグ: ボタンの状態を確認
+            console.log('🔍 ゲーム開始ボタン状態:', {
+                display: startBtn.style.display,
+                disabled: startBtn.disabled,
+                className: startBtn.className,
+                visible: startBtn.offsetParent !== null
+            });
+        } else {
+            console.warn('⚠️ start-game-btn要素が見つかりません (初期化時)');
+            
+            // 遅延検索を試行
+            setTimeout(() => {
+                const delayedBtn = document.getElementById('start-game-btn');
+                if (delayedBtn) {
+                    console.log('✅ 遅延検索でゲーム開始ボタンを発見、イベントリスナーを設定');
+                    delayedBtn.addEventListener('click', () => {
+                        console.log('🔘 ゲーム開始ボタンがクリックされました (遅延設定)');
+                        this.startGameFromIntro();
+                    });
+                } else {
+                    console.error('❌ ゲーム開始ボタンが遅延検索でも見つかりません');
+                }
+            }, 1000);
         }
 
         // キーボード操作
@@ -277,6 +303,13 @@ class GameScene {
         // 画面表示
         this.gameScreen.classList.add('active');
         this.isActive = true;
+        
+        // ゲーム画面移行時にハートをアニメーション表示
+        setTimeout(async () => {
+            console.log('🎮 ゲーム画面移行時のハートアニメーション開始');
+            await this.playHeartsStartAnimation();
+            console.log('💕 ゲーム画面移行時のハート表示完了');
+        }, 500); // 画面表示から少し遅らせて自然に
         
         // イントロダイアログを表示
         if (this.gameIntro) {
@@ -386,8 +419,16 @@ class GameScene {
         // HP表示（バー）
         this.updateHPBars();
         
-        // ハート表示を更新
-        this.updateAnimatedHearts();
+        // ハート表示を更新（すでにハートが表示されている場合は表示を維持）
+        const hasExistingHearts = this.statusElements.misakiHeartsContainer?.querySelector('.heart-animated.show') || 
+                                 this.statusElements.playerHeartsContainer?.querySelector('.heart-animated.show');
+        if (hasExistingHearts) {
+            // すでにハートが表示されている場合は表示を維持
+            this.updateAnimatedHearts(true); // keepVisible = true
+        } else {
+            // まだハートが表示されていない場合のみ通常更新
+            this.updateAnimatedHearts();
+        }
         
         // 勝利・敗北数表示
         if (this.statusElements.misakiDefeats) {
@@ -463,16 +504,17 @@ class GameScene {
 
     /**
      * アニメーション付きハート表示を更新
+     * @param {boolean} keepVisible - ハートを表示したままにするか
      */
-    updateAnimatedHearts() {
+    updateAnimatedHearts(keepVisible = false) {
         // 美咲のハート表示
         if (this.statusElements.misakiHeartsContainer) {
-            this.updateHeartsContainer(this.statusElements.misakiHeartsContainer, this.misakiHP, false);
+            this.updateHeartsContainer(this.statusElements.misakiHeartsContainer, this.misakiHP, false, keepVisible);
         }
         
         // プレイヤーのハート表示
         if (this.statusElements.playerHeartsContainer) {
-            this.updateHeartsContainer(this.statusElements.playerHeartsContainer, this.playerHP, true);
+            this.updateHeartsContainer(this.statusElements.playerHeartsContainer, this.playerHP, true, keepVisible);
         }
     }
 
@@ -481,30 +523,65 @@ class GameScene {
      * @param {HTMLElement} container - ハートコンテナ要素
      * @param {number} hp - 現在のHP
      * @param {boolean} isPlayer - プレイヤーかどうか
+     * @param {boolean} keepVisible - ハートを表示したままにするか
      */
-    updateHeartsContainer(container, hp, isPlayer) {
-        // 既存のハートを全て削除
-        container.innerHTML = '';
+    updateHeartsContainer(container, hp, isPlayer, keepVisible = false) {
+        // 既存のハートをチェック
+        const existingHearts = container.querySelectorAll('.heart-animated');
+        const hasVisibleHearts = container.querySelector('.heart-animated.show');
         
-        // 5つのハートを作成
-        for (let i = 0; i < 5; i++) {
-            const heart = document.createElement('div');
-            heart.className = 'heart-animated';
+        // ハートが存在していて、かつkeepVisibleがtrueまたはすでに表示されている場合は更新のみ
+        if (existingHearts.length === 5 && (keepVisible || hasVisibleHearts)) {
+            // 既存のハートを更新（再作成せずにクラスのみ更新）
+            existingHearts.forEach((heart, i) => {
+                // emptyクラスの制御
+                if (i >= hp) {
+                    heart.classList.add('empty');
+                } else {
+                    heart.classList.remove('empty');
+                }
+                
+                // pulseクラスの制御
+                if (i < hp && hp <= 2) {
+                    heart.classList.add('pulse');
+                } else {
+                    heart.classList.remove('pulse');
+                }
+                
+                // keepVisibleの場合showクラスを確実に追加
+                if (keepVisible && !heart.classList.contains('show')) {
+                    heart.classList.add('show');
+                }
+            });
+        } else {
+            // ハートが存在しない場合は新規作成
+            container.innerHTML = '';
             
-            if (isPlayer) {
-                heart.classList.add('player');
+            // 5つのハートを作成
+            for (let i = 0; i < 5; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart-animated';
+                
+                // keepVisibleがtrueの場合は最初からshowクラスを追加
+                if (keepVisible) {
+                    heart.classList.add('show');
+                }
+                
+                if (isPlayer) {
+                    heart.classList.add('player');
+                }
+                
+                if (i >= hp) {
+                    heart.classList.add('empty');
+                }
+                
+                // HP低下時の特別エフェクト
+                if (i < hp && hp <= 2) {
+                    heart.classList.add('pulse');
+                }
+                
+                container.appendChild(heart);
             }
-            
-            if (i >= hp) {
-                heart.classList.add('empty');
-            }
-            
-            // HP低下時の特別エフェクト
-            if (i < hp && hp <= 2) {
-                heart.classList.add('pulse');
-            }
-            
-            container.appendChild(heart);
         }
     }
 
@@ -515,7 +592,7 @@ class GameScene {
     async playHeartsStartAnimation() {
         console.log('🎯 ハートアニメーション開始');
         
-        // まず全てのハートを作成
+        // まず全てのハートを作成（アニメーション用）
         this.updateAnimatedHearts();
         
         // 美咲のハートアニメーション
@@ -531,6 +608,8 @@ class GameScene {
         }
         
         console.log('✨ ハートアニメーション完了');
+        
+        // アニメーション後もハートは表示されたままになる
     }
 
     /**
@@ -618,8 +697,8 @@ class GameScene {
         
         console.log('🎭 導入セリフを強制設定中...');
         
-        // 複数の方法で確実に設定
-        const dialogueElement = document.getElementById('dialogue-text');
+        // 新しいIDを使用
+        const dialogueElement = document.getElementById('game-dialogue-text');
         
         if (dialogueElement) {
             // 方法1: textContentで設定
@@ -630,12 +709,12 @@ class GameScene {
             
             console.log('✅ 導入セリフ設定完了:', targetText);
         } else {
-            console.error('❌ dialogue-text要素が見つかりません');
+            console.error('❌ game-dialogue-text要素が見つかりません');
         }
         
         // 遅延再設定（他のコードが上書きする場合への対策）
         setTimeout(() => {
-            const element = document.getElementById('dialogue-text');
+            const element = document.getElementById('game-dialogue-text');
             if (element && element.textContent !== targetText) {
                 element.textContent = targetText;
                 element.innerHTML = targetText;
@@ -645,7 +724,7 @@ class GameScene {
         
         // さらなる保険として1秒後にも再設定
         setTimeout(() => {
-            const element = document.getElementById('dialogue-text');
+            const element = document.getElementById('game-dialogue-text');
             if (element) {
                 element.textContent = targetText;
                 element.innerHTML = targetText;
@@ -655,48 +734,162 @@ class GameScene {
     }
 
     /**
+     * ダイアログテキストを更新
+     * @param {string} text - 表示するテキスト
+     */
+    updateDialogueText(text) {
+        // 新しいIDを使用
+        const dialogueElement = document.getElementById('game-dialogue-text');
+        if (dialogueElement) {
+            const fullText = `美咲：「${text}」`;
+            dialogueElement.textContent = fullText;
+            dialogueElement.innerHTML = fullText; // 確実に設定
+            console.log(`💬 ダイアログ更新成功: "${text}"`);
+            console.log(`📝 実際のテキスト内容: "${dialogueElement.textContent}"`);
+            
+            // 視覚的フィードバック（テキスト変更時の軽いアニメーション）
+            dialogueElement.style.opacity = '0.7';
+            setTimeout(() => {
+                dialogueElement.style.opacity = '1';
+            }, 100);
+        } else {
+            console.error('❌ game-dialogue-text要素が見つかりません');
+            
+            // フォールバック: 古いIDも試す
+            const oldDialogueElement = document.getElementById('dialogue-text');
+            if (oldDialogueElement) {
+                console.warn('⚠️ 古いIDで要素を発見、互換性のため更新');
+                const fullText = `美咲：「${text}」`;
+                oldDialogueElement.textContent = fullText;
+                oldDialogueElement.innerHTML = fullText;
+            }
+        }
+    }
+
+    /**
      * ゲーム開始ボタンからのゲーム開始処理
      */
     async startGameFromIntro() {
-        console.log('ゲーム開始ボタンが押されました');
+        console.log('🎮 ゲーム開始ボタンが押されました');
+        console.log('🔍 現在の状態チェック:', {
+            isActive: this.isActive,
+            canMakeChoice: this.canMakeChoice,
+            isPlayingRound: this.isPlayingRound,
+            currentRound: this.currentRound
+        });
         
-        // 効果音
-        this.game.audioManager.playSE('se_click.mp3', 0.8);
-        
-        // イントロダイアログを非表示
-        if (this.gameIntro) {
-            this.gameIntro.classList.add('hidden');
+        // 重複実行防止
+        if (this.isPlayingRound) {
+            console.log('❌ 既にゲームが進行中です');
+            return;
         }
         
-        // 少し待ってからハートアニメーションとゲーム開始
-        setTimeout(async () => {
-            await this.playHeartsStartAnimation();
-            this.startNewRound();
-        }, 500);
+        try {
+            // 効果音
+            this.game.audioManager.playSE('se_click.mp3', 0.8);
+            
+            // ゲーム開始ボタンを非表示にする
+            const startBtn = document.getElementById('start-game-btn');
+            if (startBtn) {
+                startBtn.style.display = 'none';
+                console.log('✅ ゲーム開始ボタンを非表示にしました');
+            } else {
+                console.warn('⚠️ start-game-btn要素が見つかりません');
+            }
+            
+            // 「最初はグー！じゃんけん...」に変更
+            this.updateDialogueText('最初はグー！じゃんけん...');
+            console.log('💬 ダイアログテキストを「最初はグー！じゃんけん...」に変更');
+            
+            // 状態を初期化
+            this.isPlayingRound = true;
+            this.canMakeChoice = false;
+            
+            // 少し待ってからゲーム開始（ハートは既に表示済み）
+            setTimeout(async () => {
+                try {
+                    console.log('🃏 ゲーム開始処理へ移行（ハートは既に表示済み）');
+                    this.startNewRound();
+                } catch (error) {
+                    console.error('❌ ゲーム開始処理エラー:', error);
+                    this.startNewRound();
+                }
+            }, 1000); // 短縮
+            
+        } catch (error) {
+            console.error('❌ ゲーム開始処理エラー:', error);
+            // エラー時のフォールバック
+            this.isPlayingRound = false;
+            this.canMakeChoice = false;
+            alert('ゲーム開始中にエラーが発生しました。ページを再読み込みしてください。');
+        }
     }
 
     /**
      * 新しいラウンドを開始
      */
     async startNewRound() {
-        console.log(`ラウンド ${this.currentRound} 開始`);
+        console.log(`🎲 ラウンド ${this.currentRound} 開始`);
+        console.log('🔍 ラウンド開始時の状態:', {
+            isActive: this.isActive,
+            canMakeChoice: this.canMakeChoice,
+            isPlayingRound: this.isPlayingRound,
+            playerHP: this.playerHP,
+            misakiHP: this.misakiHP
+        });
         
-        this.isPlayingRound = true;
-        this.canMakeChoice = false;
-        this.playerHand = null;
-        this.misakiHand = null;
-        
-        // ラウンド開始演出
-        await this.playRoundStartAnimation();
-        
-        // 美咲の開始セリフ
-        this.showMisakiMessage(this.getRoundStartMessage());
-        
-        // プレイヤーの選択を待機
-        setTimeout(() => {
+        try {
+            this.isPlayingRound = true;
+            this.canMakeChoice = false;
+            this.playerHand = null;
+            this.misakiHand = null;
+            
+            console.log('🎭 ラウンド開始演出を実行中...');
+            
+            // ラウンド開始演出
+            await this.playRoundStartAnimation();
+            
+            console.log('✅ ラウンド開始演出完了');
+            
+            // 新しいダイアログシステムを使用するため、古いメッセージ表示は削除
+            // this.showMisakiMessage(this.getRoundStartMessage());
+            
+            // UIを更新（ハートは表示を維持）
+            this.updateUI();
+            
+            // プレイヤーの選択を待機（ダイアログテキストは既に設定済み）
+            const enablePlayerChoiceTimeout = setTimeout(() => {
+                this.canMakeChoice = true;
+                this.isPlayingRound = false; // 選択可能にする
+                console.log('✅ プレイヤーの選択が可能になりました');
+                console.log(`🎯 最終状態: canMakeChoice=${this.canMakeChoice}, isPlayingRound=${this.isPlayingRound}`);
+                
+                // プレイヤーに視覚的なフィードバックを提供
+                const buttons = document.querySelectorAll('.hand-btn');
+                buttons.forEach(btn => {
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                });
+                console.log('🔘 じゃんけんボタンを有効化しました');
+                
+            }, 500); // 短縮して反応を良くする
+            
+            // 安全装置: 10秒後に強制的にプレイヤー選択を有効にする
+            setTimeout(() => {
+                if (!this.canMakeChoice) {
+                    console.warn('⚠️ 10秒経過したため強制的にプレイヤー選択を有効にします');
+                    this.canMakeChoice = true;
+                    this.isPlayingRound = false;
+                }
+            }, 10000);
+            
+        } catch (error) {
+            console.error('❌ ラウンド開始エラー:', error);
+            // エラー時のフォールバック
+            this.isPlayingRound = false;
             this.canMakeChoice = true;
-            this.showInstructionMessage('じゃんけんの手を選んでください');
-        }, 2000);
+            alert('ラウンド開始中にエラーが発生しました。続行を試します。');
+        }
     }
 
     /**
@@ -741,23 +934,35 @@ class GameScene {
      * @param {string} hand - 選択した手 (rock, scissors, paper)
      */
     async makeChoice(hand) {
+        console.log(`🎯 プレイヤーが${hand}を選択しようとしています`);
+        console.log(`🔍 現在の状態: canMakeChoice=${this.canMakeChoice}, isPlayingRound=${this.isPlayingRound}`);
+        
         if (!this.canMakeChoice || this.isPlayingRound) {
+            console.log('❌ 選択が拒否されました - 選択不可状態');
             return;
         }
         
-        console.log(`プレイヤーの選択: ${hand}`);
+        console.log(`✅ プレイヤーの選択を受理: ${hand}`);
         
         this.playerHand = hand;
         this.canMakeChoice = false;
+        this.isPlayingRound = true; // 処理中にする
         
         // 効果音
         this.game.audioManager.playSE('se_click.mp3', 0.8);
         
+        // 美咲が「ぽん！」と言う
+        this.updateDialogueText('ぽん！');
+        
         // 美咲の手を決定
         this.misakiHand = this.decideMisakiHand();
+        console.log(`🤖 美咲の手: ${this.misakiHand}`);
         
-        // じゃんけん結果を処理
-        await this.processRoundResult();
+        // 少し待ってからじゃんけん結果を処理
+        setTimeout(async () => {
+            console.log('🎲 結果処理を開始');
+            await this.processRoundResult();
+        }, 800);
     }
 
     /**
@@ -817,10 +1022,10 @@ class GameScene {
             return;
         }
         
-        // 次のラウンドへ
+        // 次のラウンドへ（少し短めに）
         setTimeout(() => {
             this.prepareNextRound();
-        }, 3000);
+        }, 2000);
     }
 
     /**
@@ -995,6 +1200,9 @@ class GameScene {
     prepareNextRound() {
         this.currentRound++;
         this.isPlayingRound = false;
+        
+        // 次のラウンド開始前に「最初はグー！じゃんけん...」を表示
+        this.updateDialogueText('最初はグー！じゃんけん...');
         
         if (this.currentRound <= this.maxRounds) {
             this.startNewRound();

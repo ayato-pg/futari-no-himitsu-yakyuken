@@ -231,10 +231,13 @@ class AudioManager {
             seAudio.currentTime = 0; // 再生位置をリセット
 
             await seAudio.play();
-            console.log(`SE再生: ${filename}`);
+            // SE再生成功時のみログを出力
+            // console.log(`✅ SE再生: ${filename}`);
             
         } catch (error) {
-            console.error(`SE再生エラー (${filename}):`, error);
+            // 効果音ファイルが見つからない場合は静かに無視
+            // デバッグが必要な場合のみコメントアウト
+            // console.warn(`⚠️ SE: ${filename} - ファイルが見つからないため無視`);
         }
     }
 

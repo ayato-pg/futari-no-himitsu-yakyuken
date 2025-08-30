@@ -888,8 +888,8 @@ body {
 /* ゲーム開始前の会話とボタン */
 .game-intro {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 40%;
+    left: 70%;
     transform: translate(-50%, -50%);
     z-index: 20;
     text-align: center;
@@ -911,11 +911,7 @@ body {
     font-size: 1.2rem;
     font-weight: 600;
     line-height: 1.6;
-    background: linear-gradient(135deg, #ff6b7d 0%, #ffb6c1 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 2px 4px rgba(255, 107, 125, 0.3);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .start-game-btn {
