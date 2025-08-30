@@ -1089,7 +1089,10 @@ class GameScene {
      * @returns {Promise} アニメーション完了のPromise
      */
     async playResultAnimation(result) {
-        // 結果表示
+        // 新しいじゃんけんアニメーションを表示
+        await this.playJankenHandAnimation(result);
+        
+        // 従来の結果表示も併用（バックアップ）
         this.showBattleResult(result);
         
         // 効果音
@@ -1113,7 +1116,160 @@ class GameScene {
         }
         
         return new Promise((resolve) => {
-            setTimeout(resolve, 2000);
+            setTimeout(resolve, 3200); // 適度な速度に調整
+        });
+    }
+
+    /**
+     * じゃんけんハンドアニメーションを再生
+     * @param {string} result - 勝敗結果 (playerWin, misakiWin, draw)
+     * @returns {Promise} アニメーション完了のPromise
+     */
+    async playJankenHandAnimation(result) {
+        console.log(`🎭 じゃんけんアニメーション開始: ${result}`);
+        
+        return new Promise((resolve) => {
+            const animationContainer = document.getElementById('janken-animation');
+            const playerHandImg = document.getElementById('player-hand-img');
+            const misakiHandImg = document.getElementById('misaki-hand-img');
+            const playerHandImage = document.getElementById('player-hand-image');
+            const misakiHandImage = document.getElementById('misaki-hand-image');
+            const resultTextAnimated = document.getElementById('result-text-animated');
+            const resultSubtitle = document.getElementById('result-subtitle');
+            const resultDisplay = document.getElementById('animated-result');
+            const battleSparks = document.querySelector('.battle-sparks');
+            const impactBurst = document.getElementById('impact-burst');
+            const vsText = document.getElementById('vs-text');
+            
+            if (!animationContainer) {
+                console.error('❌ アニメーションコンテナが見つかりません');
+                resolve();
+                return;
+            }
+            
+            // アニメーション表示
+            animationContainer.classList.add('show');
+            
+            // じゃんけんの手画像を設定
+            const handImages = {
+                rock: 'assets/images/ui/rock.png',
+                scissors: 'assets/images/ui/scissors.png', 
+                paper: 'assets/images/ui/paper.png'
+            };
+            
+            // 画像設定
+            playerHandImg.src = handImages[this.playerHand];
+            playerHandImg.alt = this.getHandDisplayName(this.playerHand);
+            misakiHandImg.src = handImages[this.misakiHand];
+            misakiHandImg.alt = this.getHandDisplayName(this.misakiHand);
+            
+            // Step 1: 手の出現アニメーション (0.6秒)
+            setTimeout(() => {
+                playerHandImage.classList.add('appear-left');
+                misakiHandImage.classList.add('appear-right');
+                
+                // スパークエフェクトは削除（軽量化）
+            }, 300);
+            
+            // Step 2: 勝負判定 (1.2秒後)
+            setTimeout(() => {
+                // 手のエフェクトをリセット
+                playerHandImage.classList.remove('appear-left');
+                misakiHandImage.classList.remove('appear-right');
+                
+                let resultText = '';
+                let resultClass = '';
+                let subtitle = '';
+                
+                // 結果に応じて初期エフェクト適用
+                switch (result) {
+                    case 'playerWin':
+                        playerHandImage.classList.add('winner', 'impact-effect');
+                        misakiHandImage.classList.add('loser');
+                        resultText = 'あなたの勝ち！';
+                        resultClass = 'player-win';
+                        subtitle = '美咲のライフが1減った！';
+                        break;
+                        
+                    case 'misakiWin':
+                        misakiHandImage.classList.add('winner', 'impact-effect');
+                        playerHandImage.classList.add('loser');
+                        resultText = '美咲の勝ち！';
+                        resultClass = 'misaki-win';
+                        subtitle = 'あなたのライフが1減った！';
+                        break;
+                        
+                    case 'draw':
+                        playerHandImage.classList.add('draw');
+                        misakiHandImage.classList.add('draw');
+                        resultText = 'あいこ';
+                        resultClass = 'draw';
+                        subtitle = 'もう一度！';
+                        break;
+                }
+                
+                // 結果テキスト設定
+                resultTextAnimated.textContent = resultText;
+                resultTextAnimated.className = `result-text-animated ${resultClass}`;
+                resultSubtitle.textContent = subtitle;
+                
+                // 結果表示アニメーション
+                resultDisplay.classList.add('show');
+                
+            }, 1200);
+            
+            // Step 3: 押し出し開始 (1.6秒後) - あいこ以外のみ
+            if (result !== 'draw') {
+                setTimeout(() => {
+                    console.log('🥊 押し出しアニメーション開始');
+                    switch (result) {
+                        case 'playerWin':
+                            playerHandImage.classList.add('push-right');
+                            break;
+                        case 'misakiWin':
+                            misakiHandImage.classList.add('push-left');
+                            break;
+                    }
+                }, 1600);
+                
+                // Step 4: 衝突エフェクト (1.8秒後) - 軽量化
+                setTimeout(() => {
+                    console.log('💥 衝突エフェクト発動');
+                    // 衝突バーストのみ（他のエフェクトは削除）
+                    if (impactBurst) {
+                        impactBurst.classList.add('show');
+                    }
+                }, 1800);
+                
+                // Step 5: はねのけ開始 (1.9秒後)
+                setTimeout(() => {
+                    console.log('🚀 はねのけアニメーション開始');
+                    switch (result) {
+                        case 'playerWin':
+                            misakiHandImage.classList.add('knockback-right');
+                            break;
+                        case 'misakiWin':
+                            playerHandImage.classList.add('knockback-left');
+                            break;
+                    }
+                }, 1900);
+            }
+            
+            // Step 6: アニメーション終了 (3秒後)
+            setTimeout(() => {
+                // クリーンアップ - 軽量化版
+                animationContainer.classList.remove('show');
+                playerHandImage.className = 'hand-image'; // 全クラスリセット
+                misakiHandImage.className = 'hand-image'; // 全クラスリセット
+                resultDisplay.classList.remove('show');
+                
+                if (impactBurst) {
+                    impactBurst.classList.remove('show');
+                }
+                
+                console.log('✨ じゃんけんアニメーション完了（軽量化版）');
+                resolve();
+            }, 3000);
         });
     }
 
@@ -1156,8 +1312,8 @@ class GameScene {
             this.statusElements.playerHandDisplay.textContent = this.getHandDisplayName(this.playerHand);
         }
         
-        // 結果パネルを表示
-        this.battleResult.classList.add('show');
+        // 新しいアニメーションシステムを使用するため、旧パネルは表示しない
+        // this.battleResult.classList.add('show');
     }
 
     /**
@@ -1200,6 +1356,11 @@ class GameScene {
     prepareNextRound() {
         this.currentRound++;
         this.isPlayingRound = false;
+        
+        // 結果パネルを非表示
+        if (this.battleResult) {
+            this.battleResult.classList.remove('show');
+        }
         
         // 次のラウンド開始前に「最初はグー！じゃんけん...」を表示
         this.updateDialogueText('最初はグー！じゃんけん...');
