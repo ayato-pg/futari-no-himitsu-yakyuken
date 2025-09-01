@@ -1112,6 +1112,44 @@ body {
     transform: translateY(-2px);
 }
 
+/* 進めるボタンのスタイル */
+.advance-button-container {
+    display: none;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.hand-btn.advance-btn {
+    background: linear-gradient(135deg, #ff6b7d 0%, #e53e52 100%);
+    box-shadow: 0 4px 15px rgba(255, 107, 125, 0.4);
+    animation: pulse-advance 2s infinite;
+    width: 180px;  /* 進めるボタンは少し大きめ */
+}
+
+.hand-btn.advance-btn::before {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+}
+
+.hand-btn.advance-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(255, 107, 125, 0.6);
+}
+
+.hand-btn.advance-btn:hover::after {
+    content: '✨';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 1.2rem;
+    animation: sparkle 1.5s infinite;
+}
+
+@keyframes pulse-advance {
+    0% { box-shadow: 0 4px 15px rgba(255, 107, 125, 0.4); }
+    50% { box-shadow: 0 6px 20px rgba(255, 107, 125, 0.6); }
+    100% { box-shadow: 0 4px 15px rgba(255, 107, 125, 0.4); }
+}
+
 .instruction {
     color: white;
     font-size: 1.1rem;

@@ -107,7 +107,7 @@
             <div class="game-intro" id="game-intro">
                 <div class="intro-dialogue" id="intro-dialogue">
                     <div class="dialogue-text" id="game-dialogue-text">
-                        美咲：「じゃ、じゃあ始めるよ？…」
+                        <!-- タイプライター効果で表示されます -->
                     </div>
                 </div>
                 <button class="start-game-btn" id="start-game-btn">ゲーム開始</button>
@@ -187,6 +187,13 @@
                     <button class="hand-btn" id="btn-paper">
                         <img src="assets/images/ui/paper.png" alt="パー">
                         <span>パー</span>
+                    </button>
+                </div>
+                <!-- 進めるボタン（初期は非表示） -->
+                <div class="advance-button-container" style="display: none;">
+                    <button class="hand-btn advance-btn" id="btn-advance">
+                        <span style="font-size: 2em;">▶️</span>
+                        <span>進める</span>
                     </button>
                 </div>
                 <div class="instruction">選択してください</div>

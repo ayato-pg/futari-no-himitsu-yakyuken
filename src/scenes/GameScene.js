@@ -21,7 +21,15 @@ class GameScene {
         this.playerHand = null;
         this.misakiHand = null;
         this.isPlayingRound = false;
+        this.lastRoundResult = null; // 前回のラウンド結果を保存
         this.canMakeChoice = false;
+        
+        // あいこ管理
+        this.consecutiveDraws = 0;
+        
+        // トーク進行管理
+        this.isWaitingForJanken = false;
+        this.pendingAction = null;
         
         // 必殺技機能を削除
         
@@ -184,20 +192,20 @@ class GameScene {
     setupEventListeners() {
         // じゃんけんボタン
         if (this.handButtons.rock) {
-            this.handButtons.rock.addEventListener('click', () => {
-                this.makeChoice('rock');
+            this.handButtons.rock.addEventListener('click', (event) => {
+                this.makeChoice('rock', event);
             });
         }
         
         if (this.handButtons.scissors) {
-            this.handButtons.scissors.addEventListener('click', () => {
-                this.makeChoice('scissors');
+            this.handButtons.scissors.addEventListener('click', (event) => {
+                this.makeChoice('scissors', event);
             });
         }
         
         if (this.handButtons.paper) {
-            this.handButtons.paper.addEventListener('click', () => {
-                this.makeChoice('paper');
+            this.handButtons.paper.addEventListener('click', (event) => {
+                this.makeChoice('paper', event);
             });
         }
         
@@ -220,6 +228,11 @@ class GameScene {
                 this.onMisakiClick();
             });
         }
+
+        // じゃんけんボタンでトーク進行も可能にする（既存のmakeChoiceを拡張）
+
+        // 🚨 進めるボタンの事前設定
+        this.setupAdvanceButton();
 
         // タイトルへ戻るボタン
         const returnBtn = document.getElementById('game-return-btn');
@@ -273,6 +286,62 @@ class GameScene {
     }
 
     /**
+     * 進めるボタンの設定を行う
+     */
+    setupAdvanceButton() {
+        console.log('🚨 setupAdvanceButton() 開始');
+        
+        const advanceButton = document.getElementById('btn-advance');
+        if (!advanceButton) {
+            console.error('❌ 進めるボタンが見つかりません');
+            return;
+        }
+        
+        // 既存のイベントリスナーを削除
+        if (advanceButton.hasListener) {
+            advanceButton.removeEventListener('click', advanceButton.clickHandler);
+            advanceButton.hasListener = false;
+            console.log('✅ 既存のイベントリスナーを削除');
+        }
+        
+        // 新しいイベントリスナーを追加
+        const clickHandler = () => {
+            console.log('▶️ 🚨 進めるボタンがクリックされました (setupAdvanceButton版)');
+            console.log('🔍 現在の状態:', {
+                isWaitingForJanken: this.isWaitingForJanken,
+                hasPendingAction: !!this.pendingAction,
+                currentRound: this.currentRound,
+                playerHP: this.playerHP,
+                misakiHP: this.misakiHP
+            });
+            
+            // SEを再生
+            this.game.audioManager.playSE('se_click.mp3', 0.5);
+            
+            // 🚨 簡潔な処理：onJankenAdvance()を直接実行
+            console.log('🚨 onJankenAdvance()を強制実行');
+            const result = this.onJankenAdvance();
+            console.log(`✅ onJankenAdvance()結果: ${result}`);
+            
+            // onJankenAdvance()が失敗した場合の代替処理
+            if (!result) {
+                console.log('⚠️ onJankenAdvance()が失敗したため、代替処理を実行');
+                // 進めるボタンを非表示にして、じゃんけんボタンに戻す
+                this.switchBackToJankenButtons();
+                this.clearJankenWait();
+                this.canMakeChoice = true;
+                this.isPlayingRound = false;
+            }
+        };
+        
+        advanceButton.addEventListener('click', clickHandler);
+        advanceButton.clickHandler = clickHandler; // 後で削除するために保存
+        advanceButton.hasListener = true;
+        
+        console.log('✅ 進めるボタンのイベントリスナーを設定しました (setupAdvanceButton版)');
+    }
+
+    /**
      * ゲームシーンを表示
      * @param {Object} initialData - 初期ゲームデータ（ロード時など）
      */
@@ -280,6 +349,32 @@ class GameScene {
         if (this.isActive) return;
         
         console.log('ゲーム画面を表示');
+        
+        // 🚨 強制的にCSVデータを再読み込み
+        if (this.game.csvLoader) {
+            console.log('🔄 CSVデータを強制再読み込み中...');
+            try {
+                await this.game.csvLoader.loadTable('dialogues');
+                console.log('✅ CSVデータ再読み込み完了');
+                
+                // 読み込み後の確認
+                const allData = this.game.csvLoader.getTableData('dialogues');
+                console.log(`📋 再読み込み後のダイアログ総数: ${allData.length}`);
+                
+                // intermediate_talk の確認
+                const intermediateCount = allData.filter(d => d.scene_type === 'intermediate_talk').length;
+                console.log(`🎭 intermediate_talk データ数: ${intermediateCount}`);
+                
+                // round_start の確認  
+                const roundStartCount = allData.filter(d => d.scene_type === 'round_start').length;
+                console.log(`🎯 round_start データ数: ${roundStartCount}`);
+                
+            } catch (error) {
+                console.error('❌ CSV再読み込みエラー:', error);
+            }
+        } else {
+            console.error('❌ CSVローダーが存在しません');
+        }
         
         // 初期データがあれば復元
         if (initialData) {
@@ -314,8 +409,8 @@ class GameScene {
         // イントロダイアログを表示
         if (this.gameIntro) {
             this.gameIntro.classList.remove('hidden');
-            // 導入セリフを確実に設定
-            this.setIntroDialogue();
+            // 導入セリフをタイプライター効果で表示
+            await this.setIntroDialogue();
         }
     }
 
@@ -343,6 +438,10 @@ class GameScene {
         this.misakiWins = 0;
         this.playerHand = null;
         this.misakiHand = null;
+        this.consecutiveDraws = 0;
+        
+        // じゃんけん待機状態もリセット
+        this.clearJankenWait();
         
         // 立ち絵を初期状態にリセット
         this.lastDisplayedSprite = '';
@@ -361,6 +460,7 @@ class GameScene {
         this.misakiHP = data.misakiHP || 5;
         this.playerWins = data.playerWins || 0;
         this.misakiWins = data.misakiWins || 0;
+        this.consecutiveDraws = data.consecutiveDraws || 0;
         
         // 復元されたプレイヤー勝利数に応じて立ち絵を更新
         this.lastDisplayedSprite = '';
@@ -690,51 +790,71 @@ class GameScene {
     }
 
     /**
-     * 導入セリフを確実に設定（gi001のみ）
+     * 導入セリフをタイプライター効果で表示（CSVから取得）
      */
-    setIntroDialogue() {
-        const targetText = '美咲：「じゃ、じゃあ始めるよ？…」';
+    async setIntroDialogue() {
+        const targetText = this.getDialogueText('gi001') || 'じゃ、じゃあ始めるよ？…';
         
-        console.log('🎭 導入セリフを強制設定中...');
+        console.log('🎭 導入セリフをタイプライター効果で表示中...');
         
-        // 新しいIDを使用
+        // HTMLの初期テキストをクリア
         const dialogueElement = document.getElementById('game-dialogue-text');
-        
         if (dialogueElement) {
-            // 方法1: textContentで設定
-            dialogueElement.textContent = targetText;
-            
-            // 方法2: innerHTMLで設定（念のため）
-            dialogueElement.innerHTML = targetText;
-            
-            console.log('✅ 導入セリフ設定完了:', targetText);
-        } else {
-            console.error('❌ game-dialogue-text要素が見つかりません');
+            dialogueElement.textContent = '';
         }
         
-        // 遅延再設定（他のコードが上書きする場合への対策）
-        setTimeout(() => {
-            const element = document.getElementById('game-dialogue-text');
-            if (element && element.textContent !== targetText) {
-                element.textContent = targetText;
-                element.innerHTML = targetText;
-                console.log('🔄 遅延再設定完了');
-            }
-        }, 500);
+        // タイプライター効果で表示
+        await this.animateDialogueText(targetText, 60); // 少しゆっくりめに
         
-        // さらなる保険として1秒後にも再設定
-        setTimeout(() => {
-            const element = document.getElementById('game-dialogue-text');
-            if (element) {
-                element.textContent = targetText;
-                element.innerHTML = targetText;
-                console.log('🛡️ 最終保証設定完了');
-            }
-        }, 1000);
+        console.log('✅ 導入セリフのタイプライター効果完了:', targetText);
     }
 
     /**
      * ダイアログテキストを更新
+     * @param {string} text - 表示するテキスト
+     */
+    /**
+     * タイプライター効果でダイアログテキストを表示
+     * @param {string} text - 表示するテキスト
+     * @param {number} speed - 文字表示速度（ミリ秒）
+     * @returns {Promise} - アニメーション完了のPromise
+     */
+    async animateDialogueText(text, speed = 50) {
+        const dialogueElement = document.getElementById('game-dialogue-text');
+        if (!dialogueElement) {
+            console.error('❌ game-dialogue-text要素が見つかりません');
+            return;
+        }
+
+        return new Promise((resolve) => {
+            const fullText = `美咲：「${text}」`;
+            dialogueElement.textContent = '';
+            
+            let currentIndex = 0;
+            const textArray = Array.from(fullText);
+            
+            console.log(`💬 タイプライター効果開始: "${text}"`);
+            
+            const animateInterval = setInterval(() => {
+                if (currentIndex < textArray.length) {
+                    dialogueElement.textContent += textArray[currentIndex];
+                    currentIndex++;
+                    
+                    // 文字表示音（3文字ごと、音量控えめ）
+                    if (currentIndex % 3 === 0) {
+                        this.game.audioManager.playSE('se_text_type.wav', 0.3);
+                    }
+                } else {
+                    clearInterval(animateInterval);
+                    console.log(`✅ タイプライター効果完了: "${text}"`);
+                    resolve();
+                }
+            }, speed);
+        });
+    }
+
+    /**
+     * 従来のupdateDialogueTextを維持（互換性のため）
      * @param {string} text - 表示するテキスト
      */
     updateDialogueText(text) {
@@ -797,24 +917,23 @@ class GameScene {
                 console.warn('⚠️ start-game-btn要素が見つかりません');
             }
             
-            // 「最初はグー！じゃんけん...」に変更
-            this.updateDialogueText('最初はグー！じゃんけん...');
-            console.log('💬 ダイアログテキストを「最初はグー！じゃんけん...」に変更');
+            // 「最初はグー！じゃんけん...」をタイプライター効果で表示
+            const gameStartText = this.getDialogueText('gs001') || '最初はグー！じゃんけん...';
+            await this.animateDialogueText(gameStartText);
+            console.log('💬 タイプライター効果で「最初はグー！じゃんけん...」を表示完了');
             
-            // 状態を初期化
-            this.isPlayingRound = true;
-            this.canMakeChoice = false;
-            
-            // 少し待ってからゲーム開始（ハートは既に表示済み）
-            setTimeout(async () => {
+            // じゃんけんボタン待機でゲーム開始（トーク進行）
+            this.waitForJanken(async () => {
                 try {
                     console.log('🃏 ゲーム開始処理へ移行（ハートは既に表示済み）');
-                    this.startNewRound();
+                    this.isPlayingRound = true;
+                    this.canMakeChoice = false;
+                    await this.startNewRound();
                 } catch (error) {
                     console.error('❌ ゲーム開始処理エラー:', error);
                     this.startNewRound();
                 }
-            }, 1000); // 短縮
+            });
             
         } catch (error) {
             console.error('❌ ゲーム開始処理エラー:', error);
@@ -851,37 +970,33 @@ class GameScene {
             
             console.log('✅ ラウンド開始演出完了');
             
-            // 新しいダイアログシステムを使用するため、古いメッセージ表示は削除
-            // this.showMisakiMessage(this.getRoundStartMessage());
+            // ラウンド1は特別処理、ラウンド2以降は通常のラウンド開始メッセージ
+            if (this.currentRound === 1) {
+                // ラウンド1は何も表示しない（既にイントロで表示済み）
+                console.log('🎯 ラウンド1：ラウンド開始メッセージをスキップ');
+            } else {
+                // ラウンド2以降のみラウンド開始メッセージを表示
+                const roundMessage = this.getRoundStartMessage();
+                await this.animateDialogueText(roundMessage, 50);
+            }
             
             // UIを更新（ハートは表示を維持）
             this.updateUI();
             
-            // プレイヤーの選択を待機（ダイアログテキストは既に設定済み）
-            const enablePlayerChoiceTimeout = setTimeout(() => {
-                this.canMakeChoice = true;
-                this.isPlayingRound = false; // 選択可能にする
-                console.log('✅ プレイヤーの選択が可能になりました');
-                console.log(`🎯 最終状態: canMakeChoice=${this.canMakeChoice}, isPlayingRound=${this.isPlayingRound}`);
-                
-                // プレイヤーに視覚的なフィードバックを提供
-                const buttons = document.querySelectorAll('.hand-btn');
-                buttons.forEach(btn => {
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
-                });
-                console.log('🔘 じゃんけんボタンを有効化しました');
-                
-            }, 500); // 短縮して反応を良くする
+            // ラウンド1は直接じゃんけん選択可能にする（ラウンド2以降はprepareSimpleNextRound()で処理）
+            this.clearJankenWait();
+            this.canMakeChoice = true;
+            this.isPlayingRound = false; // 選択可能にする
+            console.log(`✅ プレイヤーの選択が可能になりました（ラウンド${this.currentRound}）`);
+            console.log(`🎯 最終状態: canMakeChoice=${this.canMakeChoice}, isPlayingRound=${this.isPlayingRound}, isWaitingForJanken=${this.isWaitingForJanken}`);
             
-            // 安全装置: 10秒後に強制的にプレイヤー選択を有効にする
-            setTimeout(() => {
-                if (!this.canMakeChoice) {
-                    console.warn('⚠️ 10秒経過したため強制的にプレイヤー選択を有効にします');
-                    this.canMakeChoice = true;
-                    this.isPlayingRound = false;
-                }
-            }, 10000);
+            // プレイヤーに視覚的なフィードバックを提供
+            const buttons = document.querySelectorAll('.hand-btn');
+            buttons.forEach(btn => {
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            });
+            console.log(`🔘 じゃんけんボタンを有効化しました（ラウンド${this.currentRound}）`);
             
         } catch (error) {
             console.error('❌ ラウンド開始エラー:', error);
@@ -897,18 +1012,232 @@ class GameScene {
      * @returns {string} メッセージ
      */
     getRoundStartMessage() {
-        const messages = [
-            '準備はいい？じゃんけん...ぽん！',
-            'さあ、勝負よ！',
-            'どんな手を出すのかしら？',
-            '私に勝てるかしら？'
-        ];
+        // CSVからラウンドごとのトークを取得
+        const roundKey = `round_${this.currentRound}`;
         
-        if (this.currentRound === 1) {
-            return 'それじゃあ始めましょうか。じゃんけん...';
+        console.log(`🔍 ラウンド開始トーク検索: scene_type=round_start, trigger_condition=${roundKey}`);
+        
+        // CSVローダーが存在することを確認
+        if (!this.game.csvLoader) {
+            console.error('❌ CSVローダーが存在しません');
+            return 'CSVローダーエラー';
         }
         
-        return messages[Math.floor(Math.random() * messages.length)];
+        // round_start系のデータのみ抽出してデバッグ表示
+        const allDialogues = this.game.csvLoader.getTableData('dialogues');
+        const allRoundStart = allDialogues.filter(d => d.scene_type === 'round_start');
+        console.log(`🎭 round_start系データ数: ${allRoundStart.length}`);
+        allRoundStart.forEach(d => {
+            console.log(`  - ${d.dialogue_id}: ${d.trigger_condition} → "${d.text}"`);
+        });
+        
+        const roundMessages = this.getDialoguesByType('round_start', roundKey);
+        console.log(`🎯 取得されたラウンド開始トーク数: ${roundMessages.length}`);
+        
+        if (roundMessages.length > 0) {
+            // CSVにラウンド用のトークがある場合はそれを使用
+            const selectedMessage = roundMessages[0].text;
+            console.log(`✅ CSVからラウンド開始トーク取得: "${selectedMessage}"`);
+            return selectedMessage;
+        }
+        
+        // フォールバック（CSVのnr001を使用）
+        const nr001Text = this.getDialogueText('nr001');
+        if (nr001Text) {
+            console.log(`✅ CSV nr001をフォールバックで使用: "${nr001Text}"`);
+            return nr001Text;
+        }
+        
+        // それも失敗した場合の最終フォールバック
+        const finalFallback = '最初はグー！じゃんけん...';
+        console.log(`⚠️ 最終フォールバック使用: "${finalFallback}"`);
+        return finalFallback;
+    }
+
+    /**
+     * ラウンド前メッセージを取得（次ラウンド開始前のトーク）
+     * @returns {string} メッセージ
+     */
+    getPreRoundMessage() {
+        // CSVからラウンド前トークを取得
+        const roundKey = `round_${this.currentRound}`;
+        
+        console.log(`🔍 ラウンド前トーク検索: scene_type=pre_round, trigger_condition=${roundKey}`);
+        
+        // CSVローダーが存在することを確認
+        if (!this.game.csvLoader) {
+            console.error('❌ CSVローダーが存在しません');
+            return 'CSVローダーエラー';
+        }
+        
+        const preRoundMessages = this.getDialoguesByType('pre_round', roundKey);
+        console.log(`🎯 取得されたラウンド前トーク数: ${preRoundMessages.length}`);
+        
+        if (preRoundMessages.length > 0) {
+            const selectedMessage = preRoundMessages[0].text;
+            console.log(`✅ CSVからラウンド前トーク取得: "${selectedMessage}"`);
+            return selectedMessage;
+        }
+        
+        // フォールバック（CSVにない場合）
+        const fallbackMessages = {
+            2: 'さ、さあ次のラウンドよ！',
+            3: 'まだまだ勝負はこれからよ！',
+            4: 'よ、よーし次こそは…！',
+            5: '半分まで来たわね…',
+            6: 'そ、そろそろ本気出さなきゃ…',
+            7: 'あと少しで決着ね…',
+            8: 'も、もうすぐ終わりかも…',
+            9: 'い、いよいよ最終ラウンド…！'
+        };
+        
+        const fallbackMessage = fallbackMessages[this.currentRound] || 'さあ次のラウンドよ！';
+        console.log(`⚠️ フォールバックラウンド前トーク使用: "${fallbackMessage}"`);
+        return fallbackMessage;
+    }
+
+    /**
+     * 中間メッセージを取得（ラウンド開始後のトーク）
+     * @returns {string} メッセージ
+     */
+    getIntermediateMessage() {
+        // CSVから中間トークを取得
+        const roundKey = `round_${this.currentRound}`;
+        
+        console.log(`🔍 中間トーク検索: scene_type=intermediate_talk, trigger_condition=${roundKey}`);
+        
+        // CSVローダーが存在することを確認
+        if (!this.game.csvLoader) {
+            console.error('❌ CSVローダーが存在しません');
+            return 'CSVローダーエラー';
+        }
+        
+        // 全ダイアログデータをデバッグ表示
+        const allDialogues = this.game.csvLoader.getTableData('dialogues');
+        console.log(`📋 全ダイアログ数: ${allDialogues.length}`);
+        
+        // intermediate_talk系のデータのみ抽出してデバッグ表示
+        const allIntermediate = allDialogues.filter(d => d.scene_type === 'intermediate_talk');
+        console.log(`🎭 intermediate_talk系データ数: ${allIntermediate.length}`);
+        allIntermediate.forEach(d => {
+            console.log(`  - ${d.dialogue_id}: ${d.trigger_condition} → "${d.text}"`);
+        });
+        
+        const intermediateMessages = this.getDialoguesByType('intermediate_talk', roundKey);
+        console.log(`🎯 取得された中間トーク数: ${intermediateMessages.length}`);
+        
+        if (intermediateMessages.length > 0) {
+            const selectedMessage = intermediateMessages[0].text;
+            console.log(`✅ CSVから中間トーク取得: "${selectedMessage}"`);
+            return selectedMessage;
+        }
+        
+        // フォールバック（CSVにない場合）
+        const fallbackMessages = {
+            2: 'じゃあ次いくよ？',
+            3: '準備はいい？',
+            4: 'こ、今度は本気よ！',
+            5: 'い、いくよ…！',
+            6: 'え、えーと…始めるね…',
+            7: 'そ、そろそろ本気出さなきゃ…',
+            8: 'が、頑張らなきゃ…！',
+            9: '油断しちゃダメだよ？'
+        };
+        
+        const fallbackMessage = fallbackMessages[this.currentRound] || 'じゃあいくよ？';
+        console.log(`⚠️ フォールバック中間トーク使用: "${fallbackMessage}"`);
+        return fallbackMessage;
+    }
+
+    /**
+     * 美咲のリアクションメッセージを取得（CSVから）
+     * @param {string} result - ラウンド結果
+     * @returns {string} リアクションメッセージ
+     */
+    getMisakiReaction(result) {
+        if (result === 'draw') {
+            // あいこの状況に応じた詳細なトークを選択
+            let reactionType = '';
+            if (this.consecutiveDraws >= 3) {
+                reactionType = 'draw_consecutive';
+            } else if (this.playerHP <= 2 || this.misakiHP <= 2) {
+                reactionType = 'draw_tension'; // 緊迫状況でのあいこ
+            } else {
+                reactionType = 'draw_normal';
+            }
+            
+            // 拡張あいこメッセージを取得
+            const drawMessages = this.getDialoguesByType('draw_enhanced', reactionType);
+            if (drawMessages.length > 0) {
+                const randomMessage = drawMessages[Math.floor(Math.random() * drawMessages.length)];
+                return randomMessage.text;
+            }
+        }
+        
+        // フォールバック（victory_spriteデータを使用）
+        if (result === 'playerWin') {
+            // victory_spriteから適切なメッセージを取得
+            const victoryMessage = this.getVictorySpriteMessage(this.playerWins);
+            if (victoryMessage) {
+                return victoryMessage;
+            }
+            // 最終フォールバック
+            return 'あ、あれ…、負けちゃった…。次は勝つからね！';
+        } else if (result === 'misakiWin') {
+            // CSVのmisaki_win_hp_highから取得（HP条件なし、統一）
+            const misakiWinMessages = this.getDialoguesByType('reaction', 'misaki_win_hp_high');
+            if (misakiWinMessages.length > 0) {
+                const randomMessage = misakiWinMessages[Math.floor(Math.random() * misakiWinMessages.length)];
+                return randomMessage.text;
+            }
+            
+            // 最終フォールバック
+            return 'やったぁ！勝った！';
+        } else {
+            // CSVのdrawメッセージから取得
+            const drawMessages = this.getDialoguesByType('reaction', 'draw');
+            if (drawMessages.length > 0) {
+                const randomMessage = drawMessages[Math.floor(Math.random() * drawMessages.length)];
+                return randomMessage.text;
+            }
+            // 最終フォールバック
+            return 'あ、あいこね…';
+        }
+    }
+
+    /**
+     * 勝利時の立ち絵変更後メッセージを取得
+     * @param {number} winCount - 勝利回数
+     * @returns {string|null} メッセージ
+     */
+    getVictorySpriteMessage(winCount) {
+        const conditionKey = `player_win_count_${winCount}`;
+        console.log(`🔍 勝利メッセージ検索: scene_type=victory_sprite, trigger_condition=${conditionKey}`);
+        
+        const victoryMessages = this.getDialoguesByType('victory_sprite', conditionKey);
+        console.log(`🔍 見つかった勝利メッセージ数: ${victoryMessages.length}`);
+        
+        if (victoryMessages.length > 0) {
+            const randomMessage = victoryMessages[Math.floor(Math.random() * victoryMessages.length)];
+            console.log(`✅ 勝利メッセージ選択: ${randomMessage.dialogue_id} = "${randomMessage.text}"`);
+            return randomMessage.text;
+        }
+        
+        console.warn(`⚠️ 勝利メッセージが見つかりません: ${conditionKey}`);
+        return null; // メッセージがない場合
+    }
+
+    /**
+     * 立ち絵変更後メッセージ表示後の自動進行処理
+     */
+    waitForJankenVictoryMessage() {
+        console.log('🏆 waitForJankenVictoryMessage() 開始');
+        
+        // 🚨 修正：waitForJankenは呼び出さず、自動的に次に進む
+        // 立ち絵変更後メッセージは一定時間表示して自動的に美咲のリアクションに進む
+        console.log('🏆 立ち絵変更後メッセージ表示中：3秒後に自動進行');
+        
+        // ここでは何もしない（自動的に美咲のリアクションメッセージが表示される）
     }
 
     /**
@@ -932,33 +1261,97 @@ class GameScene {
     /**
      * プレイヤーの選択処理
      * @param {string} hand - 選択した手 (rock, scissors, paper)
+     * @param {Event} event - クリックイベント
      */
-    async makeChoice(hand) {
+    async makeChoice(hand, event = null) {
         console.log(`🎯 プレイヤーが${hand}を選択しようとしています`);
-        console.log(`🔍 現在の状態: canMakeChoice=${this.canMakeChoice}, isPlayingRound=${this.isPlayingRound}`);
+        console.log(`🔍 現在の状態: canMakeChoice=${this.canMakeChoice}, isPlayingRound=${this.isPlayingRound}, isWaitingForJanken=${this.isWaitingForJanken}`);
         
-        if (!this.canMakeChoice || this.isPlayingRound) {
-            console.log('❌ 選択が拒否されました - 選択不可状態');
+        // 🚨 緊急修正: ゲームが進行中なら強制的にじゃんけん処理を実行
+        if (this.currentRound >= 1 && this.currentRound <= this.maxRounds && 
+            this.playerHP > 0 && this.misakiHP > 0 && !this.isPlayingRound) {
+            
+            console.log('🚨 【強制実行】ゲーム進行中につき、じゃんけん処理を強制実行します');
+            console.log(`🎯 ラウンド${this.currentRound}、HP - プレイヤー:${this.playerHP}, 美咲:${this.misakiHP}`);
+            
+            // 状態を強制的に修正
+            this.canMakeChoice = true;
+            this.isPlayingRound = false;
+            this.clearJankenWait();
+            
+            console.log('✅ 状態を強制修正しました - じゃんけん実行開始');
+            await this.executeJankenChoice(hand);
             return;
         }
         
+        // 通常のじゃんけん選択処理
+        if (this.canMakeChoice && !this.isPlayingRound) {
+            console.log('🎲 【通常】じゃんけん選択を実行します');
+            this.clearJankenWait();
+            await this.executeJankenChoice(hand);
+            return;
+        }
+        
+        console.log(`🔍 じゃんけん選択条件チェック失敗: canMakeChoice=${this.canMakeChoice}, isPlayingRound=${this.isPlayingRound}`);
+        
+        // 進めるボタンモードの処理
+        const clickedButton = event ? event.target.closest('.hand-btn') : null;
+        if (clickedButton && clickedButton.classList.contains('advance-btn')) {
+            console.log('▶️ 🔴 進めるボタンが押されました！');
+            console.log('🔍 現在の状態:', {
+                isWaitingForJanken: this.isWaitingForJanken,
+                canMakeChoice: this.canMakeChoice,
+                isPlayingRound: this.isPlayingRound,
+                currentRound: this.currentRound
+            });
+            if (this.onJankenAdvance()) {
+                console.log('✅ 🚀 トーク進行処理完了');
+                return;
+            } else {
+                console.warn('⚠️ onJankenAdvance()がfalseを返しました');
+            }
+        }
+        
+        // トーク進行処理（じゃんけん不可能時のみ）
+        if (this.isWaitingForJanken && (!this.canMakeChoice || this.isPlayingRound)) {
+            console.log('🎭 トーク進行処理を実行します');
+            if (this.onJankenAdvance()) {
+                console.log('✅ トーク進行処理完了');
+                return;
+            }
+        }
+        
+        console.log('❌ どの処理も実行されませんでした - デバッグ情報:');
+        console.log(`❌ currentRound=${this.currentRound}, playerHP=${this.playerHP}, misakiHP=${this.misakiHP}`);
+        console.log(`❌ canMakeChoice=${this.canMakeChoice}, isPlayingRound=${this.isPlayingRound}, isWaitingForJanken=${this.isWaitingForJanken}`);
+    }
+
+    /**
+     * じゃんけん選択の実際の処理を実行
+     * @param {string} hand - 選択した手
+     */
+    async executeJankenChoice(hand) {
         console.log(`✅ プレイヤーの選択を受理: ${hand}`);
         
         this.playerHand = hand;
         this.canMakeChoice = false;
         this.isPlayingRound = true; // 処理中にする
         
+        // じゃんけんボタンを無効化（アニメーション中は操作不可）
+        this.disableJankenButtons();
+        
         // 効果音
         this.game.audioManager.playSE('se_click.mp3', 0.8);
         
         // 美咲が「ぽん！」と言う
-        this.updateDialogueText('ぽん！');
+        const ponText = this.getDialogueText('jp001') || 'ぽん！';
+        await this.animateDialogueText(ponText, 100); // 短めに設定
         
         // 美咲の手を決定
         this.misakiHand = this.decideMisakiHand();
         console.log(`🤖 美咲の手: ${this.misakiHand}`);
         
-        // 少し待ってからじゃんけん結果を処理
+        // 少し待ってからじゃんけんアニメーション（自動進行に戻す）
         setTimeout(async () => {
             console.log('🎲 結果処理を開始');
             await this.processRoundResult();
@@ -1003,6 +1396,14 @@ class GameScene {
         // 勝敗判定
         const result = this.determineWinner(this.playerHand, this.misakiHand);
         
+        // 前回のラウンド結果をクリア（新しい結果で上書きする前に）
+        console.log(`🧹 前回のラウンド結果をクリア: "${this.lastRoundResult}" → 新しい結果: "${result}"`);
+        
+        // 現在のラウンド結果を保存（次のラウンドで使用）
+        this.lastRoundResult = String(result).trim();
+        console.log(`💾 ✅ 現在のラウンド結果を保存: "${this.lastRoundResult}" (タイプ: ${typeof this.lastRoundResult}, 長さ: ${this.lastRoundResult.length})`);
+        console.log(`🔍 詳細チェック: result=${result}, あいこ判定=${this.lastRoundResult === 'draw'}`);
+        
         // 結果アニメーション
         await this.playResultAnimation(result);
         
@@ -1022,10 +1423,7 @@ class GameScene {
             return;
         }
         
-        // 次のラウンドへ（少し短めに）
-        setTimeout(() => {
-            this.prepareNextRound();
-        }, 2000);
+        // 次のラウンドは既にplayResultAnimationでクリック待機が設定されているため、ここでは何もしない
     }
 
     /**
@@ -1061,6 +1459,7 @@ class GameScene {
             const oldMisakiHP = this.misakiHP;
             this.misakiHP = Math.max(0, this.misakiHP - 1);
             this.playerWins++;
+            this.consecutiveDraws = 0; // あいこカウントリセット
             
             // 🎨 プレイヤー勝利時に美咲の立ち絵を更新
             this.updateMisakiSprite(this.playerWins);
@@ -1070,17 +1469,34 @@ class GameScene {
                 this.animateHeartLoss(this.misakiHP, false);
             }
             
+            // 立ち絵変更後の特別なトークを表示（進めるボタン待機）
+            setTimeout(async () => {
+                const victoryMessage = this.getVictorySpriteMessage(this.playerWins);
+                console.log(`🏆 勝利メッセージ取得: playerWins=${this.playerWins}, message="${victoryMessage}"`);
+                
+                if (victoryMessage) {
+                    // 🚨 修正：表示時間を長くして、進めるボタン待機を追加
+                    await this.animateDialogueText(victoryMessage, 30); // 30ms間隔でゆっくり表示
+                    
+                    // 立ち絵変更後メッセージの後に進めるボタンで待機
+                    console.log('🏆 立ち絵変更後メッセージ表示完了：進めるボタンで待機開始');
+                    this.waitForJankenVictoryMessage();
+                }
+            }, 1500); // 立ち絵変更アニメーション完了後
+            
         } else if (result === 'misakiWin') {
             const oldPlayerHP = this.playerHP;
             this.playerHP = Math.max(0, this.playerHP - 1);
             this.misakiWins++;
+            this.consecutiveDraws = 0; // あいこカウントリセット
             
             // ハート減少アニメーション
             if (oldPlayerHP > this.playerHP) {
                 this.animateHeartLoss(this.playerHP, true);
             }
+        } else if (result === 'draw') {
+            this.consecutiveDraws++; // あいこカウント増加
         }
-        // drawの場合はHP変化なし
     }
 
     /**
@@ -1094,6 +1510,21 @@ class GameScene {
         
         // 従来の結果表示も併用（バックアップ）
         this.showBattleResult(result);
+        
+        // 美咲のリアクションセリフをタイプライター効果で表示（クリック待機）
+        setTimeout(async () => {
+            const reactionMessage = this.getMisakiReaction(result);
+            await this.animateDialogueText(reactionMessage, 45);
+            
+            // 新しいフロー：まず即座にラウンド準備処理を実行
+            console.log('🎯 ラウンド準備処理を開始');
+            this.prepareNextRoundImmediate();
+            
+            // その後、進めるボタン待機を設定
+            this.waitForJanken(async () => {
+                await this.handleNextRoundDialogue();
+            });
+        }, 4500); // 🚨 修正：立ち絵変更後メッセージ表示後まで待機（1.5s + 3s）
         
         // 効果音
         if (result === 'playerWin') {
@@ -1268,9 +1699,102 @@ class GameScene {
                 }
                 
                 console.log('✨ じゃんけんアニメーション完了（軽量化版）');
+                
+                // アニメーション完了後にじゃんけんボタンを「進める」アイコンに切り替え
+                // 遅延させて、waitForJanken()が確実に設定された後にボタンを表示
+                setTimeout(() => {
+                    this.switchToAdvanceButtons();
+                }, 1000); // 1秒遅延（3.5秒後のwaitForJanken設定を待つ）
+                
                 resolve();
             }, 3000);
         });
+    }
+
+    /**
+     * じゃんけんボタンを無効化
+     */
+    disableJankenButtons() {
+        const buttons = document.querySelectorAll('.hand-btn');
+        buttons.forEach(btn => {
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+            btn.disabled = true;
+        });
+        console.log('🔘 じゃんけんボタンを無効化しました');
+    }
+
+    /**
+     * じゃんけんボタンを「進める」アイコンに切り替え
+     */
+    switchToAdvanceButtons() {
+        console.log('🚨 switchToAdvanceButtons() 開始');
+        
+        // じゃんけんボタンを非表示
+        const handButtons = document.querySelector('.hand-buttons');
+        const advanceButtonContainer = document.querySelector('.advance-button-container');
+        const advanceButton = document.getElementById('btn-advance');
+        
+        console.log('🔍 要素の存在チェック:', {
+            handButtons: !!handButtons,
+            advanceButtonContainer: !!advanceButtonContainer,
+            advanceButton: !!advanceButton
+        });
+        
+        if (handButtons) {
+            handButtons.style.display = 'none';
+            console.log('✅ じゃんけんボタンを非表示にしました');
+        }
+        
+        // 進めるボタンを表示
+        if (advanceButtonContainer) {
+            advanceButtonContainer.style.display = 'flex';
+            advanceButtonContainer.style.justifyContent = 'center';
+            console.log('✅ 進めるボタンコンテナを表示しました');
+        }
+        
+        // 進めるボタンを確実に有効化
+        if (advanceButton) {
+            advanceButton.style.opacity = '1';
+            advanceButton.style.pointerEvents = 'auto';
+            advanceButton.disabled = false;
+            console.log('✅ 進めるボタンを有効化しました');
+        }
+        
+        // 進めるボタンのイベントリスナー設定は setupAdvanceButton() で既に行われているため、
+        // 重複設定を避けるためここでは何もしない
+        console.log('🔍 進めるボタンはsetupAdvanceButton()で既に設定済み');
+        
+        console.log('🔘 じゃんけんボタンを非表示にして「進める」ボタンを表示しました');
+    }
+
+    /**
+     * ボタンをじゃんけんモードに戻す
+     */
+    switchBackToJankenButtons() {
+        console.log('🔄 switchBackToJankenButtons() 実行開始');
+        
+        // 進めるボタンを非表示
+        const advanceButtonContainer = document.querySelector('.advance-button-container');
+        if (advanceButtonContainer) {
+            advanceButtonContainer.style.display = 'none';
+        }
+        
+        // じゃんけんボタンを表示
+        const handButtons = document.querySelector('.hand-buttons');
+        if (handButtons) {
+            handButtons.style.display = 'flex';
+        }
+        
+        // じゃんけんボタンを有効化
+        const buttons = document.querySelectorAll('.hand-buttons .hand-btn');
+        buttons.forEach(btn => {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+            btn.disabled = false;
+        });
+        
+        console.log('✅ switchBackToJankenButtons() 完了：進めるボタンを非表示にしてじゃんけんボタンを表示しました');
     }
 
     /**
@@ -1351,9 +1875,9 @@ class GameScene {
     }
 
     /**
-     * 次のラウンドを準備
+     * 次のラウンドを即座に準備（ボタン待機なし）
      */
-    prepareNextRound() {
+    prepareNextRoundImmediate() {
         this.currentRound++;
         this.isPlayingRound = false;
         
@@ -1362,11 +1886,170 @@ class GameScene {
             this.battleResult.classList.remove('show');
         }
         
-        // 次のラウンド開始前に「最初はグー！じゃんけん...」を表示
-        this.updateDialogueText('最初はグー！じゃんけん...');
+        console.log(`🎯 即座ラウンド準備: ラウンド${this.currentRound}`);
+        
+        // CSVローダー状態をチェック
+        console.log('🔍 CSVローダー状態チェック中...');
+        if (this.game.csvLoader && this.game.csvLoader.data) {
+            console.log('✅ CSVローダーが存在します');
+        } else {
+            console.warn('⚠️ CSVローダーが異常です');
+        }
         
         if (this.currentRound <= this.maxRounds) {
-            this.startNewRound();
+            // ラウンド2以降は中間トークを表示
+            if (this.currentRound >= 2) {
+                const intermediateMessage = this.getIntermediateMessage();
+                // 🚨 重要：awaitを削除して同期実行
+                this.animateDialogueText(intermediateMessage, 50).then(() => {
+                    console.log('🔄 intermediate_talk表示完了：進めるボタン待機準備完了');
+                });
+            } else {
+                // ラウンド1はそのまま開始
+                this.startNewRound();
+            }
+        } else {
+            console.log('最大ラウンドに到達');
+        }
+    }
+
+    /**
+     * 進めるボタンクリック時の次ラウンドダイアログ処理
+     */
+    async handleNextRoundDialogue() {
+        console.log(`🔍 🚨 handleNextRoundDialogue() 開始`);
+        console.log(`🔍 🚨 前回の結果をチェック: lastRoundResult = "${this.lastRoundResult}"`);
+        console.log(`🔍 🚨 lastRoundResultのタイプ: ${typeof this.lastRoundResult}`);
+        console.log(`🔍 🚨 nullチェック: ${this.lastRoundResult === null}`);
+        console.log(`🔍 🚨 drawチェック: ${this.lastRoundResult === 'draw'}`);
+        console.log(`🔍 🚨 playerWinチェック: ${this.lastRoundResult === 'playerWin'}`);
+        console.log(`🔍 🚨 misakiWinチェック: ${this.lastRoundResult === 'misakiWin'}`);
+        
+        if (this.lastRoundResult === 'draw') {
+            // あいこの場合: da001を表示
+            console.log('🌲 ✅ 前回はあいこでした - da001を表示します');
+            await this.showDrawAfterDialogue();
+        } else if (this.lastRoundResult === 'playerWin' || this.lastRoundResult === 'misakiWin') {
+            // 勝敗がついている場合: nr001を表示
+            console.log(`🎆 ✅ 前回は勝敗がつきました(${this.lastRoundResult}) - nr001を表示します`);
+            await this.showNextRoundDialogue();
+        } else {
+            // 予期しない状態の場合のフォールバック
+            console.warn(`⚠️ 予期しない状態: lastRoundResult="${this.lastRoundResult}" - nr001をフォールバック表示`);
+            await this.showNextRoundDialogue();
+        }
+    }
+
+    /**
+     * 次のラウンドを準備（シンプル版）- 廃止予定
+     * 前回の結果があいこの場合は「あいこで・・・」を表示
+     */
+    async prepareSimpleNextRound() {
+        console.warn('⚠️ prepareSimpleNextRound() は廃止予定です。prepareNextRoundImmediate() を使用してください。');
+        this.prepareNextRoundImmediate();
+    }
+
+    /**
+     * あいこ後のダイアログを表示（da001）
+     */
+    async showDrawAfterDialogue() {
+        console.log('🚨 showDrawAfterDialogue() 開始 - da001を確実に表示します');
+        
+        // da001 「あいこで・・・」を確実に表示
+        console.log('🚨 da001をCSVから取得中...');
+        let drawAfterText = this.getDialogueText('da001');
+        
+        // フォールバックで確実に表示
+        if (!drawAfterText) {
+            drawAfterText = 'あいこで・・・';
+            console.log('🚨 CSVから取得できないためフォールバックで表示');
+        }
+        
+        console.log(`🚨 確実にda001を表示: "${drawAfterText}"`);
+        await this.animateDialogueText(drawAfterText, 50);
+        
+        // あいこダイアログ後にじゃんけんボタンに切り替え
+        console.log('🔄 da001表示後：じゃんけんボタンに切り替え');
+        this.switchBackToJankenButtons();
+        
+        // あいこの場合は直接じゃんけん選択可能に
+        this.clearJankenWait();
+        this.canMakeChoice = true;
+        this.isPlayingRound = false;
+        
+        console.log('✅ da001フロー完了：じゃんけん選択可能');
+        
+        // 状態をリセット（次回のじゃんけん実行直前まで維持）
+        // this.lastRoundResult = null; // 削除：早すぎるリセットが問題の原因
+    }
+
+    /**
+     * 次ラウンド開始のダイアログを表示（nr001）
+     */
+    async showNextRoundDialogue() {
+        console.log('🚨 showNextRoundDialogue() 開始 - nr001を確実に表示します');
+        
+        // ボタンをじゃんけんモードに切り替え
+        console.log('🔄 nr001表示前：じゃんけんボタンに切り替え');
+        this.switchBackToJankenButtons();
+        
+        // nr001 「最初はグー！じゃんけん...」を確実に表示
+        console.log('🚨 nr001をCSVから取得中...');
+        let nextRoundText = this.getDialogueText('nr001');
+        
+        // フォールバックで確実に表示
+        if (!nextRoundText) {
+            nextRoundText = '最初はグー！じゃんけん...';
+            console.log('🚨 CSVから取得できないためフォールバックで表示');
+        }
+        
+        console.log(`🚨 確実にnr001を表示: "${nextRoundText}"`);
+        await this.animateDialogueText(nextRoundText, 50);
+        
+        // 次ラウンド開始後にじゃんけん選択可能に
+        this.clearJankenWait();
+        this.canMakeChoice = true;
+        this.isPlayingRound = false;
+        
+        console.log('✅ nr001フロー完了：じゃんけん選択可能');
+        
+        // 状態をリセット（次回のじゃんけん実行直前まで維持）
+        // this.lastRoundResult = null; // 削除：早すぎるリセットが問題の原因
+    }
+
+    /**
+     * 次のラウンドを準備（従来版）
+     */
+    async prepareNextRound() {
+        this.currentRound++;
+        this.isPlayingRound = false;
+        
+        // 結果パネルを非表示
+        if (this.battleResult) {
+            this.battleResult.classList.remove('show');
+        }
+        
+        // 次のラウンド開始前に「最初はグー！じゃんけん...」をタイプライター効果で表示
+        const nextRoundText = this.getDialogueText('nr001') || '最初はグー！じゃんけん...';
+        await this.animateDialogueText(nextRoundText);
+        
+        // 次ラウンド開始をじゃんけんボタン待機（ラウンド前トーク追加）
+        if (this.currentRound <= this.maxRounds) {
+            this.waitForJanken(async () => {
+                // ラウンド2以降は開始前トークを表示
+                if (this.currentRound >= 2) {
+                    const preRoundMessage = this.getPreRoundMessage();
+                    await this.animateDialogueText(preRoundMessage, 50);
+                    
+                    // トーク表示後、じゃんけんボタン待機で次ラウンド開始
+                    this.waitForJanken(async () => {
+                        await this.startNewRound();
+                    });
+                } else {
+                    // ラウンド1はそのまま開始
+                    await this.startNewRound();
+                }
+            });
         } else {
             // 最大ラウンド到達（通常はここには来ない）
             console.log('最大ラウンドに到達');
@@ -1509,6 +2192,31 @@ class GameScene {
     }
 
     /**
+     * じゃんけんボタンでのトーク進行処理
+     */
+    onJankenAdvance() {
+        console.log('▶️ onJankenAdvance() 呼び出し', {
+            isWaitingForJanken: this.isWaitingForJanken,
+            hasPendingAction: !!this.pendingAction
+        });
+        
+        this.game.audioManager.playSE('se_click.mp3', 0.5);
+        
+        // 🚨 修正：pendingActionがあれば実行（isWaitingForJankenは不要）
+        if (this.pendingAction) {
+            console.log('🎯 pendingActionを実行します');
+            const action = this.pendingAction;
+            this.clearJankenWait(); // 状態をクリア
+            action();
+            console.log('✅ pendingAction実行完了');
+            return true; // 進行処理を実行したことを示す
+        }
+        
+        console.warn('⚠️ pendingActionが未設定です。falseを返します');
+        return false;
+    }
+
+    /**
      * 美咲クリック時の処理
      */
     onMisakiClick() {
@@ -1609,6 +2317,7 @@ class GameScene {
             misakiHP: this.misakiHP,
             playerWins: this.playerWins,
             misakiWins: this.misakiWins,
+            consecutiveDraws: this.consecutiveDraws,
             currentMisakiSprite: this.currentMisakiSprite
         };
     }
@@ -1623,6 +2332,7 @@ class GameScene {
         this.misakiHP = state.misakiHP || 5;
         this.playerWins = state.playerWins || 0;
         this.misakiWins = state.misakiWins || 0;
+        this.consecutiveDraws = state.consecutiveDraws || 0;
         
         // 立ち絵状態も復元
         this.currentMisakiSprite = state.currentMisakiSprite || '';
@@ -1640,11 +2350,104 @@ class GameScene {
     }
 
     /**
+     * CSVからダイアログテキストを取得（デバッグ強化版）
+     * @param {string} dialogueId - ダイアログID
+     * @returns {string|null} ダイアログテキスト
+     */
+    getDialogueText(dialogueId) {
+        console.log(`🔍 getDialogueText() 呼び出し: dialogueId = "${dialogueId}"`);
+        
+        if (!this.game.csvLoader) {
+            console.error(`⚠️ CSVローダーが存在しません (dialogueId: ${dialogueId})`);
+            return null;
+        }
+        
+        console.log(`🔍 CSVローダーが存在、データを検索中... (dialogueId: ${dialogueId})`);
+        
+        try {
+            const dialogue = this.game.csvLoader.findData('dialogues', 'dialogue_id', dialogueId);
+            
+            if (dialogue) {
+                console.log(`✅ CSVからデータを取得成功: ${dialogueId} = "${dialogue.text}"`);
+                return dialogue.text;
+            } else {
+                console.warn(`⚠️ CSVに ${dialogueId} が見つかりません`);
+                
+                // デバッグ用：全データをリスト表示
+                const allDialogues = this.game.csvLoader.getTableData('dialogues');
+                console.log('🔍 現在のCSVダイアログ一覧:');
+                if (allDialogues) {
+                    allDialogues.forEach(d => {
+                        if (d.dialogue_id && d.dialogue_id.includes(dialogueId.substring(0, 2))) {
+                            console.log(`  - ${d.dialogue_id}: "${d.text}"`);
+                        }
+                    });
+                }
+                
+                return null;
+            }
+        } catch (error) {
+            console.error(`⚠️ CSVデータ取得エラー (dialogueId: ${dialogueId}):`, error);
+            return null;
+        }
+    }
+
+    /**
+     * 指定されたタイプのダイアログ一覧を取得
+     * @param {string} sceneType - シーンタイプ
+     * @param {string} triggerCondition - トリガー条件
+     * @returns {Array} ダイアログ配列
+     */
+    getDialoguesByType(sceneType, triggerCondition) {
+        if (!this.game.csvLoader) return [];
+        
+        const dialogues = this.game.csvLoader.getTableData('dialogues');
+        return dialogues.filter(dialogue => 
+            dialogue.scene_type === sceneType && 
+            dialogue.trigger_condition === triggerCondition
+        );
+    }
+
+    /**
+     * じゃんけん待機を設定
+     * @param {Function} action - じゃんけんボタン押下時に実行する処理
+     */
+    waitForJanken(action) {
+        this.isWaitingForJanken = true;
+        this.pendingAction = action;
+        
+        // じゃんけんボタンに待機中の視覚的フィードバックを追加
+        const buttons = document.querySelectorAll('.hand-btn');
+        buttons.forEach(btn => {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+            btn.style.boxShadow = '0 0 10px rgba(255, 215, 0, 0.7)'; // ゴールド輝き
+        });
+        
+        console.log('🔄 じゃんけん待機状態に設定しました');
+    }
+
+    /**
+     * じゃんけん待機を解除
+     */
+    clearJankenWait() {
+        this.isWaitingForJanken = false;
+        this.pendingAction = null;
+        
+        // じゃんけんボタンの視覚的フィードバックを削除
+        const buttons = document.querySelectorAll('.hand-btn');
+        buttons.forEach(btn => {
+            btn.style.boxShadow = '';
+        });
+    }
+
+    /**
      * リソースをクリーンアップ
      */
     cleanup() {
         this.canMakeChoice = false;
         this.isPlayingRound = false;
+        this.clearJankenWait();
         console.log('GameScene cleanup');
     }
 }
