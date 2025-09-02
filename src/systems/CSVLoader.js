@@ -237,8 +237,18 @@ class CSVLoader {
                 { character_id: 'player', name: 'あなた', age: '22' }
             ],
             dialogues: [
-                { dialogue_id: 'd001', character_id: 'misaki', text: '久しぶりね。大学生活はどう？', emotion: 'smile' },
-                { dialogue_id: 'd002', character_id: 'misaki', text: '昔みたいにお姉ちゃんって呼んでよ', emotion: 'teasing' }
+                { dialogue_id: 'd001', scene_type: 'game_intro', trigger_condition: 'round_1', character: 'misaki', text: '久しぶりね。大学生活はどう？', priority: '1', emotion: 'smile' },
+                { dialogue_id: 'd002', scene_type: 'game_start', trigger_condition: 'game_start', character: 'misaki', text: '昔みたいにお姉ちゃんって呼んでよ', priority: '1', emotion: 'teasing' },
+                { dialogue_id: 'mr010', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'やったぁ！勝った！', priority: '1', emotion: 'happy' },
+                { dialogue_id: 'mr011', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'ふふっ、いつも通り弱いなぁ♪', priority: '1', emotion: 'smug' },
+                { dialogue_id: 'mr012', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'えへへ…勝っちゃった♪', priority: '1', emotion: 'bashful' },
+                { dialogue_id: 'mr019', scene_type: 'reaction', trigger_condition: 'draw', character: 'misaki', text: 'あ、あいこね…', priority: '1', emotion: 'neutral' },
+                { dialogue_id: 'mr020', scene_type: 'reaction', trigger_condition: 'draw', character: 'misaki', text: 'も、もう一回！', priority: '1', emotion: 'determined' },
+                { dialogue_id: 'vw001', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_1', character: 'misaki', text: 'あ、あれ…、負けちゃった…。次は勝つからね！', priority: '1', emotion: 'surprised' },
+                { dialogue_id: 'vw002', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_2', character: 'misaki', text: 'うっ…いつもすぐ負けるくせにぃ…。まぐれだよね？', priority: '1', emotion: 'shocked' },
+                { dialogue_id: 'vw003', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_3', character: 'misaki', text: 'こ、こんなはずじゃ…恥ずかしい…。ここから先は…もうやめておかない？…', priority: '1', emotion: 'disbelief' },
+                { dialogue_id: 'vw004', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_4', character: 'misaki', text: 'や、やばい…。。。隠してもいいでしょ！！早く次はじめるよ！ジロジロ見ないの！', priority: '1', emotion: 'panic' },
+                { dialogue_id: 'vw005', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_5', character: 'misaki', text: 'あ、あぁ…負けちゃった…。そんなに見ないでよ…。野球拳だと強すぎない…？', priority: '1', emotion: 'defeated' }
             ],
             misaki_costumes: [
                 { level: '1', costume_image: 'misaki_suit.png', costume_name: 'OLスーツ', hp_required: '5' },

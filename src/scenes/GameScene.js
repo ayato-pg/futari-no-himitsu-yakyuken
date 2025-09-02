@@ -26,6 +26,8 @@ class GameScene {
         
         // あいこ管理
         this.consecutiveDraws = 0;
+        this.drawMessageIndex = 0; // あいこメッセージの順番管理（0-3の循環）
+        this.misakiWinMessageIndex = 0; // 美咲勝利メッセージの順番管理
         
         // トーク進行管理
         this.isWaitingForJanken = false;
@@ -103,12 +105,12 @@ class GameScene {
     updateMisakiSprite(playerWins) {
         // 勝利数に応じた立ち絵マッピング（6段階）
         const spriteMapping = {
-            0: 'misaki_game_stage1.png',  // 初期状態：自信満々
-            1: 'misaki_game_stage2.png',  // 1勝：少し焦り始める
-            2: 'misaki_game_stage3.png',  // 2勝：明確に焦る
-            3: 'misaki_game_stage4.png',  // 3勝：必死になる
-            4: 'misaki_game_stage5.png',  // 4勝：かなり恥ずかしい
-            5: 'misaki_game_stage6.png'   // 5勝：完全敗北（最終段階）
+            0: 'assets/images/characters/misaki/misaki_game_stage1.png',  // 初期状態：自信満々
+            1: 'assets/images/characters/misaki/misaki_game_stage2.png',  // 1勝：少し焦り始める
+            2: 'assets/images/characters/misaki/misaki_game_stage3.png',  // 2勝：明確に焦る
+            3: 'assets/images/characters/misaki/misaki_game_stage4.png',  // 3勝：必死になる
+            4: 'assets/images/characters/misaki/misaki_game_stage5.png',  // 4勝：かなり恥ずかしい
+            5: 'assets/images/characters/misaki/misaki_game_stage6.png'   // 5勝：完全敗北（最終段階）
         };
         
         const spriteName = spriteMapping[playerWins] || spriteMapping[0];
@@ -136,7 +138,10 @@ class GameScene {
             return;
         }
 
-        const imagePath = `assets/images/characters/misaki/${spriteName}`;
+        // spriteNameにはすでにフルパスが含まれているため、そのまま使用
+        const imagePath = spriteName;
+        
+        console.log(`🖼️ 美咲の立ち絵変更開始: ${imagePath}`);
         
         // 画像のプリロード処理
         const tempImage = new Image();
@@ -165,7 +170,22 @@ class GameScene {
         };
         
         tempImage.onerror = () => {
-            console.error(`❌ 立ち絵が見つかりません: ${spriteName}`);
+            console.error(`❌ 立ち絵が見つかりません: ${imagePath}`);
+            
+            // フォールバック: デフォルト画像を試行
+            const fallbackPath = 'assets/images/characters/misaki/misaki_game_stage1.png';
+            if (imagePath !== fallbackPath) {
+                console.log(`🔄 フォールバック画像を試行: ${fallbackPath}`);
+                const fallbackImage = new Image();
+                fallbackImage.onload = () => {
+                    this.misakiGameDisplay.src = fallbackImage.src;
+                    console.log(`✅ フォールバック画像読み込み成功`);
+                };
+                fallbackImage.onerror = () => {
+                    console.error(`❌ フォールバック画像も読み込めません: ${fallbackPath}`);
+                };
+                fallbackImage.src = fallbackPath;
+            }
         };
         
         tempImage.src = imagePath;
@@ -439,6 +459,8 @@ class GameScene {
         this.playerHand = null;
         this.misakiHand = null;
         this.consecutiveDraws = 0;
+        this.drawMessageIndex = 0;
+        this.misakiWinMessageIndex = 0;
         
         // じゃんけん待機状態もリセット
         this.clearJankenWait();
@@ -461,6 +483,8 @@ class GameScene {
         this.playerWins = data.playerWins || 0;
         this.misakiWins = data.misakiWins || 0;
         this.consecutiveDraws = data.consecutiveDraws || 0;
+        this.drawMessageIndex = data.drawMessageIndex || 0;
+        this.misakiWinMessageIndex = data.misakiWinMessageIndex || 0;
         
         // 復元されたプレイヤー勝利数に応じて立ち絵を更新
         this.lastDisplayedSprite = '';
@@ -1177,28 +1201,103 @@ class GameScene {
         // フォールバック（victory_spriteデータを使用）
         if (result === 'playerWin') {
             // victory_spriteから適切なメッセージを取得
-            const victoryMessage = this.getVictorySpriteMessage(this.playerWins);
+            // 注意：この時点ではまだupdateHPByResultが呼ばれていないので、勝利後の値（+1）を使う
+            const winCount = this.playerWins + 1;
+            console.log(`🏆 プレイヤー勝利時のメッセージ取得: 現在の勝利数=${this.playerWins} → 勝利後の勝利数=${winCount}`);
+            
+            const victoryMessage = this.getVictorySpriteMessage(winCount);
             if (victoryMessage) {
                 return victoryMessage;
             }
-            // 最終フォールバック
-            return 'あ、あれ…、負けちゃった…。次は勝つからね！';
+            
+            // CSVデータが見つからない場合は空文字を返す（reactionトークを使わない）
+            console.log('⚠️ victory_spriteメッセージが見つからないため、reactionトークをスキップ');
+            return '';
         } else if (result === 'misakiWin') {
-            // CSVのmisaki_win_hp_highから取得（HP条件なし、統一）
-            const misakiWinMessages = this.getDialoguesByType('reaction', 'misaki_win_hp_high');
-            if (misakiWinMessages.length > 0) {
-                const randomMessage = misakiWinMessages[Math.floor(Math.random() * misakiWinMessages.length)];
-                return randomMessage.text;
+            // 🚨 修正：美咲の勝利回数に応じて順番にメッセージを表示
+            console.log(`🔍 美咲勝利回数: ${this.misakiWins}`);
+            
+            // CSVローダーの状況チェック
+            if (!this.game.csvLoader) {
+                console.error('❌ CSVローダーが存在しません - フォールバックメッセージを使用');
+                const fallbackMessages = [
+                    'やったぁ！勝った！',
+                    'あれ、負けちゃった…次は頑張る！',
+                    'うー、またやられた…',
+                    'もう、負けないもん！',
+                    'くっ…まだまだ！'
+                ];
+                const fallbackIndex = Math.max(0, Math.min(this.misakiWins - 1, fallbackMessages.length - 1));
+                return fallbackMessages[fallbackIndex];
             }
             
-            // 最終フォールバック
-            return 'やったぁ！勝った！';
+            // CSVの美咲勝利メッセージから順番に取得
+            const misakiWinMessages = this.getDialoguesByType('reaction', 'misaki_win_hp_high');
+            console.log(`🔍 取得した美咲勝利メッセージ数: ${misakiWinMessages.length}`);
+            
+            if (misakiWinMessages && misakiWinMessages.length > 0) {
+                // dialogue_id順にソート（mr010, mr011, mr012, mr013...の順番を保証）
+                misakiWinMessages.sort((a, b) => a.dialogue_id.localeCompare(b.dialogue_id));
+                
+                console.log(`🔍 ソート後の美咲勝利メッセージ順序:`);
+                misakiWinMessages.forEach((msg, index) => {
+                    console.log(`  ${index}: ${msg.dialogue_id} = "${msg.text}"`);
+                });
+                
+                // 美咲勝利メッセージを順番に表示（mr010 → mr011 → mr012 → mr013...の循環）
+                const messageIndex = this.misakiWinMessageIndex % misakiWinMessages.length;
+                const selectedMessage = misakiWinMessages[messageIndex];
+                
+                console.log(`🏆 美咲勝利メッセージ順番表示: インデックス${this.misakiWinMessageIndex} → ${selectedMessage.dialogue_id} = "${selectedMessage.text}"`);
+                
+                // 次回用にインデックスを更新
+                this.misakiWinMessageIndex = (this.misakiWinMessageIndex + 1) % misakiWinMessages.length;
+                
+                return selectedMessage.text;
+            }
+            
+            console.warn(`⚠️ 美咲勝利メッセージが見つからない - フォールバック使用`);
+            
+            // 最終フォールバック：勝利回数に応じたメッセージ
+            const finalFallbackMessages = [
+                'やったぁ！勝った！',
+                'えへへ、また勝っちゃった♪',
+                'うふふ、調子がいいみたい！',
+                'あ、あんまり勝っちゃダメかな…？',
+                'ご、ごめんね…でも嬉しい！'
+            ];
+            const finalIndex = this.misakiWinMessageIndex % finalFallbackMessages.length;
+            const finalMessage = finalFallbackMessages[finalIndex];
+            console.log(`🔄 最終フォールバック美咲勝利メッセージ: インデックス${this.misakiWinMessageIndex} → "${finalMessage}"`);
+            
+            // インデックス更新
+            this.misakiWinMessageIndex = (this.misakiWinMessageIndex + 1) % finalFallbackMessages.length;
+            
+            return finalMessage;
         } else {
-            // CSVのdrawメッセージから取得
+            // CSVのdrawメッセージから順番に取得
             const drawMessages = this.getDialoguesByType('reaction', 'draw');
+            console.log(`🔍 取得したdrawメッセージ数: ${drawMessages.length}`);
+            
             if (drawMessages.length > 0) {
-                const randomMessage = drawMessages[Math.floor(Math.random() * drawMessages.length)];
-                return randomMessage.text;
+                // dialogue_id順にソート（mr019, mr020, mr021, mr022の順番を保証）
+                drawMessages.sort((a, b) => a.dialogue_id.localeCompare(b.dialogue_id));
+                
+                console.log(`🔍 ソート後のdrawメッセージ順序:`);
+                drawMessages.forEach((msg, index) => {
+                    console.log(`  ${index}: ${msg.dialogue_id} = "${msg.text}"`);
+                });
+                
+                // あいこメッセージを順番に表示（mr019 → mr020 → mr021 → mr022 → mr019...の循環）
+                const messageIndex = this.drawMessageIndex % drawMessages.length;
+                const selectedMessage = drawMessages[messageIndex];
+                
+                console.log(`🔄 あいこメッセージ順番表示: インデックス${this.drawMessageIndex} → ${selectedMessage.dialogue_id} = "${selectedMessage.text}"`);
+                
+                // 次回用にインデックスを更新
+                this.drawMessageIndex = (this.drawMessageIndex + 1) % drawMessages.length;
+                
+                return selectedMessage.text;
             }
             // 最終フォールバック
             return 'あ、あいこね…';
@@ -1211,11 +1310,44 @@ class GameScene {
      * @returns {string|null} メッセージ
      */
     getVictorySpriteMessage(winCount) {
+        if (!this.game.csvLoader) {
+            console.warn('⚠️ CSVローダーがありません');
+            return null;
+        }
+        
         const conditionKey = `player_win_count_${winCount}`;
         console.log(`🔍 勝利メッセージ検索: scene_type=victory_sprite, trigger_condition=${conditionKey}`);
         
+        // デバッグ用：全dialoguesデータを確認
+        const allDialogues = this.game.csvLoader.getTableData('dialogues');
+        console.log(`📋 全ダイアログ数: ${allDialogues.length}`);
+        
+        // victory_sprite系のデータを抽出してデバッグ表示
+        const allVictorySprite = allDialogues.filter(d => d.scene_type === 'victory_sprite');
+        console.log(`🏆 victory_sprite系データ数: ${allVictorySprite.length}`);
+        allVictorySprite.forEach(d => {
+            console.log(`  - ${d.dialogue_id}: ${d.trigger_condition} → "${d.text}"`);
+        });
+        
         const victoryMessages = this.getDialoguesByType('victory_sprite', conditionKey);
         console.log(`🔍 見つかった勝利メッセージ数: ${victoryMessages.length}`);
+        
+        // デバッグ：検索結果の詳細表示
+        if (victoryMessages.length === 0) {
+            console.log(`🔍 検索条件の詳細確認:`);
+            console.log(`  - scene_type: "victory_sprite"`);
+            console.log(`  - trigger_condition: "${conditionKey}"`);
+            
+            // 類似データを検索して表示
+            const similarData = allDialogues.filter(d => 
+                d.scene_type && d.scene_type.includes('victory') ||
+                d.trigger_condition && d.trigger_condition.includes('player_win')
+            );
+            console.log(`🔍 類似データ (${similarData.length}件):`);
+            similarData.forEach(d => {
+                console.log(`  - ${d.dialogue_id}: scene="${d.scene_type}", trigger="${d.trigger_condition}"`);
+            });
+        }
         
         if (victoryMessages.length > 0) {
             const randomMessage = victoryMessages[Math.floor(Math.random() * victoryMessages.length)];
@@ -1224,20 +1356,54 @@ class GameScene {
         }
         
         console.warn(`⚠️ 勝利メッセージが見つかりません: ${conditionKey}`);
-        return null; // メッセージがない場合
+        return null;
+    }
+    
+    /**
+     * フォールバック勝利メッセージを取得
+     * @param {number} winCount - 勝利回数
+     * @returns {string} フォールバックメッセージ
+     */
+    getFallbackVictoryMessage(winCount) {
+        const fallbackMessages = {
+            1: 'あ、負けちゃった…でも、まだまだ！',
+            2: 'う、うー…次は絶対勝つもん！',
+            3: 'も、もう…こんなの想定外だよ…',
+            4: 'や、やばい…本気でまずいかも…',
+            5: 'そ、そんな…完全に負けちゃった…'
+        };
+        
+        const message = fallbackMessages[winCount] || fallbackMessages[1];
+        console.log(`🔄 フォールバック勝利メッセージ使用: ${winCount}勝 → "${message}"`);
+        return message;
     }
 
     /**
      * 立ち絵変更後メッセージ表示後の自動進行処理
      */
     waitForJankenVictoryMessage() {
-        console.log('🏆 waitForJankenVictoryMessage() 開始');
+        console.log('🏆 waitForJankenVictoryMessage() 開始：進めるボタン待機');
         
-        // 🚨 修正：waitForJankenは呼び出さず、自動的に次に進む
-        // 立ち絵変更後メッセージは一定時間表示して自動的に美咲のリアクションに進む
-        console.log('🏆 立ち絵変更後メッセージ表示中：3秒後に自動進行');
-        
-        // ここでは何もしない（自動的に美咲のリアクションメッセージが表示される）
+        // 🚨 強制修正：進めるボタンクリック待機に変更
+        this.waitForJanken(async () => {
+            console.log('🏆 victory_spriteメッセージ後の進めるボタンクリック');
+            
+            // intermediate_talkを表示（ラウンド2以降のみ）
+            if (this.currentRound >= 2) {
+                console.log('🔄 victory_sprite後にintermediate_talkを表示');
+                const intermediateMessage = this.getIntermediateMessage();
+                await this.animateDialogueText(intermediateMessage, 50);
+                
+                // intermediate_talk表示後も進めるボタンで待機
+                this.waitForJanken(async () => {
+                    console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                    await this.handleNextRoundDialogue();
+                });
+            } else {
+                // ラウンド1の場合は直接次のラウンドへ
+                await this.handleNextRoundDialogue();
+            }
+        });
     }
 
     /**
@@ -1469,20 +1635,8 @@ class GameScene {
                 this.animateHeartLoss(this.misakiHP, false);
             }
             
-            // 立ち絵変更後の特別なトークを表示（進めるボタン待機）
-            setTimeout(async () => {
-                const victoryMessage = this.getVictorySpriteMessage(this.playerWins);
-                console.log(`🏆 勝利メッセージ取得: playerWins=${this.playerWins}, message="${victoryMessage}"`);
-                
-                if (victoryMessage) {
-                    // 🚨 修正：表示時間を長くして、進めるボタン待機を追加
-                    await this.animateDialogueText(victoryMessage, 30); // 30ms間隔でゆっくり表示
-                    
-                    // 立ち絵変更後メッセージの後に進めるボタンで待機
-                    console.log('🏆 立ち絵変更後メッセージ表示完了：進めるボタンで待機開始');
-                    this.waitForJankenVictoryMessage();
-                }
-            }, 1500); // 立ち絵変更アニメーション完了後
+            // 🚨 修正：立ち絵変更後の処理を無効化（playResultAnimationで統一処理）
+            console.log('🏆 立ち絵変更後の処理をスキップ：playResultAnimationで統一処理');
             
         } else if (result === 'misakiWin') {
             const oldPlayerHP = this.playerHP;
@@ -1511,20 +1665,125 @@ class GameScene {
         // 従来の結果表示も併用（バックアップ）
         this.showBattleResult(result);
         
-        // 美咲のリアクションセリフをタイプライター効果で表示（クリック待機）
-        setTimeout(async () => {
-            const reactionMessage = this.getMisakiReaction(result);
-            await this.animateDialogueText(reactionMessage, 45);
+        // 🚨 修正：playerWinの場合はvictory_sprite処理で統一、それ以外はreactionトーク処理
+        if (result !== 'playerWin') {
+            // 美咲のリアクションセリフをタイプライター効果で表示（進めるボタン待機）
+            setTimeout(async () => {
+                const reactionMessage = this.getMisakiReaction(result);
+                await this.animateDialogueText(reactionMessage, 45);
+                
+                // リアクション表示完了後、進めるボタンで待機
+                console.log('🎯 reactionトーク表示完了：進めるボタン待機開始');
+                
+                // 新しいフロー：まず即座にラウンド準備処理を実行
+                console.log('🎯 ラウンド準備処理を開始');
+                this.prepareNextRoundImmediate();
+                
+                // その後、進めるボタン待機を設定（misakiWinとdrawの場合）
+                this.waitForJanken(async () => {
+                    console.log('🎯 reactionトーク後の進めるボタンクリック');
+                    
+                    // 🚨 統一処理：すべての結果でintermediate_talkを表示（ラウンド2以降）
+                    if (this.currentRound >= 2) {
+                        console.log('🔄 reactionトーク後にintermediate_talkを表示');
+                        const intermediateMessage = this.getIntermediateMessage();
+                        await this.animateDialogueText(intermediateMessage, 50);
+                        
+                        // intermediate_talk表示後も進めるボタンで待機
+                        this.waitForJanken(async () => {
+                            console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                            await this.handleNextRoundDialogue();
+                        });
+                    } else {
+                        // ラウンド1の場合は直接次のラウンドへ
+                        await this.handleNextRoundDialogue();
+                    }
+                });
+            }, 3000); // じゃんけんアニメーション完了3秒後
+        } else {
+            // playerWinの場合は、victory_sprite処理に任せる（二重処理防止）
+            console.log('🏆 playerWinのためreactionトーク処理をスキップ：victory_sprite処理で統一');
             
-            // 新しいフロー：まず即座にラウンド準備処理を実行
-            console.log('🎯 ラウンド準備処理を開始');
+            // ラウンド準備は実行する
             this.prepareNextRoundImmediate();
             
-            // その後、進めるボタン待機を設定
-            this.waitForJanken(async () => {
-                await this.handleNextRoundDialogue();
-            });
-        }, 4500); // 🚨 修正：立ち絵変更後メッセージ表示後まで待機（1.5s + 3s）
+            // 🚨 修正：playerWinの場合もreactionトークを表示してから進めるボタン待機
+            setTimeout(async () => {
+                // victory_spriteメッセージが表示される前にreactionトークを表示
+                const reactionMessage = this.getMisakiReaction(result);
+                
+                // reactionメッセージが空の場合はスキップ
+                if (reactionMessage && reactionMessage.trim() !== '') {
+                    await this.animateDialogueText(reactionMessage, 45);
+                    console.log('🏆 playerWin時のreactionトーク表示完了');
+                } else {
+                    console.log('🏆 reactionトークが空のためスキップ');
+                }
+                
+                console.log('🏆 playerWin時のreactionトーク表示完了：進めるボタン待機開始');
+                
+                // その後、進めるボタン待機を設定
+                this.waitForJanken(async () => {
+                    console.log('🏆 playerWin reactionトーク後の進めるボタンクリック');
+                    
+                    // victory_spriteメッセージを表示（プレイヤーが勝った場合のみ、勝利回数に関係なく）
+                    if (this.playerWins >= 1) {
+                        const victoryMessage = this.getVictorySpriteMessage(this.playerWins);
+                        if (victoryMessage && victoryMessage.trim() !== '') {
+                            console.log(`🏆 victory_spriteメッセージ表示: "${victoryMessage}"`);
+                            await this.animateDialogueText(victoryMessage, 30);
+                            
+                            // victory_sprite後も進めるボタンで待機
+                            this.waitForJanken(async () => {
+                                console.log('🏆 victory_sprite後の進めるボタンクリック');
+                                
+                                // intermediate_talkを表示（ラウンド2以降のみ）
+                                if (this.currentRound >= 2) {
+                                    const intermediateMessage = this.getIntermediateMessage();
+                                    await this.animateDialogueText(intermediateMessage, 50);
+                                    
+                                    // intermediate_talk表示後も進めるボタンで待機
+                                    this.waitForJanken(async () => {
+                                        console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                                        await this.handleNextRoundDialogue();
+                                    });
+                                } else {
+                                    // ラウンド1の場合は直接次のラウンドへ
+                                    await this.handleNextRoundDialogue();
+                                }
+                            });
+                        } else {
+                            console.log('⚠️ victory_spriteメッセージが見つからない - 直接intermediate_talkに進行');
+                        }
+                        
+                        // victory_spriteの有無に関わらず、intermediate_talkを処理
+                        if (this.currentRound >= 2) {
+                            const intermediateMessage = this.getIntermediateMessage();
+                            if (intermediateMessage && intermediateMessage.trim() !== '') {
+                                await this.animateDialogueText(intermediateMessage, 50);
+                                
+                                this.waitForJanken(async () => {
+                                    console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                                    await this.handleNextRoundDialogue();
+                                });
+                            } else {
+                                // intermediate_talkがない場合は直接次のラウンドへ
+                                console.log('🔄 intermediate_talkがないため直接次のラウンドへ');
+                                await this.handleNextRoundDialogue();
+                            }
+                        } else {
+                            // ラウンド1の場合は直接次のラウンドへ
+                            console.log('🔄 ラウンド1のため直接次のラウンドへ');
+                            await this.handleNextRoundDialogue();
+                        }
+                    } else {
+                        // プレイヤーの勝利がない場合は直接次のラウンドへ
+                        console.log('🔄 プレイヤー勝利なし、直接次ラウンドへ');
+                        await this.handleNextRoundDialogue();
+                    }
+                });
+            }, 3000); // じゃんけんアニメーション完了3秒後
+        }
         
         // 効果音
         if (result === 'playerWin') {
@@ -1897,17 +2156,14 @@ class GameScene {
         }
         
         if (this.currentRound <= this.maxRounds) {
-            // ラウンド2以降は中間トークを表示
-            if (this.currentRound >= 2) {
-                const intermediateMessage = this.getIntermediateMessage();
-                // 🚨 重要：awaitを削除して同期実行
-                this.animateDialogueText(intermediateMessage, 50).then(() => {
-                    console.log('🔄 intermediate_talk表示完了：進めるボタン待機準備完了');
-                });
-            } else {
-                // ラウンド1はそのまま開始
+            // 🚨 完全修正：すべての結果でintermediate_talkの自動表示を削除
+            console.log('🚨 すべての結果でintermediate_talk自動表示を削除：進めるボタン待機のみ');
+            
+            if (this.currentRound === 1) {
+                // ラウンド1のみそのまま開始
                 this.startNewRound();
             }
+            // ラウンド2以降は何もしない（reactionトーク後の進めるボタンクリック待機のみ）
         } else {
             console.log('最大ラウンドに到達');
         }
@@ -2203,17 +2459,35 @@ class GameScene {
         this.game.audioManager.playSE('se_click.mp3', 0.5);
         
         // 🚨 修正：pendingActionがあれば実行（isWaitingForJankenは不要）
-        if (this.pendingAction) {
+        if (this.pendingAction && typeof this.pendingAction === 'function') {
             console.log('🎯 pendingActionを実行します');
             const action = this.pendingAction;
             this.clearJankenWait(); // 状態をクリア
-            action();
-            console.log('✅ pendingAction実行完了');
-            return true; // 進行処理を実行したことを示す
+            try {
+                action();
+                console.log('✅ pendingAction実行完了');
+                return true; // 進行処理を実行したことを示す
+            } catch (error) {
+                console.error('❌ pendingAction実行エラー:', error);
+                return false;
+            }
         }
         
-        console.warn('⚠️ pendingActionが未設定です。falseを返します');
-        return false;
+        // pendingActionが設定されていない場合の処理を改善
+        console.log('🔍 pendingActionが設定されていません - デフォルト処理を実行');
+        
+        // デフォルト処理：じゃんけんモードに戻す
+        if (this.isWaitingForJanken) {
+            this.clearJankenWait();
+            this.switchBackToJankenButtons();
+            this.canMakeChoice = true;
+            this.isPlayingRound = false;
+            console.log('✅ デフォルト処理：じゃんけんモードに復帰');
+            return true;
+        }
+        
+        console.log('ℹ️ 処理すべき待機状態がありません');
+        return true; // エラーではないのでtrueを返す
     }
 
     /**
@@ -2318,6 +2592,8 @@ class GameScene {
             playerWins: this.playerWins,
             misakiWins: this.misakiWins,
             consecutiveDraws: this.consecutiveDraws,
+            drawMessageIndex: this.drawMessageIndex,
+            misakiWinMessageIndex: this.misakiWinMessageIndex,
             currentMisakiSprite: this.currentMisakiSprite
         };
     }
@@ -2333,6 +2609,8 @@ class GameScene {
         this.playerWins = state.playerWins || 0;
         this.misakiWins = state.misakiWins || 0;
         this.consecutiveDraws = state.consecutiveDraws || 0;
+        this.drawMessageIndex = state.drawMessageIndex || 0;
+        this.misakiWinMessageIndex = state.misakiWinMessageIndex || 0;
         
         // 立ち絵状態も復元
         this.currentMisakiSprite = state.currentMisakiSprite || '';
@@ -2402,10 +2680,39 @@ class GameScene {
         if (!this.game.csvLoader) return [];
         
         const dialogues = this.game.csvLoader.getTableData('dialogues');
-        return dialogues.filter(dialogue => 
-            dialogue.scene_type === sceneType && 
-            dialogue.trigger_condition === triggerCondition
-        );
+        
+        // デバッグログ追加
+        console.log(`🔍 getDialoguesByType 検索開始:`);
+        console.log(`  - sceneType: "${sceneType}"`);
+        console.log(`  - triggerCondition: "${triggerCondition}"`);
+        console.log(`  - 総データ数: ${dialogues.length}`);
+        
+        const results = dialogues.filter(dialogue => {
+            const sceneMatch = dialogue.scene_type === sceneType;
+            const triggerMatch = dialogue.trigger_condition === triggerCondition;
+            
+            // マッチしたデータをログに出力
+            if (sceneMatch && triggerMatch) {
+                console.log(`  ✅ マッチ: ${dialogue.dialogue_id} - "${dialogue.text}"`);
+            }
+            
+            return sceneMatch && triggerMatch;
+        });
+        
+        console.log(`🔍 検索結果: ${results.length}件`);
+        return results;
+    }
+
+    /**
+     * 特定のdialogue_idでメッセージを取得
+     * @param {string} dialogueId - 取得するdialogue_id
+     * @returns {object|null} 該当するダイアログオブジェクト
+     */
+    getDialogueById(dialogueId) {
+        if (!this.game.csvLoader) return null;
+        
+        const dialogues = this.game.csvLoader.getTableData('dialogues');
+        return dialogues.find(dialogue => dialogue.dialogue_id === dialogueId) || null;
     }
 
     /**
