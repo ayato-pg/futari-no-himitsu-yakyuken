@@ -1198,20 +1198,9 @@ class GameScene {
             }
         }
         
-        // フォールバック（victory_spriteデータを使用）
+        // プレイヤー勝利時は空文字を返す（victory_spriteメッセージのみ表示）
         if (result === 'playerWin') {
-            // victory_spriteから適切なメッセージを取得
-            // 注意：この時点ではまだupdateHPByResultが呼ばれていないので、勝利後の値（+1）を使う
-            const winCount = this.playerWins + 1;
-            console.log(`🏆 プレイヤー勝利時のメッセージ取得: 現在の勝利数=${this.playerWins} → 勝利後の勝利数=${winCount}`);
-            
-            const victoryMessage = this.getVictorySpriteMessage(winCount);
-            if (victoryMessage) {
-                return victoryMessage;
-            }
-            
-            // CSVデータが見つからない場合は空文字を返す（reactionトークを使わない）
-            console.log('⚠️ victory_spriteメッセージが見つからないため、reactionトークをスキップ');
+            console.log('🏆 プレイヤー勝利時のreactionトーク: スキップ（victory_spriteメッセージのみ表示）');
             return '';
         } else if (result === 'misakiWin') {
             // 🚨 修正：美咲の勝利回数に応じて順番にメッセージを表示
@@ -1529,29 +1518,38 @@ class GameScene {
      * @returns {string} 美咲の手
      */
     decideMisakiHand() {
-        // じゃんけんパターンデータを取得
-        const patternData = this.game.csvLoader.findData('janken_patterns', 'round', this.currentRound.toString());
-        
-        let weights = { rock: 33, scissors: 33, paper: 34 }; // デフォルト
-        
-        if (patternData) {
-            weights = {
-                rock: parseInt(patternData.rock_weight),
-                scissors: parseInt(patternData.scissors_weight),
-                paper: parseInt(patternData.paper_weight)
-            };
+        // プレイヤーの手が選択されていることを前提
+        if (!this.playerHand) {
+            // プレイヤーの手がない場合はランダム
+            const hands = ['rock', 'scissors', 'paper'];
+            return hands[Math.floor(Math.random() * hands.length)];
         }
         
-        // 重み付き抽選
-        const totalWeight = weights.rock + weights.scissors + weights.paper;
-        const random = Math.random() * totalWeight;
+        // 勝率制御: 美咲勝ち20%、あいこ20%、プレイヤー勝ち60%
+        const random = Math.random();
         
-        if (random < weights.rock) {
-            return 'rock';
-        } else if (random < weights.rock + weights.scissors) {
-            return 'scissors';
+        if (random < 0.2) {
+            // 美咲勝ち (20%) - プレイヤーに勝つ手を出す
+            const winningHands = {
+                'rock': 'paper',
+                'scissors': 'rock', 
+                'paper': 'scissors'
+            };
+            console.log(`🎲 美咲勝ち制御 (${(random * 100).toFixed(1)}%): ${this.playerHand} → ${winningHands[this.playerHand]}`);
+            return winningHands[this.playerHand];
+        } else if (random < 0.4) {
+            // あいこ (20%) - プレイヤーと同じ手を出す
+            console.log(`🎲 あいこ制御 (${(random * 100).toFixed(1)}%): ${this.playerHand} → ${this.playerHand}`);
+            return this.playerHand;
         } else {
-            return 'paper';
+            // プレイヤー勝ち (60%) - プレイヤーに負ける手を出す
+            const losingHands = {
+                'rock': 'scissors',
+                'scissors': 'paper',
+                'paper': 'rock'
+            };
+            console.log(`🎲 プレイヤー勝ち制御 (${(random * 100).toFixed(1)}%): ${this.playerHand} → ${losingHands[this.playerHand]}`);
+            return losingHands[this.playerHand];
         }
     }
 
@@ -1712,102 +1710,78 @@ class GameScene {
                 // victory_spriteメッセージが表示される前にreactionトークを表示
                 const reactionMessage = this.getMisakiReaction(result);
                 
-                // reactionメッセージが空の場合はスキップ
+                // reactionメッセージが空の場合はスキップして直接victory_spriteを表示
                 if (reactionMessage && reactionMessage.trim() !== '') {
                     await this.animateDialogueText(reactionMessage, 45);
                     console.log('🏆 playerWin時のreactionトーク表示完了');
-                } else {
-                    console.log('🏆 reactionトークが空のためスキップ');
-                }
-                
-                console.log('🏆 playerWin時のreactionトーク表示完了：進めるボタン待機開始');
-                
-                // その後、進めるボタン待機を設定
-                this.waitForJanken(async () => {
-                    console.log('🏆 playerWin reactionトーク後の進めるボタンクリック');
                     
-                    // victory_spriteメッセージを表示（プレイヤーが勝った場合のみ、勝利回数に関係なく）
-                    if (this.playerWins >= 1) {
-                        const victoryMessage = this.getVictorySpriteMessage(this.playerWins);
-                        if (victoryMessage && victoryMessage.trim() !== '') {
-                            console.log(`🏆 victory_spriteメッセージ表示: "${victoryMessage}"`);
-                            await this.animateDialogueText(victoryMessage, 30);
-                            
-                            // victory_sprite後も進めるボタンで待機
-                            this.waitForJanken(async () => {
-                                console.log('🏆 victory_sprite後の進めるボタンクリック');
-                                
-                                // intermediate_talkを表示（ラウンド2以降のみ）
-                                if (this.currentRound >= 2) {
-                                    const intermediateMessage = this.getIntermediateMessage();
-                                    await this.animateDialogueText(intermediateMessage, 50);
-                                    
-                                    // intermediate_talk表示後も進めるボタンで待機
-                                    this.waitForJanken(async () => {
-                                        console.log('🔄 intermediate_talk後の進めるボタンクリック');
-                                        await this.handleNextRoundDialogue();
-                                    });
-                                } else {
-                                    // ラウンド1の場合は直接次のラウンドへ
-                                    await this.handleNextRoundDialogue();
-                                }
-                            });
-                        } else {
-                            console.log('⚠️ victory_spriteメッセージが見つからない - 直接intermediate_talkに進行');
-                        }
+                    // reactionトーク後、進めるボタン待機を設定
+                    this.waitForJanken(async () => {
+                        console.log('🏆 playerWin reactionトーク後の進めるボタンクリック');
+                        await this.showVictorySpriteMessage();
+                    });
+                } else {
+                    console.log('🏆 reactionトークが空のため、直接victory_spriteメッセージを表示');
+                    // reactionトークがない場合は直接victory_spriteメッセージを表示
+                    await this.showVictorySpriteMessage();
+                }
+            }, 3000); // じゃんけんアニメーション完了3秒後
+        }
+    }
+
+    /**
+     * victory_spriteメッセージを表示
+     */
+    async showVictorySpriteMessage() {
+        // victory_spriteメッセージを表示（プレイヤーが勝った場合のみ、勝利回数に関係なく）
+        if (this.playerWins >= 1) {
+            const victoryMessage = this.getVictorySpriteMessage(this.playerWins);
+            if (victoryMessage && victoryMessage.trim() !== '') {
+                console.log(`🏆 victory_spriteメッセージ表示: "${victoryMessage}"`);
+                await this.animateDialogueText(victoryMessage, 30);
+                
+                // victory_sprite後も進めるボタンで待機
+                this.waitForJanken(async () => {
+                    console.log('🏆 victory_sprite後の進めるボタンクリック');
+                    
+                    // intermediate_talkを表示（ラウンド2以降のみ）
+                    if (this.currentRound >= 2) {
+                        const intermediateMessage = this.getIntermediateMessage();
+                        await this.animateDialogueText(intermediateMessage, 50);
                         
-                        // victory_spriteの有無に関わらず、intermediate_talkを処理
-                        if (this.currentRound >= 2) {
-                            const intermediateMessage = this.getIntermediateMessage();
-                            if (intermediateMessage && intermediateMessage.trim() !== '') {
-                                await this.animateDialogueText(intermediateMessage, 50);
-                                
-                                this.waitForJanken(async () => {
-                                    console.log('🔄 intermediate_talk後の進めるボタンクリック');
-                                    await this.handleNextRoundDialogue();
-                                });
-                            } else {
-                                // intermediate_talkがない場合は直接次のラウンドへ
-                                console.log('🔄 intermediate_talkがないため直接次のラウンドへ');
-                                await this.handleNextRoundDialogue();
-                            }
-                        } else {
-                            // ラウンド1の場合は直接次のラウンドへ
-                            console.log('🔄 ラウンド1のため直接次のラウンドへ');
+                        // intermediate_talk表示後も進めるボタンで待機
+                        this.waitForJanken(async () => {
+                            console.log('🔄 intermediate_talk後の進めるボタンクリック');
                             await this.handleNextRoundDialogue();
-                        }
+                        });
                     } else {
-                        // プレイヤーの勝利がない場合は直接次のラウンドへ
-                        console.log('🔄 プレイヤー勝利なし、直接次ラウンドへ');
+                        // ラウンド1の場合は直接次のラウンドへ
                         await this.handleNextRoundDialogue();
                     }
                 });
-            }, 3000); // じゃんけんアニメーション完了3秒後
-        }
-        
-        // 効果音
-        if (result === 'playerWin') {
-            this.game.audioManager.playSE('se_win.mp3', 0.8);
-        } else if (result === 'misakiWin') {
-            this.game.audioManager.playSE('se_lose.mp3', 0.8);
-        }
-        
-        // 美咲の反応アニメーション
-        if (this.misakiGameDisplay) {
-            if (result === 'playerWin') {
-                this.misakiGameDisplay.classList.add('shake');
-            } else if (result === 'misakiWin') {
-                this.misakiGameDisplay.classList.add('bounce');
+            } else {
+                console.log('⚠️ victory_spriteメッセージが見つからない - 直接intermediate_talkに進行');
+                
+                // victory_spriteメッセージがない場合でもintermediate_talkを処理
+                if (this.currentRound >= 2) {
+                    const intermediateMessage = this.getIntermediateMessage();
+                    await this.animateDialogueText(intermediateMessage, 50);
+                    
+                    this.waitForJanken(async () => {
+                        console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                        await this.handleNextRoundDialogue();
+                    });
+                } else {
+                    // ラウンド1の場合は直接次のラウンドへ
+                    console.log('🔄 ラウンド1のため直接次のラウンドへ');
+                    await this.handleNextRoundDialogue();
+                }
             }
-            
-            setTimeout(() => {
-                this.misakiGameDisplay.classList.remove('shake', 'bounce');
-            }, 1000);
+        } else {
+            // プレイヤーの勝利がない場合は直接次のラウンドへ
+            console.log('🔄 プレイヤー勝利なし、直接次ラウンドへ');
+            await this.handleNextRoundDialogue();
         }
-        
-        return new Promise((resolve) => {
-            setTimeout(resolve, 3200); // 適度な速度に調整
-        });
     }
 
     /**
