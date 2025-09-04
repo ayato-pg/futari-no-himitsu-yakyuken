@@ -1,0 +1,11 @@
+﻿talk_id,sequence_order,character,text,emotion,sprite_stage,voice_file,next_id,choice_options
+vt001,1,misaki,や、野球拳になった途端、強すぎじゃない...?,surprised,6,v_victory_01.mp3,vt002,
+vt002,2,misaki,まさか本当に負けちゃうなんて...,embarrassed,6,v_victory_02.mp3,vt003,
+vt003,3,misaki,これで約束を守らないといけないのね...,resigned,6,v_victory_03.mp3,vt004,
+vt004,4,misaki,何でも言うこと聞くって言っちゃったし...,nervous,6,v_victory_04.mp3,vt005,
+vt005,5,misaki,でも、そんなにひどいことは言わないでよね?,hopeful,6,v_victory_05.mp3,vt006,
+vt006,6,misaki,あなたって、意外とじゃんけんが上手なのね,impressed,6,v_victory_06.mp3,vt007,
+vt007,7,misaki,普段はあんなに弱いのに...,teasing,6,v_victory_07.mp3,vt008,
+vt008,8,misaki,まあいいわ。約束は約束だから,accepting,6,v_victory_08.mp3,vt009,
+vt009,9,misaki,それで...何をお願いするの?,curious,6,v_victory_09.mp3,vt010,
+vt010,10,misaki,あまり無茶は言わないでよ?,warning,6,v_victory_10.mp3,,

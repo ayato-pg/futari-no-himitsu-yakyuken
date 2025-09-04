@@ -28,6 +28,8 @@ class GameController {
         this.gameState = {
             currentPhase: 'title', // title, dialogue, game, ending
             isGameActive: false,
+            isEndingMode: false, // エンディングトーク画面モード
+            canReturnToGame: true, // ゲームに戻ることができるか
             gameData: {}
         };
         
@@ -367,6 +369,36 @@ class GameController {
     }
 
     /**
+     * トーク画面を表示（ゲーム勝利後）
+     * @param {string} sceneType - シーンタイプ (デフォルトは'victory')
+     */
+    async showDialogue(sceneType = 'victory') {
+        console.log(`トーク画面に遷移: ${sceneType}`);
+        
+        // victoryシーンの場合はエンディングモードを設定
+        if (sceneType === 'victory') {
+            console.log('🎉 エンディングトーク画面モードを有効化');
+            this.gameState.isEndingMode = true;
+            this.gameState.canReturnToGame = false;
+        }
+        
+        this.hideAllScenes();
+        this.currentScene = 'dialogue';
+        this.gameState.currentPhase = 'dialogue';
+        this.gameState.isGameActive = false;
+        
+        // 隠しクリック領域を更新
+        this.clickAreaSystem.deactivateAllAreas();
+        
+        // トークシーンを表示（美咲の立ち絵は現状のstage6を維持）
+        // livingシーンを使用してゲーム開始前と同じトーク画面に戻る
+        await this.scenes.dialogue.show(sceneType);
+        
+        // 会話シーンの隠し領域を有効化
+        this.clickAreaSystem.activateAreasForScene('dialogue');
+    }
+
+    /**
      * エンディングを表示
      * @param {string} endingType - エンディングタイプ
      */
@@ -411,6 +443,8 @@ class GameController {
         this.gameState = {
             currentPhase: 'dialogue',
             isGameActive: true,
+            isEndingMode: false,
+            canReturnToGame: true,
             gameData: {
                 currentRound: 1,
                 playerHP: 5,

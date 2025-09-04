@@ -11,6 +11,7 @@ class CSVLoader {
             'scenes.csv',
             'characters.csv',
             'dialogues.csv',
+            'victory_talk.csv',
             'misaki_costumes.csv',
             'endings.csv',
             'ui_elements.csv',
@@ -294,7 +295,19 @@ class CSVLoader {
      * @returns {Array} データ配列
      */
     getTableData(tableName) {
-        return this.csvData[tableName] || [];
+        console.log(`📊 getTableData('${tableName}')呼び出し`);
+        const data = this.csvData[tableName] || [];
+        console.log(`🔍 取得したデータ件数: ${data.length}`);
+        console.log(`📂 利用可能なテーブル: ${Object.keys(this.csvData).join(', ')}`);
+        
+        if (tableName === 'victory_talk' && data.length > 0) {
+            console.log('🎯 victory_talkデータの詳細:');
+            data.forEach((item, index) => {
+                console.log(`  [${index}] ${item.talk_id}: "${item.text?.substring(0, 20)}..." (sequence: ${item.sequence_order})`);
+            });
+        }
+        
+        return data;
     }
 
     /**

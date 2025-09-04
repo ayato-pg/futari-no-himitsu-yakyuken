@@ -163,12 +163,37 @@ class DialogueScene {
         
         console.log(`会話シーン表示: ${sceneId}`);
         
+        // victoryシーンの場合、特別な処理を行う
+        if (sceneId === 'victory') {
+            console.log('🏆 プレイヤー勝利後のトークシーン開始（美咲stage6を維持）');
+            // 美咲の立ち絵をstage6に設定
+            this.currentVictoryMode = true;
+            
+            // 専用CSVから勝利後トークを読み込み（エラー耐性版）
+            try {
+                await this.loadVictoryDialogueData();
+            } catch (error) {
+                console.error('🚨 loadVictoryDialogueData()でエラー発生:', error);
+                console.log('🛡️ 緊急フォールバック実行');
+                this.dialogueQueue = this.getFallbackVictoryData();
+            }
+            
+            // 最終安全確認
+            if (!this.dialogueQueue || this.dialogueQueue.length === 0) {
+                console.error('🆘 【最終緊急処理】dialogueQueueが空のため強制設定');
+                this.dialogueQueue = this.getFallbackVictoryData();
+            }
+            
+            console.log(`🎯 【victory確定】dialogueQueue最終確認: ${this.dialogueQueue.length}件`);
+        }
         
-        // 会話データを設定
-        if (dialogues) {
-            this.dialogueQueue = dialogues;
-        } else {
-            this.loadDialogueData(sceneId);
+        // 会話データを設定（victoryの場合は既に設定済み）
+        if (sceneId !== 'victory') {
+            if (dialogues) {
+                this.dialogueQueue = dialogues;
+            } else {
+                this.loadDialogueData(sceneId);
+            }
         }
         
         // 会話シーン専用BGMを再生
@@ -518,6 +543,176 @@ class DialogueScene {
     }
 
     /**
+     * 5回勝利後の専用トークデータを読み込み（堅牢版）
+     */
+    async loadVictoryDialogueData() {
+        console.log('🏆 【緊急確実版】勝利後トークデータを読み込み中...');
+        
+        // 🚨 最優先：フォールバックデータを先に準備
+        const fallbackData = this.getFallbackVictoryData();
+        console.log(`🛡️ フォールバックデータ準備完了: ${fallbackData.length}件`);
+        
+        // CSVローダーが存在しない場合は即座にフォールバック
+        if (!this.game.csvLoader) {
+            console.warn('⚠️ CSVローダーがありません - フォールバック使用');
+            this.dialogueQueue = fallbackData;
+            console.log(`✅ フォールバックデータ設定完了: ${this.dialogueQueue.length}件`);
+            return;
+        }
+        
+        // CSV読み込みを試行（失敗してもフォールバックで継続）
+        let csvSuccess = false;
+        try {
+            console.log('🔄 victory_talk.csvを試行読み込み中...');
+            await this.game.csvLoader.loadCSV('victory_talk.csv');
+            
+            // CSVデータ取得を試行
+            const victoryTalks = this.game.csvLoader.getTableData('victory_talk');
+            
+            if (victoryTalks && victoryTalks.length >= 10) {
+                // CSV読み込み成功
+                console.log('✅ CSV読み込み成功！CSVデータを使用');
+                
+                // sequence_order順にソート
+                victoryTalks.sort((a, b) => parseInt(a.sequence_order) - parseInt(b.sequence_order));
+                
+                // DialogueSceneの形式に変換
+                this.dialogueQueue = victoryTalks.map(talk => ({
+                    dialogue_id: talk.talk_id,
+                    scene_id: 'victory',
+                    character_id: talk.character,
+                    text: talk.text,
+                    emotion: talk.emotion,
+                    voice_file: talk.voice_file || '',
+                    next_id: talk.next_id || ''
+                }));
+                
+                csvSuccess = true;
+                console.log(`✅ CSV勝利後トークデータ使用: ${this.dialogueQueue.length}件`);
+            }
+        } catch (error) {
+            console.error('❌ CSV読み込み失敗:', error);
+        }
+        
+        // CSV失敗時は確実にフォールバックを使用
+        if (!csvSuccess) {
+            console.warn('🚨 CSV読み込み失敗 - 確実フォールバック実行');
+            this.dialogueQueue = fallbackData;
+        }
+        
+        // 最終確認：dialogueQueueが確実に設定されているか
+        if (!this.dialogueQueue || this.dialogueQueue.length === 0) {
+            console.error('🆘 dialogueQueueが空！緊急フォールバック実行');
+            this.dialogueQueue = fallbackData;
+        }
+        
+        console.log(`🎯 【最終確認】dialogueQueue設定完了: ${this.dialogueQueue.length}件`);
+        this.dialogueQueue.forEach((d, i) => {
+            console.log(`  [${i}] ${d.dialogue_id}: "${d.text.substring(0, 25)}..."`);
+        });
+    }
+
+    /**
+     * 勝利後トーク用の完全フォールバックデータ（victory_talk.csv完全版）
+     * @returns {Array} フォールバックダイアログデータ
+     */
+    getFallbackVictoryData() {
+        console.log('🚨 【緊急フォールバック】victory_talk完全データを使用');
+        return [
+            {
+                dialogue_id: 'vt001',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'や、野球拳になった途端、強すぎじゃない...?',
+                emotion: 'surprised',
+                voice_file: 'v_victory_01.mp3',
+                next_id: 'vt002'
+            },
+            {
+                dialogue_id: 'vt002',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'まさか本当に負けちゃうなんて...',
+                emotion: 'embarrassed',
+                voice_file: 'v_victory_02.mp3',
+                next_id: 'vt003'
+            },
+            {
+                dialogue_id: 'vt003',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'これで約束を守らないといけないのね...',
+                emotion: 'resigned',
+                voice_file: 'v_victory_03.mp3',
+                next_id: 'vt004'
+            },
+            {
+                dialogue_id: 'vt004',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: '何でも言うこと聞くって言っちゃったし...',
+                emotion: 'nervous',
+                voice_file: 'v_victory_04.mp3',
+                next_id: 'vt005'
+            },
+            {
+                dialogue_id: 'vt005',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'でも、そんなにひどいことは言わないでよね?',
+                emotion: 'hopeful',
+                voice_file: 'v_victory_05.mp3',
+                next_id: 'vt006'
+            },
+            {
+                dialogue_id: 'vt006',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'あなたって、意外とじゃんけんが上手なのね',
+                emotion: 'impressed',
+                voice_file: 'v_victory_06.mp3',
+                next_id: 'vt007'
+            },
+            {
+                dialogue_id: 'vt007',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: '普段はあんなに弱いのに...',
+                emotion: 'teasing',
+                voice_file: 'v_victory_07.mp3',
+                next_id: 'vt008'
+            },
+            {
+                dialogue_id: 'vt008',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'まあいいわ。約束は約束だから',
+                emotion: 'accepting',
+                voice_file: 'v_victory_08.mp3',
+                next_id: 'vt009'
+            },
+            {
+                dialogue_id: 'vt009',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'それで...何をお願いするの?',
+                emotion: 'curious',
+                voice_file: 'v_victory_09.mp3',
+                next_id: 'vt010'
+            },
+            {
+                dialogue_id: 'vt010',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'あまり無茶は言わないでよ?',
+                emotion: 'warning',
+                voice_file: 'v_victory_10.mp3',
+                next_id: ''
+            }
+        ];
+    }
+
+    /**
      * 会話データを読み込み（修正版：正しいデータを直接使用）
      * @param {string} sceneId - シーンID
      */
@@ -604,6 +799,9 @@ class DialogueScene {
                 { dialogue_id: 'd011', scene_id: 'game', character_id: 'misaki', text: 'あら、私の勝ちね。約束は約束よ', emotion: 'win_confident', voice_file: 'v_008.mp3', next_id: '' },
                 { dialogue_id: 'd012', scene_id: 'game', character_id: 'misaki', text: 'きゃっ...まさか負けるなんて', emotion: 'lose_surprised', voice_file: 'v_009.mp3', next_id: '' }
             ],
+            'victory': [
+                { dialogue_id: 'victory_start', scene_id: 'victory', character_id: 'misaki', text: 'や、野球拳になった途端、強すぎじゃない...?', emotion: 'surprised', voice_file: '', next_id: '' }
+            ],
             'true_end': [
                 { dialogue_id: 'd015', scene_id: 'true_end', character_id: 'misaki', text: 'あなたの勝ちよ...大人になったのね', emotion: 'defeated_loving', voice_file: 'v_012.mp3', next_id: '' }
             ],
@@ -618,19 +816,50 @@ class DialogueScene {
     }
 
     /**
-     * 次の会話を表示
+     * 次の会話を表示（安全版）
      */
     showNextDialogue() {
+        console.log(`🎯 showNextDialogue() 呼び出し - currentIndex:${this.currentDialogueIndex}, queueLength:${this.dialogueQueue.length}`);
+        
+        // 🚨 緊急安全確認：victoryモードでdialogueQueueが空の場合
+        if (this.currentVictoryMode && (!this.dialogueQueue || this.dialogueQueue.length === 0)) {
+            console.error('🆘 【緊急】victoryモードでdialogueQueueが空！フォールバック実行');
+            this.dialogueQueue = this.getFallbackVictoryData();
+            this.currentDialogueIndex = 0;
+            console.log(`🛡️ 緊急フォールバック完了: ${this.dialogueQueue.length}件`);
+        }
+        
         if (this.currentDialogueIndex >= this.dialogueQueue.length) {
             // 会話終了
+            console.log('🎬 会話終了 - onDialogueComplete()を呼び出し');
             this.playDialogueSE('dialogue_end');
             this.onDialogueComplete();
             return;
         }
         
         const dialogue = this.dialogueQueue[this.currentDialogueIndex];
+        console.log(`📢 次の会話表示 - dialogue_id:${dialogue ? dialogue.dialogue_id : 'undefined'}`);
+        console.log(`📝 テキスト内容: "${dialogue ? dialogue.text.substring(0, 30) : 'undefined'}..."`);
+        
+        // ダイアログデータが存在しない場合の緊急処理
+        if (!dialogue) {
+            console.error('🚨 dialogue データが null または undefined');
+            if (this.currentVictoryMode) {
+                console.log('🛡️ victoryモード用緊急フォールバック再実行');
+                this.dialogueQueue = this.getFallbackVictoryData();
+                this.currentDialogueIndex = 0;
+                const emergencyDialogue = this.dialogueQueue[0];
+                if (emergencyDialogue) {
+                    this.displayDialogue(emergencyDialogue);
+                    this.currentDialogueIndex++;
+                }
+            }
+            return;
+        }
+        
         this.displayDialogue(dialogue);
         this.currentDialogueIndex++;
+        console.log(`⬆️ インデックス更新完了 - 新しいIndex:${this.currentDialogueIndex}`);
     }
 
     /**
@@ -674,7 +903,12 @@ class DialogueScene {
         }
         
         // 立ち絵制御
-        if (dialogue.sprite_file && dialogue.sprite_file.trim() !== '') {
+        if (this.currentVictoryMode) {
+            // プレイヤー勝利後は常にstage6（完全敗北状態）の立ち絵を使用
+            const stage6Sprite = 'misaki_game_stage6.png';
+            console.log('🏆 勝利モード: stage6立ち絵を強制表示');
+            this.changeMisakiSpriteDirectly(stage6Sprite);
+        } else if (dialogue.sprite_file && dialogue.sprite_file.trim() !== '') {
             const spriteName = dialogue.sprite_file.trim();
             this.lastSpecifiedSprite = spriteName;
             this.changeMisakiSpriteDirectly(spriteName);
@@ -776,12 +1010,16 @@ class DialogueScene {
      * 会話ボックスクリック時の処理
      */
     onDialogueClick() {
+        console.log(`🖱️ 会話ボックスクリック - isTextAnimating:${this.isTextAnimating}, currentIndex:${this.currentDialogueIndex}`);
+        
         if (this.isTextAnimating) {
             // テキストアニメーション中なら完了
+            console.log('⚡ テキストアニメーション中 - 即座に完了');
             this.playDialogueSE('text_complete');
             this.completeTextAnimation();
         } else {
             // 次の会話へ
+            console.log('➡️ 次の会話に進む');
             this.playDialogueSE('text_advance');
             this.showNextDialogue();
         }
@@ -1056,9 +1294,137 @@ class DialogueScene {
     onDialogueComplete() {
         console.log('会話が完了しました');
         
-        // ゲーム画面へ遷移
+        // エンディングモードの場合はゲームに戻らない
+        if (this.game.gameState.isEndingMode) {
+            console.log('🎉 エンディングトーク完了：ゲーム終了');
+            this.showEndingOptions();
+            return;
+        }
+        
+        // 通常モード：ゲーム画面へ遷移
         this.hide();
         this.game.startBattlePhase();
+    }
+
+    /**
+     * エンディング選択肢を表示
+     */
+    showEndingOptions() {
+        console.log('🎉 エンディング選択肢を表示');
+        
+        // エンディング用のボタンを表示
+        const endingContainer = document.createElement('div');
+        endingContainer.id = 'ending-options';
+        endingContainer.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            z-index: 1000;
+        `;
+        
+        const title = document.createElement('h2');
+        title.textContent = 'ゲーム終了';
+        title.style.cssText = 'margin-bottom: 20px; color: #FF6B7D;';
+        
+        const message = document.createElement('p');
+        message.textContent = 'お疲れさまでした！';
+        message.style.cssText = 'margin-bottom: 30px; font-size: 18px;';
+        
+        const restartButton = document.createElement('button');
+        restartButton.textContent = 'もう一度プレイ';
+        restartButton.style.cssText = `
+            padding: 12px 24px;
+            margin: 0 10px;
+            background: #FF6B7D;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        `;
+        restartButton.onmouseover = () => restartButton.style.background = '#ff5a6d';
+        restartButton.onmouseout = () => restartButton.style.background = '#FF6B7D';
+        restartButton.onclick = () => this.restartGame();
+        
+        const titleButton = document.createElement('button');
+        titleButton.textContent = 'タイトルに戻る';
+        titleButton.style.cssText = `
+            padding: 12px 24px;
+            margin: 0 10px;
+            background: #7ED6C4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        `;
+        titleButton.onmouseover = () => titleButton.style.background = '#6ec4b4';
+        titleButton.onmouseout = () => titleButton.style.background = '#7ED6C4';
+        titleButton.onclick = () => this.returnToTitle();
+        
+        endingContainer.appendChild(title);
+        endingContainer.appendChild(message);
+        endingContainer.appendChild(restartButton);
+        endingContainer.appendChild(titleButton);
+        
+        document.body.appendChild(endingContainer);
+        
+        // 音響効果
+        this.playDialogueSE('dialogue_end');
+    }
+
+    /**
+     * ゲーム再スタート
+     */
+    restartGame() {
+        console.log('🔄 ゲームを再スタート');
+        
+        // エンディング選択肢を削除
+        const endingOptions = document.getElementById('ending-options');
+        if (endingOptions) {
+            endingOptions.remove();
+        }
+        
+        // ゲーム状態をリセット
+        this.game.gameState.isEndingMode = false;
+        this.game.gameState.canReturnToGame = true;
+        this.game.gameState.isGameActive = true;
+        
+        // ゲームシーンをリセットして再開
+        this.hide();
+        this.game.scenes.game.resetGame();
+        this.game.showTitle();
+    }
+
+    /**
+     * タイトルに戻る
+     */
+    returnToTitle() {
+        console.log('🏠 タイトルに戻る');
+        
+        // エンディング選択肢を削除
+        const endingOptions = document.getElementById('ending-options');
+        if (endingOptions) {
+            endingOptions.remove();
+        }
+        
+        // ゲーム状態をリセット
+        this.game.gameState.isEndingMode = false;
+        this.game.gameState.canReturnToGame = true;
+        this.game.gameState.isGameActive = false;
+        
+        // タイトル画面に戻る
+        this.hide();
+        this.game.showTitle();
     }
 
     /**

@@ -837,6 +837,7 @@ class GameScene {
      * ダイアログテキストを更新
      * @param {string} text - 表示するテキスト
      */
+
     /**
      * タイプライター効果でダイアログテキストを表示
      * @param {string} text - 表示するテキスト
@@ -1140,6 +1141,12 @@ class GameScene {
         const allDialogues = this.game.csvLoader.getTableData('dialogues');
         console.log(`📋 全ダイアログ数: ${allDialogues.length}`);
         
+        // CSVの先頭データを確認
+        console.log('📋 CSV先頭5件のデータ:');
+        allDialogues.slice(0, 5).forEach((d, i) => {
+            console.log(`  ${i}: ${d.dialogue_id} | ${d.scene_type} | ${d.trigger_condition} | "${d.text}"`);
+        });
+        
         // intermediate_talk系のデータのみ抽出してデバッグ表示
         const allIntermediate = allDialogues.filter(d => d.scene_type === 'intermediate_talk');
         console.log(`🎭 intermediate_talk系データ数: ${allIntermediate.length}`);
@@ -1147,8 +1154,26 @@ class GameScene {
             console.log(`  - ${d.dialogue_id}: ${d.trigger_condition} → "${d.text}"`);
         });
         
+        // CSVの最後の5件も確認
+        console.log('📋 CSV最後5件のデータ:');
+        const lastItems = allDialogues.slice(-5);
+        lastItems.forEach((d, i) => {
+            console.log(`  ${lastItems.length - 5 + i}: ${d.dialogue_id} | ${d.scene_type} | ${d.trigger_condition} | "${d.text}"`);
+        });
+        
         const intermediateMessages = this.getDialoguesByType('intermediate_talk', roundKey);
         console.log(`🎯 取得された中間トーク数: ${intermediateMessages.length}`);
+        
+        // getDialoguesByTypeの動作確認のため、手動でフィルタリングしてみる
+        console.log('🔍 手動フィルタリングテスト:');
+        const manualFiltered = allDialogues.filter(dialogue => {
+            console.log(`  チェック中: ${dialogue.dialogue_id} | scene_type="${dialogue.scene_type}" | trigger="${dialogue.trigger_condition}"`);
+            return dialogue.scene_type === 'intermediate_talk' && dialogue.trigger_condition === roundKey;
+        });
+        console.log(`🔍 手動フィルタリング結果: ${manualFiltered.length}件`);
+        manualFiltered.forEach(d => {
+            console.log(`  → ${d.dialogue_id}: "${d.text}"`);
+        });
         
         if (intermediateMessages.length > 0) {
             const selectedMessage = intermediateMessages[0].text;
@@ -1156,22 +1181,36 @@ class GameScene {
             return selectedMessage;
         }
         
-        // フォールバック（CSVにない場合）
+        // 手動フィルタリングの結果を使用
+        if (manualFiltered.length > 0) {
+            const selectedMessage = manualFiltered[0].text;
+            console.log(`✅ 手動フィルタリングから中間トーク取得: "${selectedMessage}"`);
+            return selectedMessage;
+        }
+        
+        // フォールバック：ラウンド別のデフォルトメッセージ
         const fallbackMessages = {
-            2: 'じゃあ次いくよ？',
-            3: '準備はいい？',
-            4: 'こ、今度は本気よ！',
-            5: 'い、いくよ…！',
-            6: 'え、えーと…始めるね…',
-            7: 'そ、そろそろ本気出さなきゃ…',
-            8: 'が、頑張らなきゃ…！',
-            9: '油断しちゃダメだよ？'
+            'round_2': 'じゃあ次いくよ？',
+            'round_3': '準備はいい？',
+            'round_4': '本気でいくよー！',
+            'round_5': 'い、いくよ…！',
+            'round_6': 'え、えーと…始めるね…',
+            'round_7': 'そ、そろそろ本気出さなきゃ…',
+            'round_8': 'が、頑張らなきゃ…！',
+            'round_9': '油断しちゃダメだよ？'
         };
         
-        const fallbackMessage = fallbackMessages[this.currentRound] || 'じゃあいくよ？';
-        console.log(`⚠️ フォールバック中間トーク使用: "${fallbackMessage}"`);
-        return fallbackMessage;
+        const fallbackMessage = fallbackMessages[roundKey];
+        if (fallbackMessage) {
+            console.log(`⚠️ フォールバックメッセージ使用: "${fallbackMessage}"`);
+            return fallbackMessage;
+        }
+        
+        // CSVに登録されていない場合は中間トークを表示しない
+        console.log(`⚠️ CSVに中間トークが見つからないためスキップ: round_${this.currentRound}`);
+        return '';
     }
+
 
     /**
      * 美咲のリアクションメッセージを取得（CSVから）
@@ -1293,6 +1332,7 @@ class GameScene {
         }
     }
 
+
     /**
      * 勝利時の立ち絵変更後メッセージを取得
      * @param {number} winCount - 勝利回数
@@ -1381,13 +1421,19 @@ class GameScene {
             if (this.currentRound >= 2) {
                 console.log('🔄 victory_sprite後にintermediate_talkを表示');
                 const intermediateMessage = this.getIntermediateMessage();
-                await this.animateDialogueText(intermediateMessage, 50);
                 
-                // intermediate_talk表示後も進めるボタンで待機
-                this.waitForJanken(async () => {
-                    console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                if (intermediateMessage && intermediateMessage.trim() !== '') {
+                    await this.animateDialogueText(intermediateMessage, 50);
+                    
+                    // intermediate_talk表示後も進めるボタンで待機
+                    this.waitForJanken(async () => {
+                        console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                        await this.handleNextRoundDialogue();
+                    });
+                } else {
+                    console.log('🔄 intermediate_talkが空のため直接次のラウンドへ');
                     await this.handleNextRoundDialogue();
-                });
+                }
             } else {
                 // ラウンド1の場合は直接次のラウンドへ
                 await this.handleNextRoundDialogue();
@@ -1582,8 +1628,10 @@ class GameScene {
             await this.game.costumeSystem.updateCostumeByHP(this.misakiHP, this.misakiGameDisplay);
         }
         
-        // ゲーム終了判定
-        if (this.checkGameEnd()) {
+        // ゲーム終了判定（5勝した場合はここで処理終了）
+        if (this.playerWins >= 5 || this.misakiWins >= 5) {
+            console.log('🏆 5勝達成によりゲーム終了処理へ');
+            this.checkGameEnd();
             return;
         }
         
@@ -1663,6 +1711,9 @@ class GameScene {
         // 従来の結果表示も併用（バックアップ）
         this.showBattleResult(result);
         
+        // 5勝チェックはprocessRoundResultで実行済みのため、ここでは削除
+        // checkGameEnd()で既に処理されているはず
+        
         // 🚨 修正：playerWinの場合はvictory_sprite処理で統一、それ以外はreactionトーク処理
         if (result !== 'playerWin') {
             // 美咲のリアクションセリフをタイプライター効果で表示（進めるボタン待機）
@@ -1685,13 +1736,19 @@ class GameScene {
                     if (this.currentRound >= 2) {
                         console.log('🔄 reactionトーク後にintermediate_talkを表示');
                         const intermediateMessage = this.getIntermediateMessage();
-                        await this.animateDialogueText(intermediateMessage, 50);
                         
-                        // intermediate_talk表示後も進めるボタンで待機
-                        this.waitForJanken(async () => {
-                            console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                        if (intermediateMessage && intermediateMessage.trim() !== '') {
+                            await this.animateDialogueText(intermediateMessage, 50);
+                            
+                            // intermediate_talk表示後も進めるボタンで待機
+                            this.waitForJanken(async () => {
+                                console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                                await this.handleNextRoundDialogue();
+                            });
+                        } else {
+                            console.log('🔄 intermediate_talkが空のため直接次のラウンドへ');
                             await this.handleNextRoundDialogue();
-                        });
+                        }
                     } else {
                         // ラウンド1の場合は直接次のラウンドへ
                         await this.handleNextRoundDialogue();
@@ -1704,6 +1761,8 @@ class GameScene {
             
             // ラウンド準備は実行する
             this.prepareNextRoundImmediate();
+            
+            // 🚨 修正：5勝達成時は通常のvictory_sprite処理を行う（ゆっくり表示）
             
             // 🚨 修正：playerWinの場合もreactionトークを表示してから進めるボタン待機
             setTimeout(async () => {
@@ -1733,12 +1792,34 @@ class GameScene {
      * victory_spriteメッセージを表示
      */
     async showVictorySpriteMessage() {
+        
         // victory_spriteメッセージを表示（プレイヤーが勝った場合のみ、勝利回数に関係なく）
         if (this.playerWins >= 1) {
             const victoryMessage = this.getVictorySpriteMessage(this.playerWins);
             if (victoryMessage && victoryMessage.trim() !== '') {
                 console.log(`🏆 victory_spriteメッセージ表示: "${victoryMessage}"`);
-                await this.animateDialogueText(victoryMessage, 30);
+                // 5勝時はよりゆっくり表示
+                const animationSpeed = this.playerWins >= 5 ? 50 : 30;
+                await this.animateDialogueText(victoryMessage, animationSpeed);
+                
+                // 🚨 修正：5勝達成時は進むボタンでエンディングトークに遷移
+                if (this.playerWins >= 5) {
+                    console.log('🏆 5勝達成：進むボタンでエンディングトークへ遷移');
+                    this.waitForJanken(async () => {
+                        console.log('🏆 5勝達成後の進むボタンクリック - エンディングトークへ遷移');
+                        
+                        // ゲーム状態をクリア
+                        this.isPlayingRound = false;
+                        this.canMakeChoice = false;
+                        
+                        // ゲームシーンを隠す
+                        this.hide();
+                        
+                        // エンディングトークに遷移
+                        this.game.showDialogue('victory');
+                    });
+                    return; // 通常の次ラウンド処理をスキップ
+                }
                 
                 // victory_sprite後も進めるボタンで待機
                 this.waitForJanken(async () => {
@@ -1747,13 +1828,19 @@ class GameScene {
                     // intermediate_talkを表示（ラウンド2以降のみ）
                     if (this.currentRound >= 2) {
                         const intermediateMessage = this.getIntermediateMessage();
-                        await this.animateDialogueText(intermediateMessage, 50);
                         
-                        // intermediate_talk表示後も進めるボタンで待機
-                        this.waitForJanken(async () => {
-                            console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                        if (intermediateMessage && intermediateMessage.trim() !== '') {
+                            await this.animateDialogueText(intermediateMessage, 50);
+                            
+                            // intermediate_talk表示後も進めるボタンで待機
+                            this.waitForJanken(async () => {
+                                console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                                await this.handleNextRoundDialogue();
+                            });
+                        } else {
+                            console.log('🔄 intermediate_talkが空のため直接次のラウンドへ');
                             await this.handleNextRoundDialogue();
-                        });
+                        }
                     } else {
                         // ラウンド1の場合は直接次のラウンドへ
                         await this.handleNextRoundDialogue();
@@ -1765,12 +1852,18 @@ class GameScene {
                 // victory_spriteメッセージがない場合でもintermediate_talkを処理
                 if (this.currentRound >= 2) {
                     const intermediateMessage = this.getIntermediateMessage();
-                    await this.animateDialogueText(intermediateMessage, 50);
                     
-                    this.waitForJanken(async () => {
-                        console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                    if (intermediateMessage && intermediateMessage.trim() !== '') {
+                        await this.animateDialogueText(intermediateMessage, 50);
+                        
+                        this.waitForJanken(async () => {
+                            console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                            await this.handleNextRoundDialogue();
+                        });
+                    } else {
+                        console.log('🔄 intermediate_talkが空のため直接次のラウンドへ');
                         await this.handleNextRoundDialogue();
-                    });
+                    }
                 } else {
                     // ラウンド1の場合は直接次のラウンドへ
                     console.log('🔄 ラウンド1のため直接次のラウンドへ');
@@ -2092,9 +2185,9 @@ class GameScene {
      * @returns {boolean} ゲーム終了かどうか
      */
     checkGameEnd() {
-        // 5勝先取でTRUE END
+        // 5勝先取でトーク画面に遷移
         if (this.playerWins >= 5) {
-            this.endGame('true_end');
+            this.handlePlayerVictory();
             return true;
         }
         
@@ -2105,6 +2198,23 @@ class GameScene {
         }
         
         return false;
+    }
+
+    /**
+     * プレイヤー最終勝利時の処理
+     */
+    async handlePlayerVictory() {
+        console.log('🏆 プレイヤー最終勝利！進むボタンでエンディングトークへ');
+        
+        this.canMakeChoice = false;
+        this.isPlayingRound = false;
+        
+        // 既存のwaitForJankenをクリア
+        this.pendingJankenAction = null;
+        this.isWaitingForJanken = false;
+        
+        // 自動遷移は削除：victory_spriteメッセージ表示後に進むボタンでエンディングトークへ
+        console.log('🏆 5勝達成：victory_spriteメッセージ後、進むボタンでエンディングトークに遷移');
     }
 
     /**
