@@ -41,7 +41,10 @@
                         <button class="game-btn" id="btn-howtoplay">遊び方</button>
                         <button class="game-btn" id="btn-gallery" disabled>ギャラリー</button>
                         <button class="game-btn" id="btn-settings">設定</button>
-                        <button class="game-btn dev-btn" id="btn-csv-reload" style="background: #ff6b7d; font-size: 0.9em; display: block;">CSV更新</button>
+                        <button class="game-btn dev-btn" id="btn-csv-reload" style="background: #ff6b7d !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important;">CSV更新</button>
+                        <button class="game-btn dev-btn" id="btn-bad-end-editor" style="background: #9B59B6 !important; color: white !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important; margin: 10px 0 !important; padding: 15px 30px !important; border: none !important; border-radius: 25px !important; cursor: pointer !important; font-weight: bold !important;">BAD END編集</button>
+                        <button class="game-btn dev-btn" id="btn-show-bad-end" style="background: #E74C3C !important; color: white !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important; margin: 10px 0 !important; padding: 15px 30px !important; border: none !important; border-radius: 25px !important; cursor: pointer !important; font-weight: bold !important;">BAD END表示</button>
+                        <button class="game-btn dev-btn" id="btn-clear-cache" style="background: #F39C12 !important; color: white !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important; margin: 10px 0 !important; padding: 15px 30px !important; border: none !important; border-radius: 25px !important; cursor: pointer !important; font-weight: bold !important;">キャッシュクリア</button>
                     </div>
                 </div>
             </div>
@@ -212,6 +215,9 @@
             <button class="return-to-title-btn" id="ending-return-btn">タイトルへ戻る</button>
             <div class="ending-content">
                 <div class="ending-title" id="ending-title"></div>
+                <div class="ending-character">
+                    <img id="ending-character-sprite" src="" alt="立ち絵" style="display: none;">
+                </div>
                 <div class="ending-cg">
                     <img id="ending-image" src="" alt="エンディング">
                 </div>
@@ -219,6 +225,64 @@
                 <div class="ending-controls">
                     <button class="game-btn" id="btn-title-return">タイトルに戻る</button>
                     <button class="game-btn" id="btn-replay">もう一度プレイ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BAD END編集画面 -->
+        <div id="bad-end-editor-screen" class="screen" style="z-index: 9999;">
+            <div class="background" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+            <button class="return-to-title-btn" id="editor-return-btn" style="position: absolute; top: 20px; right: 20px; z-index: 10000;">タイトルへ戻る</button>
+            <div class="editor-content" style="padding: 20px; overflow-y: auto; height: 100vh; box-sizing: border-box;">
+                <h2 style="color: white; text-align: center; margin-bottom: 30px; font-size: 2em;">BAD END テキスト編集</h2>
+                
+                <div class="editor-form" style="background: rgba(255,255,255,0.95); padding: 30px; border-radius: 10px; max-width: 800px; margin: 0 auto;">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">タイトルテキスト:</label>
+                        <input type="text" id="bad-end-title" style="width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">冒頭テキスト:</label>
+                        <textarea id="bad-end-opening" style="width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px; min-height: 60px;"></textarea>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">美咲のリアクション:</label>
+                        <textarea id="bad-end-reaction" style="width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px; min-height: 60px;"></textarea>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">美咲のセリフ (特別テキスト):</label>
+                        <input type="text" id="bad-end-special" style="width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">子供時代の振り返り:</label>
+                        <textarea id="bad-end-childhood" style="width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px; min-height: 60px;"></textarea>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">次回への誘い:</label>
+                        <input type="text" id="bad-end-invitation" style="width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 5px;">締めの印象:</label>
+                        <textarea id="bad-end-impression" style="width: 100%; padding: 10px; font-size: 16px; border: 2px solid #ddd; border-radius: 5px; min-height: 60px;"></textarea>
+                    </div>
+                    
+                    <div class="editor-controls" style="display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+                        <button class="game-btn" id="btn-save-bad-end" style="background: #27AE60; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; min-width: 100px;">💾 保存</button>
+                        <button class="game-btn" id="btn-reset-bad-end" style="background: #E74C3C; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; min-width: 100px;">🔄 リセット</button>
+                        <button class="game-btn" id="btn-preview-bad-end" style="background: #3498DB; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; min-width: 100px;">👁️ プレビュー</button>
+                        <button class="game-btn" id="btn-load-csv-bad-end" style="background: #9B59B6; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; min-width: 100px;">📂 CSV読み込み</button>
+                    </div>
+                </div>
+                
+                <div id="preview-area" style="display: none; background: rgba(0,0,0,0.8); color: white; padding: 30px; border-radius: 10px; max-width: 800px; margin: 20px auto;">
+                    <h3 style="color: #ff6b7d; margin-bottom: 20px;">プレビュー</h3>
+                    <div id="preview-content" style="white-space: pre-wrap; line-height: 1.8;"></div>
                 </div>
             </div>
         </div>
@@ -234,6 +298,7 @@
     <script src="src/scenes/DialogueScene.js"></script>
     <script src="src/scenes/GameScene.js"></script>
     <script src="src/scenes/EndingScene.js"></script>
+    <script src="src/scenes/BadEndEditorScene.js"></script>
     <script src="src/game.js"></script>
 </body>
 </html>

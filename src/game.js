@@ -21,7 +21,8 @@ class GameController {
             title: null,
             dialogue: null,
             game: null,
-            ending: null
+            ending: null,
+            badEndEditor: null
         };
         
         // ゲーム状態
@@ -192,6 +193,7 @@ class GameController {
         this.scenes.dialogue = new DialogueScene(this);
         this.scenes.game = new GameScene(this);
         this.scenes.ending = new EndingScene(this);
+        this.scenes.badEndEditor = new BadEndEditorScene(this);
         
         console.log('シーン初期化完了');
     }
@@ -286,6 +288,34 @@ class GameController {
         
         // タイトル画面の隠し領域を有効化
         this.clickAreaSystem.activateAreasForScene('title');
+    }
+
+    /**
+     * BAD END編集画面を表示
+     */
+    async showBadEndEditor() {
+        console.log('BAD END編集画面に遷移');
+        console.log('badEndEditor scene:', this.scenes.badEndEditor);
+        
+        if (!this.scenes.badEndEditor) {
+            console.error('❌ BadEndEditorSceneが初期化されていません');
+            alert('BAD END編集機能が初期化されていません。');
+            return;
+        }
+        
+        this.hideAllScenes();
+        this.currentScene = 'badEndEditor';
+        
+        // 隠しクリック領域を無効化
+        this.clickAreaSystem.deactivateAllAreas();
+        
+        console.log('badEndEditorシーンのshow()を呼び出し中...');
+        try {
+            await this.scenes.badEndEditor.show();
+        } catch (error) {
+            console.error('❌ BAD END編集画面の表示でエラー:', error);
+            alert('BAD END編集画面の表示でエラーが発生しました: ' + error.message);
+        }
     }
 
     /**

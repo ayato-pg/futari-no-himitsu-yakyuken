@@ -168,6 +168,7 @@ class DialogueScene {
             console.log('🏆 プレイヤー勝利後のトークシーン開始（美咲stage6を維持）');
             // 美咲の立ち絵をstage6に設定
             this.currentVictoryMode = true;
+            this.victoryDressingMode = false;  // 着替えモードフラグ初期化
             
             // 専用CSVから勝利後トークを読み込み（エラー耐性版）
             try {
@@ -215,13 +216,19 @@ class DialogueScene {
         
         // 美咲の立ち絵設定（画面表示後に実行）
         requestAnimationFrame(() => {
-            console.log('🇺�️ 美咲の立ち絵を設定します');
+            console.log('🖼️ 美咲の立ち絵を設定します');
             
             // 美咲の表示コンテナを確実に表示
             this.ensureMisakiDisplayVisible();
             
-            // 美咲の立ち絵を設定
-            this.setupMisakiDisplay();
+            // victoryモード（エンディングトーク）の場合は直接stage6立ち絵を表示
+            if (sceneId === 'victory') {
+                console.log('🏆 エンディングトーク: stage6立ち絵を直接設定');
+                this.changeMisakiSpriteDirectly('misaki_game_stage6.png');
+            } else {
+                // 通常シーンの立ち絵設定
+                this.setupMisakiDisplay();
+            }
             
             // 最初の会話を表示（アニメーション完了待ち）
             setTimeout(() => {
@@ -246,6 +253,10 @@ class DialogueScene {
         
         // テキストアニメーションを停止
         this.isTextAnimating = false;
+        
+        // victoryモードフラグをリセット
+        this.currentVictoryMode = false;
+        this.victoryDressingMode = false;
     }
 
     /**
@@ -254,6 +265,21 @@ class DialogueScene {
      */
     setupBackground(sceneId) {
         const backgroundElement = document.getElementById('dialogue-bg');
+        
+        // victoryシーン（エンディングトーク）の場合は専用背景
+        if (sceneId === 'victory') {
+            console.log('🌙 エンディングトーク背景: bg_living_night.png');
+            if (backgroundElement) {
+                const imagePath = `./assets/images/backgrounds/bg_living_night.png`;
+                backgroundElement.style.backgroundImage = `url('${imagePath}')`;
+                backgroundElement.style.backgroundSize = 'cover';
+                backgroundElement.style.backgroundPosition = 'center';
+                backgroundElement.style.backgroundRepeat = 'no-repeat';
+            }
+            return;
+        }
+        
+        // 通常シーンの背景処理
         const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', sceneId);
         
         if (backgroundElement && sceneData && sceneData.background_image) {
@@ -274,6 +300,13 @@ class DialogueScene {
      */
     setupMisakiDisplay(emotion = 'normal', costumeLevel = 1) {
         if (!this.misakiDisplay) return;
+        
+        // 🚨 victoryモードの場合は即座にstage6立ち絵を設定
+        if (this.currentVictoryMode) {
+            console.log('🏆 setupMisakiDisplay: victoryモード検出 - stage6を設定');
+            this.changeMisakiSpriteDirectly('misaki_game_stage6.png');
+            return;
+        }
         
         // 初期衣装を normal に設定（重要：画像読み込み前に設定）
         this.currentCostume = 'normal';
@@ -560,18 +593,28 @@ class DialogueScene {
             return;
         }
         
-        // CSV読み込みを試行（失敗してもフォールバックで継続）
+        // CSV読み込みを試行（キャッシュクリア + 強制読み込み）
         let csvSuccess = false;
         try {
-            console.log('🔄 victory_talk.csvを試行読み込み中...');
+            console.log('🔄 victory_talk.csvを強制読み込み中（キャッシュクリア）...');
+            
+            // 🚨 既存のvictory_talkキャッシュを削除
+            if (this.game.csvLoader.csvData['victory_talk']) {
+                delete this.game.csvLoader.csvData['victory_talk'];
+                console.log('🗑️ 古いvictory_talkキャッシュを削除');
+            }
+            
+            // 強制読み込み実行
             await this.game.csvLoader.loadCSV('victory_talk.csv');
+            console.log('✅ victory_talk.csv強制読み込み完了');
             
             // CSVデータ取得を試行
             const victoryTalks = this.game.csvLoader.getTableData('victory_talk');
+            console.log('🔍 読み込み後のCSVデータ確認:', victoryTalks ? victoryTalks.length : 'null');
             
-            if (victoryTalks && victoryTalks.length >= 10) {
-                // CSV読み込み成功
-                console.log('✅ CSV読み込み成功！CSVデータを使用');
+            if (victoryTalks && victoryTalks.length >= 22) {
+                // CSV読み込み成功（更新版エンディング）
+                console.log('✅ CSV読み込み成功！最新エンディングデータを使用');
                 
                 // sequence_order順にソート
                 victoryTalks.sort((a, b) => parseInt(a.sequence_order) - parseInt(b.sequence_order));
@@ -588,7 +631,7 @@ class DialogueScene {
                 }));
                 
                 csvSuccess = true;
-                console.log(`✅ CSV勝利後トークデータ使用: ${this.dialogueQueue.length}件`);
+                console.log(`✅ CSV最新エンディングデータ使用: ${this.dialogueQueue.length}件（完全更新版）`);
             }
         } catch (error) {
             console.error('❌ CSV読み込み失敗:', error);
@@ -613,11 +656,11 @@ class DialogueScene {
     }
 
     /**
-     * 勝利後トーク用の完全フォールバックデータ（victory_talk.csv完全版）
+     * 勝利後トーク用の完全フォールバックデータ（最新CSV版22件）
      * @returns {Array} フォールバックダイアログデータ
      */
     getFallbackVictoryData() {
-        console.log('🚨 【緊急フォールバック】victory_talk完全データを使用');
+        console.log('🚨 【緊急フォールバック】victory_talk最新22件データを使用');
         return [
             {
                 dialogue_id: 'vt001',
@@ -631,82 +674,191 @@ class DialogueScene {
             {
                 dialogue_id: 'vt002',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: 'まさか本当に負けちゃうなんて...',
-                emotion: 'embarrassed',
-                voice_file: 'v_victory_02.mp3',
+                character_id: 'player_thought',
+                text: '美咲の顔が真っ赤になっている。まさか本当に勝ってしまうなんて...',
+                emotion: '',
+                voice_file: '',
                 next_id: 'vt003'
             },
             {
                 dialogue_id: 'vt003',
                 scene_id: 'victory',
                 character_id: 'misaki',
-                text: 'これで約束を守らないといけないのね...',
-                emotion: 'resigned',
-                voice_file: 'v_victory_03.mp3',
+                text: 'まさか本当に負けちゃうなんて思ってなかった...',
+                emotion: 'embarrassed',
+                voice_file: 'v_victory_02.mp3',
                 next_id: 'vt004'
             },
             {
                 dialogue_id: 'vt004',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: '何でも言うこと聞くって言っちゃったし...',
-                emotion: 'nervous',
-                voice_file: 'v_victory_04.mp3',
+                character_id: 'player_thought',
+                text: '美咲の抜群のスタイルに言葉が出ない。',
+                emotion: '',
+                voice_file: '',
                 next_id: 'vt005'
             },
             {
                 dialogue_id: 'vt005',
                 scene_id: 'victory',
                 character_id: 'misaki',
-                text: 'でも、そんなにひどいことは言わないでよね?',
-                emotion: 'hopeful',
-                voice_file: 'v_victory_05.mp3',
+                text: 'そんなにジロジロ見ないでよ…',
+                emotion: 'resigned',
+                voice_file: 'v_victory_03.mp3',
                 next_id: 'vt006'
             },
             {
                 dialogue_id: 'vt006',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: 'あなたって、意外とじゃんけんが上手なのね',
-                emotion: 'impressed',
-                voice_file: 'v_victory_06.mp3',
+                character_id: 'player_thought',
+                text: '美咲がこんなに恥ずかしそうにしているのを見るのは初めてだ。',
+                emotion: '',
+                voice_file: '',
                 next_id: 'vt007'
             },
             {
                 dialogue_id: 'vt007',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: '普段はあんなに弱いのに...',
-                emotion: 'teasing',
-                voice_file: 'v_victory_07.mp3',
+                character_id: 'player',
+                text: 'ご、ごめん…。',
+                emotion: 'nervous',
+                voice_file: 'v_victory_04.mp3',
                 next_id: 'vt008'
             },
             {
                 dialogue_id: 'vt008',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: 'まあいいわ。約束は約束だから',
-                emotion: 'accepting',
-                voice_file: 'v_victory_08.mp3',
+                character_id: 'player_thought',
+                text: '急に照れ臭くなり目を背けてしまった。',
+                emotion: '',
+                voice_file: '',
                 next_id: 'vt009'
             },
             {
                 dialogue_id: 'vt009',
                 scene_id: 'victory',
                 character_id: 'misaki',
-                text: 'それで...何をお願いするの?',
-                emotion: 'curious',
-                voice_file: 'v_victory_09.mp3',
+                text: 'も…もう服着るよ…?弟帰ってくるかもしれないから…',
+                emotion: 'hopeful',
+                sprite_stage: 'dressing',
+                voice_file: 'v_victory_05.mp3',
                 next_id: 'vt010'
             },
             {
                 dialogue_id: 'vt010',
                 scene_id: 'victory',
+                character_id: 'player_thought',
+                text: 'この時間をずっと目に焼き付けておきたいが、たしかにあいつが返ってくるかも…',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt011'
+            },
+            {
+                dialogue_id: 'vt011',
+                scene_id: 'victory',
+                character_id: 'player',
+                text: 'もうちょっと見ておきたいけど…わかった。',
+                emotion: 'impressed',
+                voice_file: 'v_victory_06.mp3',
+                next_id: 'vt012'
+            },
+            {
+                dialogue_id: 'vt012',
+                scene_id: 'victory',
                 character_id: 'misaki',
-                text: 'あまり無茶は言わないでよ?',
+                text: '見ておきたいとか言わないの！',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt013'
+            },
+            {
+                dialogue_id: 'vt013',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲との距離が縮まった気がする。こんな時間がずっと続けばいいのに。',
+                emotion: 'teasing',
+                voice_file: 'v_victory_07.mp3',
+                next_id: 'vt014'
+            },
+            {
+                dialogue_id: 'vt014',
+                scene_id: 'victory',
+                character_id: 'sound_effect',
+                text: '――ガチャ！（玄関のドアが開く音）...ただいまー！！',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt015'
+            },
+            {
+                dialogue_id: 'vt015',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'え？...ほんとに帰ってきちゃったよー！',
+                emotion: 'accepting',
+                voice_file: 'v_victory_08.mp3',
+                next_id: 'vt016'
+            },
+            {
+                dialogue_id: 'vt016',
+                scene_id: 'victory',
+                character_id: 'player',
+                text: 'ど、どうしよう…',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt017'
+            },
+            {
+                dialogue_id: 'vt017',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'お風呂場に隠れるから変なこと言わないでね！！',
+                emotion: 'curious',
+                voice_file: 'v_victory_09.mp3',
+                next_id: 'vt018'
+            },
+            {
+                dialogue_id: 'vt018',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'ま、また勝負してあげてもいいよ…?',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt019'
+            },
+            {
+                dialogue_id: 'vt019',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲の急な提案に戸惑いと嬉しさがこみ上げる。',
                 emotion: 'warning',
                 voice_file: 'v_victory_10.mp3',
+                next_id: 'vt020'
+            },
+            {
+                dialogue_id: 'vt020',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲が慌ててお風呂場へ走っていく。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt021'
+            },
+            {
+                dialogue_id: 'vt021',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '今回の勝負で美咲との距離が縮まった気がする。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt022'
+            },
+            {
+                dialogue_id: 'vt022',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: 'こんな時間がずっと続けばいいのに…',
+                emotion: 'surprised',
+                voice_file: '',
                 next_id: ''
             }
         ];
@@ -904,10 +1056,22 @@ class DialogueScene {
         
         // 立ち絵制御
         if (this.currentVictoryMode) {
-            // プレイヤー勝利後は常にstage6（完全敗北状態）の立ち絵を使用
-            const stage6Sprite = 'misaki_game_stage6.png';
-            console.log('🏆 勝利モード: stage6立ち絵を強制表示');
-            this.changeMisakiSpriteDirectly(stage6Sprite);
+            // プレイヤー勝利後のsprite_stage対応
+            if (dialogue.dialogue_id === 'vt009') {
+                // vt009: misaki_dialogue_dressing.pngに切り替え
+                console.log('👗 vt009: 着替え中立ち絵に切り替え');
+                this.changeMisakiSpriteDirectly('misaki_dialogue_dressing.png');
+                this.victoryDressingMode = true;  // 着替えモードフラグを設定
+            } else if (this.victoryDressingMode) {
+                // vt009以降: misaki_dialogue_dressing.png継続表示
+                console.log('👗 着替え中立ち絵を継続表示');
+                this.changeMisakiSpriteDirectly('misaki_dialogue_dressing.png');
+            } else {
+                // vt001-vt008: stage6（完全敗北状態）の立ち絵を使用
+                const stage6Sprite = 'misaki_game_stage6.png';
+                console.log('🏆 勝利モード: stage6立ち絵を表示');
+                this.changeMisakiSpriteDirectly(stage6Sprite);
+            }
         } else if (dialogue.sprite_file && dialogue.sprite_file.trim() !== '') {
             const spriteName = dialogue.sprite_file.trim();
             this.lastSpecifiedSprite = spriteName;
@@ -1051,13 +1215,13 @@ class DialogueScene {
      */
     playDialogueSE(type) {
         const soundEffects = {
-            'text_advance': { file: 'se_text_advance.mp3', volume: 0.6 },
-            'text_complete': { file: 'se_text_complete.mp3', volume: 0.5 },
-            'dialogue_end': { file: 'se_dialogue_end.mp3', volume: 0.7 },
-            'choice_select': { file: 'se_choice_select.mp3', volume: 0.8 },
-            'misaki_click': { file: 'se_misaki_voice.mp3', volume: 0.4 },
-            'page_turn': { file: 'se_page_turn.mp3', volume: 0.5 },
-            'text_type': { file: 'se_text_type.mp3', volume: 0.3 }
+            'text_advance': { file: 'se_click.mp3', volume: 0.6 },
+            'text_complete': { file: 'se_click.mp3', volume: 0.5 },
+            'dialogue_end': { file: 'se_click.mp3', volume: 0.7 },
+            'choice_select': { file: 'se_click.mp3', volume: 0.8 },
+            'misaki_click': { file: 'se_click.mp3', volume: 0.4 },
+            'page_turn': { file: 'se_click.mp3', volume: 0.5 },
+            'text_type': { file: 'se_click.mp3', volume: 0.3 }
         };
 
         const se = soundEffects[type];
@@ -1402,7 +1566,7 @@ class DialogueScene {
         // ゲームシーンをリセットして再開
         this.hide();
         this.game.scenes.game.resetGame();
-        this.game.showTitle();
+        this.game.showTitleScreen();
     }
 
     /**
@@ -1424,7 +1588,7 @@ class DialogueScene {
         
         // タイトル画面に戻る
         this.hide();
-        this.game.showTitle();
+        this.game.showTitleScreen();
     }
 
     /**

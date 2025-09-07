@@ -345,8 +345,8 @@ body {
     filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.3));
     transition: all 0.3s ease;
     cursor: pointer;
-    opacity: 0;
-    transform: scale(0.95);
+    opacity: 1;  /* 初期状態で表示 */
+    transform: scale(1);
 }
 
 .screen.active .misaki-display img {
@@ -355,7 +355,7 @@ body {
 
 @keyframes misakiFadeIn {
     0% {
-        opacity: 0;
+        opacity: 1;  /* アニメーション開始時も表示 */
         transform: scale(0.95);
         filter: drop-shadow(2px 2px 10px rgba(0,0,0,0.3)) blur(8px);
     }
@@ -1227,6 +1227,32 @@ body {
     color: #ffd700;
     text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
     margin-bottom: 2rem;
+    position: absolute;
+    top: 15%;  /* 画面の15%の位置に配置 */
+    left: 0;  /* 左端から0%の位置 */
+    transform: translateX(0);
+    text-align: center;
+    width: 100%;
+    z-index: 20;  /* タイトルを前面に */
+}
+
+.ending-character {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;  /* 最背面に配置 */
+}
+
+.ending-character img {
+    max-height: 500px;
+    width: auto;
+    filter: drop-shadow(3px 3px 10px rgba(0,0,0,0.8));
+    transition: opacity 1.5s ease, transform 0.5s ease;
+}
+
+.ending-character img:hover {
+    transform: scale(1.02);
 }
 
 .ending-cg {
@@ -1249,11 +1275,22 @@ body {
     background: rgba(0,0,0,0.7);
     padding: 20px;
     border-radius: 10px;
+    position: absolute;
+    bottom: 10%;  /* 下から10%の位置（さらに10%下に移動） */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;  /* テキストを前面に */
 }
 
 .ending-controls {
     display: flex;
     gap: 2rem;
+    justify-content: center;
+    position: absolute;
+    bottom: 5%;  /* 下から5%の位置（下に30%移動） */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;  /* ボタンを前面に */
 }
 
 /* レスポンシブ対応 */

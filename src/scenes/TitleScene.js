@@ -26,6 +26,14 @@ class TitleScene {
         this.titleScreen = document.getElementById('title-screen');
         this.misakiImage = document.getElementById('misaki-title');
         
+        // 初期化時に立ち絵を確実に設定
+        if (this.misakiImage) {
+            this.misakiImage.src = './assets/images/characters/misaki/misaki_adult_normal.png';
+            this.misakiImage.style.opacity = '1';
+            this.misakiImage.style.display = 'block';
+            console.log('🎭 初期化時に美咲立ち絵を設定');
+        }
+        
         // メニューボタンを取得
         this.menuButtonElements = [
             document.getElementById('btn-new-game'),
@@ -109,6 +117,9 @@ class TitleScene {
         const csvReloadBtn = document.getElementById('btn-csv-reload');
         if (csvReloadBtn) {
             csvReloadBtn.style.display = 'block'; // 確実に表示
+            csvReloadBtn.style.visibility = 'visible';
+            csvReloadBtn.style.opacity = '1';
+            console.log('CSV更新ボタンを強制表示:', csvReloadBtn);
             csvReloadBtn.addEventListener('click', async () => {
                 console.log('🔄 CSV強制リロードボタンが押されました');
                 try {
@@ -121,6 +132,149 @@ class TitleScene {
             console.log('✅ CSV更新ボタンが設定されました');
         } else {
             console.warn('❌ CSV更新ボタンが見つかりませんでした');
+        }
+
+        // BAD END編集ボタン（開発用）
+        const badEndEditorBtn = document.getElementById('btn-bad-end-editor');
+        console.log('BAD END編集ボタン要素を検索:', badEndEditorBtn);
+        
+        if (badEndEditorBtn) {
+            // 強制的にスタイルを設定
+            badEndEditorBtn.style.cssText = `
+                background: #9B59B6 !important;
+                color: white !important;
+                font-size: 0.9em !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                z-index: 999 !important;
+                margin: 10px 0 !important;
+                padding: 15px 30px !important;
+                border: none !important;
+                border-radius: 25px !important;
+                cursor: pointer !important;
+                font-weight: bold !important;
+                width: auto !important;
+                height: auto !important;
+            `;
+            
+            console.log('BAD END編集ボタンを強制表示:', badEndEditorBtn);
+            
+            // イベントリスナーを追加
+            badEndEditorBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                console.log('📝 BAD END編集ボタンがクリックされました');
+                
+                try {
+                    this.game.audioManager.playSE('se_click.mp3', 0.7);
+                } catch (error) {
+                    console.warn('効果音エラー:', error);
+                }
+                
+                // 正式なBAD END編集画面に遷移
+                this.hide();
+                this.game.showBadEndEditor();
+            });
+            
+            console.log('✅ BAD END編集ボタンが設定されました');
+        } else {
+            console.warn('❌ BAD END編集ボタンが見つかりませんでした');
+            // ボタンを動的に作成
+            this.createBadEndEditorButton();
+        }
+
+        // BAD END表示ボタン（開発用）
+        const showBadEndBtn = document.getElementById('btn-show-bad-end');
+        console.log('BAD END表示ボタン要素を検索:', showBadEndBtn);
+        
+        if (showBadEndBtn) {
+            showBadEndBtn.style.cssText = `
+                background: #E74C3C !important;
+                color: white !important;
+                font-size: 0.9em !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                z-index: 999 !important;
+                margin: 10px 0 !important;
+                padding: 15px 30px !important;
+                border: none !important;
+                border-radius: 25px !important;
+                cursor: pointer !important;
+                font-weight: bold !important;
+                width: auto !important;
+                height: auto !important;
+            `;
+            
+            console.log('BAD END表示ボタンを強制表示:', showBadEndBtn);
+            
+            showBadEndBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                console.log('🔴 BAD END表示ボタンがクリックされました');
+                
+                try {
+                    this.game.audioManager.playSE('se_click.mp3', 0.7);
+                } catch (error) {
+                    console.warn('効果音エラー:', error);
+                }
+                
+                // 直接BAD ENDを表示
+                this.showBadEndDirectly();
+            });
+            
+            console.log('✅ BAD END表示ボタンが設定されました');
+        } else {
+            console.warn('❌ BAD END表示ボタンが見つかりませんでした');
+        }
+
+        // キャッシュクリアボタン（開発用）
+        const clearCacheBtn = document.getElementById('btn-clear-cache');
+        console.log('キャッシュクリアボタン要素を検索:', clearCacheBtn);
+        
+        if (clearCacheBtn) {
+            clearCacheBtn.style.cssText = `
+                background: #F39C12 !important;
+                color: white !important;
+                font-size: 0.9em !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                z-index: 999 !important;
+                margin: 10px 0 !important;
+                padding: 15px 30px !important;
+                border: none !important;
+                border-radius: 25px !important;
+                cursor: pointer !important;
+                font-weight: bold !important;
+                width: auto !important;
+                height: auto !important;
+            `;
+            
+            clearCacheBtn.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                console.log('🧹 キャッシュクリアボタンがクリックされました');
+                
+                // 全てのキャッシュを強制クリア
+                localStorage.clear();
+                
+                // CSVLoaderキャッシュもクリア
+                if (this.game.csvLoader && this.game.csvLoader.csvData) {
+                    this.game.csvLoader.csvData = {};
+                }
+                
+                alert('全キャッシュをクリアしました！\nページを再読み込みして最新データを確認してください。');
+                
+                // ページリロード
+                window.location.reload();
+            });
+            
+            console.log('✅ キャッシュクリアボタンが設定されました');
         }
 
         // ボタンホバー効果
@@ -142,6 +296,32 @@ class TitleScene {
         
         console.log('タイトル画面を表示');
         
+        // 他の画面の立ち絵を確実にクリア
+        const endingSprite = document.getElementById('ending-character-sprite');
+        if (endingSprite) {
+            endingSprite.style.display = 'none';
+            endingSprite.src = '';
+            console.log('🗑️ エンディング画面の立ち絵をクリア');
+        }
+        
+        // 開発用ボタンを強制表示
+        const csvBtn = document.getElementById('btn-csv-reload');
+        if (csvBtn) {
+            csvBtn.style.cssText = 'background: #ff6b7d !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
+        }
+        const badEndBtn = document.getElementById('btn-bad-end-editor');
+        if (badEndBtn) {
+            badEndBtn.style.cssText = 'background: #9B59B6 !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
+        }
+        const showBadEndBtn = document.getElementById('btn-show-bad-end');
+        if (showBadEndBtn) {
+            showBadEndBtn.style.cssText = 'background: #E74C3C !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
+        }
+        const clearCacheBtn = document.getElementById('btn-clear-cache');
+        if (clearCacheBtn) {
+            clearCacheBtn.style.cssText = 'background: #F39C12 !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
+        }
+        
         // タイトル専用BGMを再生（自動クロスフェード）
         await this.game.audioManager.playSceneBGM('title', 2.0);
         
@@ -155,14 +335,35 @@ class TitleScene {
         this.titleScreen.classList.add('active');
         this.isActive = true;
         
-        // 美咲の画像を設定
-        this.setupMisakiImage();
-        
         // フェードイン アニメーション
         this.titleScreen.style.opacity = '0';
         setTimeout(() => {
             this.titleScreen.style.transition = 'opacity 1s ease';
             this.titleScreen.style.opacity = '1';
+            
+            // フェードイン後に美咲の画像を設定（DOM更新後に確実に実行）
+            setTimeout(() => {
+                this.setupMisakiImage();
+                
+                // さらに遅延して再度確認
+                setTimeout(() => {
+                    const misakiCheck = document.getElementById('misaki-title');
+                    if (misakiCheck) {
+                        console.log('🔍 立ち絵チェック - 表示状態:', {
+                            display: misakiCheck.style.display,
+                            visibility: misakiCheck.style.visibility,
+                            opacity: misakiCheck.style.opacity,
+                            src: misakiCheck.src
+                        });
+                        
+                        // 画像が設定されていない場合は強制設定
+                        if (!misakiCheck.src || misakiCheck.src === '') {
+                            misakiCheck.src = './assets/images/characters/misaki/misaki_adult_normal.png';
+                            console.log('⚠️ 立ち絵が空だったため強制設定');
+                        }
+                    }
+                }, 500);
+            }, 200);
         }, 100);
     }
 
@@ -182,21 +383,63 @@ class TitleScene {
      * 美咲の画像を設定
      */
     setupMisakiImage() {
-        if (this.misakiImage && this.game.csvLoader) {
-            const misakiData = this.game.csvLoader.findData('characters', 'character_id', 'misaki');
-            if (misakiData && misakiData.default_image) {
-                const imagePath = `./assets/images/characters/misaki/${misakiData.default_image}`;
-                
-                // 画像が存在しない場合のフォールバック
-                this.misakiImage.src = imagePath;
-                this.misakiImage.onerror = () => {
-                    console.warn('美咲の画像が見つかりません、プレースホルダーを使用');
+        console.log('🎭 タイトル画面の美咲立ち絵を設定中...');
+        
+        // 要素を再取得（確実に最新のDOM要素を取得）
+        this.misakiImage = document.getElementById('misaki-title');
+        
+        if (!this.misakiImage) {
+            console.error('❌ misaki-title要素が見つかりません！');
+            return;
+        }
+        
+        // 立ち絵を確実に表示状態にする（重要度の高いスタイルを強制）
+        this.misakiImage.style.cssText = `
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: relative !important;
+            z-index: 10 !important;
+            max-height: 600px !important;
+            transform: scale(1) !important;
+        `;
+        
+        // デフォルト画像を直接設定（CSVに依存しない）
+        const defaultImagePath = './assets/images/characters/misaki/misaki_adult_normal.png';
+        
+        console.log('✅ 美咲の立ち絵パス（強制設定）:', defaultImagePath);
+        
+        // 画像読み込み成功時
+        this.misakiImage.onload = () => {
+            console.log('✅ タイトル画面の美咲立ち絵読み込み成功');
+            this.misakiImage.style.display = 'block !important';
+            this.misakiImage.style.visibility = 'visible !important';
+            this.misakiImage.style.opacity = '1 !important';
+        };
+        
+        // 画像が存在しない場合のフォールバック
+        this.misakiImage.onerror = () => {
+            console.error('❌ 美咲の画像読み込みエラー:', defaultImagePath);
+            // CSVから取得を試みる
+            if (this.game.csvLoader) {
+                const misakiData = this.game.csvLoader.findData('characters', 'character_id', 'misaki');
+                if (misakiData && misakiData.default_image) {
+                    const csvImagePath = `./assets/images/characters/misaki/${misakiData.default_image}`;
+                    console.log('📋 CSVから画像パスを取得:', csvImagePath);
+                    this.misakiImage.src = csvImagePath;
+                } else {
                     this.createPlaceholderImage();
-                };
+                }
             } else {
                 this.createPlaceholderImage();
             }
-        }
+        };
+        
+        // 画像を強制的に設定
+        this.misakiImage.src = '';  // 一旦クリア
+        setTimeout(() => {
+            this.misakiImage.src = defaultImagePath;
+        }, 10);
     }
 
     /**
@@ -914,6 +1157,129 @@ class TitleScene {
         if (!this.isActive) return;
         
         // 必要に応じてアニメーション更新処理を追加
+    }
+
+    /**
+     * BAD END編集ボタンを動的作成
+     */
+    createBadEndEditorButton() {
+        console.log('BAD END編集ボタンを動的作成中...');
+        
+        const menuButtons = document.querySelector('.menu-buttons');
+        if (menuButtons) {
+            const button = document.createElement('button');
+            button.id = 'btn-bad-end-editor-dynamic';
+            button.className = 'game-btn dev-btn';
+            button.textContent = 'BAD END編集 (動的)';
+            button.style.cssText = `
+                background: #9B59B6 !important;
+                color: white !important;
+                font-size: 0.9em !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: relative !important;
+                z-index: 999 !important;
+                margin: 10px 0 !important;
+                padding: 15px 30px !important;
+                border: none !important;
+                border-radius: 25px !important;
+                cursor: pointer !important;
+                font-weight: bold !important;
+            `;
+            
+            button.addEventListener('click', () => {
+                alert('動的BAD END編集ボタンがクリックされました！');
+                this.showSimpleBadEndEditor();
+            });
+            
+            menuButtons.appendChild(button);
+            console.log('✅ 動的BAD END編集ボタンを作成しました');
+        }
+    }
+
+    /**
+     * シンプルなBAD END編集画面を表示
+     */
+    showSimpleBadEndEditor() {
+        console.log('シンプルなBAD END編集画面を表示');
+        
+        // 既存の編集画面があれば削除
+        const existing = document.getElementById('simple-bad-end-editor');
+        if (existing) {
+            existing.remove();
+        }
+        
+        // シンプルな編集画面を作成
+        const editorDiv = document.createElement('div');
+        editorDiv.id = 'simple-bad-end-editor';
+        editorDiv.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        `;
+        
+        editorDiv.innerHTML = `
+            <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%;">
+                <h2 style="text-align: center; color: #333; margin-bottom: 20px;">BAD END テキスト編集</h2>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">タイトル:</label>
+                    <input type="text" id="simple-title" value="また今度ね♪" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">メッセージ:</label>
+                    <textarea id="simple-message" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; height: 100px;">今日はここまでだね♪
+
+またじゃんけんしてあげてもいーよー？</textarea>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="alert('保存しました！'); localStorage.setItem('bad_end_simple', JSON.stringify({title: document.getElementById('simple-title').value, message: document.getElementById('simple-message').value})); document.getElementById('simple-bad-end-editor').remove()" style="background: #27AE60; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">保存</button>
+                    <button onclick="document.getElementById('simple-bad-end-editor').remove()" style="background: #E74C3C; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">閉じる</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(editorDiv);
+        console.log('✅ シンプルなBAD END編集画面を表示しました');
+    }
+
+    /**
+     * 直接BAD ENDを表示
+     */
+    showBadEndDirectly() {
+        console.log('🔴 直接BAD ENDを表示します');
+        
+        // 🚨 完全にキャッシュをクリア
+        localStorage.clear();
+        if (this.game.csvLoader && this.game.csvLoader.csvData) {
+            this.game.csvLoader.csvData = {};
+            console.log('🗑️ 全CSVキャッシュを削除');
+        }
+        
+        // タイトル画面を非表示
+        this.hide();
+        
+        // ゲーム状態をBAD END用にセット
+        if (this.game.gameState) {
+            this.game.gameState.isGameActive = false;
+            this.game.gameState.currentPhase = 'ending';
+        }
+        
+        // 直接BAD ENDを表示
+        this.game.showEnding('bad_end');
+        
+        console.log('✅ BAD END表示完了');
     }
 
     /**

@@ -15,6 +15,7 @@ class EndingScene {
         this.endingTitle = null;
         this.endingImage = null;
         this.endingText = null;
+        this.endingCharacterSprite = null;
         this.controlButtons = {};
         
         this.initialize();
@@ -28,6 +29,7 @@ class EndingScene {
         this.endingTitle = document.getElementById('ending-title');
         this.endingImage = document.getElementById('ending-image');
         this.endingText = document.getElementById('ending-text');
+        this.endingCharacterSprite = document.getElementById('ending-character-sprite');
         
         // 制御ボタン
         this.controlButtons = {
@@ -141,21 +143,81 @@ class EndingScene {
         
         console.log('エンディング画面を非表示');
         
+        // BAD END立ち絵を確実に非表示
+        if (this.endingCharacterSprite) {
+            this.endingCharacterSprite.style.display = 'none';
+            this.endingCharacterSprite.src = '';
+            console.log('🎭 BAD END立ち絵を非表示にしました');
+        }
+        
+        // エンディング画面の全要素を非表示
         this.endingScreen.classList.remove('active');
         this.isActive = false;
     }
 
     /**
-     * エンディングデータを読み込み
+     * エンディングデータを読み込み（CSV優先版）
      * @param {string} endingType - エンディングタイプ
      * @returns {Object} エンディングデータ
      */
     loadEndingData(endingType) {
-        if (this.game.csvLoader) {
-            return this.game.csvLoader.findData('endings', 'ending_id', endingType);
+        // bad_endの場合は専用CSVから読み込み
+        if (endingType === 'bad_end') {
+            console.log('🔄 BAD END: CSVを強制再読み込み中...');
+            
+            // キャッシュをクリアして強制再読み込み
+            if (this.game.csvLoader && this.game.csvLoader.csvData) {
+                delete this.game.csvLoader.csvData['bad_end'];
+                console.log('🗑️ bad_endキャッシュをクリア');
+            }
+            
+            // CSVから読み込みを試みる
+            if (this.game.csvLoader) {
+                const badEndData = this.game.csvLoader.getTableData('bad_end');
+                if (badEndData && badEndData.length > 0) {
+                    const data = badEndData[0]; // 最初のデータを使用
+                    console.log(`✅ bad_end.csvデータを読み込み成功`);
+                    console.log(`📝 ending_name: "${data.ending_name}"`);
+                    console.log(`📝 title_text: "${data.title_text}"`);
+                    console.log(`📝 opening_text: "${data.opening_text}"`);
+                    console.log(`📝 defeat_reaction: "${data.defeat_reaction}"`);
+                    
+                    // CSVのデータをそのまま返す
+                    return data;
+                }
+            }
+            
+            // フォールバック: CSVが読み込めない場合
+            console.warn('⚠️ bad_end.csvが見つかりません。フォールバック使用');
+            const fallbackData = {
+                ending_id: 'bad_end',
+                ending_name: 'GAME　OVER',  // CSVと同じ値（全角スペース→半角スペース）
+                title_text: 'また今度ね♪',
+                special_text: '',
+                bg_image: 'bg_night.png',
+                bgm_file: 'game_over.mp3',
+                cg_image: 'cg_bad.png',
+                description: '美咲に5敗した時のエンディング',
+                opening_text: '今日はここまでだね♪',
+                defeat_reaction: 'またじゃんけんしてあげてもいーよー？',
+                childhood_reflection: '',
+                future_invitation: '',
+                final_impression: ''
+            };
+            
+            return fallbackData;
         }
         
-        // フォールバックデータ
+        // 他のエンディングは従来通り
+        if (this.game.csvLoader) {
+            const data = this.game.csvLoader.findData('endings', 'ending_id', endingType);
+            if (data) {
+                console.log(`✅ endings.csvから${endingType}データを読み込み`);
+                return data;
+            }
+        }
+        
+        // フォールバックデータ（シンプル版）
         const fallbackData = {
             'true_end': {
                 ending_id: 'true_end',
@@ -169,14 +231,20 @@ class EndingScene {
             'bad_end': {
                 ending_id: 'bad_end',
                 ending_name: 'BAD ENDING',
-                title_text: '完敗...また今度ね',
+                title_text: 'また今度ね♪',
                 bg_image: 'bg_night.png',
                 bgm_file: 'game_over.mp3',
                 cg_image: 'cg_bad.png',
-                special_text: 'あらあら、まだまだ子供ね♪'
+                special_text: '',
+                opening_text: '今日はここまでだね♪',
+                defeat_reaction: 'またじゃんけんしてあげてもいーよー？',
+                childhood_reflection: '',
+                future_invitation: '',
+                final_impression: ''
             }
         };
         
+        console.warn(`⚠️ CSV ${endingType}データが見つかりません。フォールバック使用`);
         return fallbackData[endingType] || fallbackData['bad_end'];
     }
 
@@ -224,6 +292,9 @@ class EndingScene {
         // CG画像設定
         this.setupEndingImage(endingData);
         
+        // 立ち絵設定（BAD ENDの場合のみ）
+        this.setupEndingCharacter(endingData);
+        
         // エンディングテキスト設定
         this.setupEndingText(endingData);
     }
@@ -234,6 +305,16 @@ class EndingScene {
      */
     setupEndingImage(endingData) {
         if (!this.endingImage) return;
+        
+        // BAD ENDの場合は赤い枠を表示しない
+        if (this.currentEnding === 'bad_end') {
+            console.log('🚫 BAD END: 赤い枠を非表示');
+            this.endingImage.style.display = 'none';
+            if (this.endingImage.parentElement) {
+                this.endingImage.parentElement.style.display = 'none';
+            }
+            return;
+        }
         
         if (endingData && endingData.cg_image) {
             const imagePath = `./assets/images/cg/${endingData.cg_image}`;
@@ -248,6 +329,47 @@ class EndingScene {
             };
         } else {
             this.createEndingPlaceholder();
+        }
+    }
+
+    /**
+     * エンディング立ち絵を設定（BAD END専用）
+     * @param {Object} endingData - エンディングデータ
+     */
+    setupEndingCharacter(endingData) {
+        if (!this.endingCharacterSprite) return;
+        
+        // BAD ENDの場合のみ立ち絵を表示
+        if (this.currentEnding === 'bad_end') {
+            console.log('🎭 BAD END立ち絵を表示: misaki_bad_end.png');
+            
+            const spritePath = './assets/images/characters/misaki/misaki_bad_end.png';
+            this.endingCharacterSprite.src = spritePath;
+            this.endingCharacterSprite.alt = '美咲（勝利）';
+            this.endingCharacterSprite.style.display = 'block';
+            
+            // 画像読み込み成功時の処理
+            this.endingCharacterSprite.onload = () => {
+                console.log('✅ BAD END立ち絵の読み込み成功');
+                this.endingCharacterSprite.style.display = 'block';
+            };
+            
+            // 画像が存在しない場合の処理
+            this.endingCharacterSprite.onerror = () => {
+                console.error('❌ misaki_bad_end.png が見つかりません:', spritePath);
+                this.endingCharacterSprite.style.display = 'none';
+            };
+            
+            // フェードイン演出
+            this.endingCharacterSprite.style.opacity = '0';
+            setTimeout(() => {
+                this.endingCharacterSprite.style.transition = 'opacity 1.5s ease';
+                this.endingCharacterSprite.style.opacity = '1';
+            }, 1500);
+            
+        } else {
+            // TRUE ENDでは立ち絵を非表示
+            this.endingCharacterSprite.style.display = 'none';
         }
     }
 
@@ -310,27 +432,36 @@ ${baseText}`;
     }
 
     /**
-     * BAD ENDのテキストを取得
+     * BAD ENDのテキストを取得（完全シンプル版）
      * @param {Object} endingData - エンディングデータ
      * @returns {string} エンディングテキスト
      */
     getBadEndText(endingData) {
-        const baseText = endingData && endingData.special_text ? 
-            endingData.special_text : 
-            'あらあら、まだまだ子供ね♪';
+        console.log('📖 BAD ENDテキスト生成 - CSVデータから取得');
         
-        return `野球拳で完敗してしまったあなた。
-
-美咲お姉ちゃんは勝ち誇った表情で言いました。
-
-「${baseText}」
-
-子供の頃から変わらず、美咲お姉ちゃんには敵わないようです。
-でも、きっとまたチャンスはあるはず...
-
-「また今度、リベンジしてもいいわよ？」
-
-美咲お姉ちゃんの誘惑的な笑顔が、心に焼き付いて離れません。`;
+        // CSVデータから取得したテキストを使用
+        let simpleText = '';
+        
+        if (endingData) {
+            // opening_textとdefeat_reactionのみを使用
+            if (endingData.opening_text) {
+                simpleText = endingData.opening_text;
+            }
+            
+            if (endingData.defeat_reaction) {
+                simpleText += `<br><br>${endingData.defeat_reaction}`;
+            }
+            
+            console.log('✅ CSVから読み込んだテキスト:', simpleText);
+        }
+        
+        // データがない場合のフォールバック
+        if (!simpleText) {
+            simpleText = `今日はここまでだね♪<br><br>またじゃんけんしてあげてもいーよー？`;
+            console.log('⚠️ フォールバックテキストを使用');
+        }
+        
+        return simpleText;
     }
 
     /**
@@ -340,7 +471,7 @@ ${baseText}`;
     animateEndingText(text) {
         if (!this.endingText) return;
         
-        this.endingText.textContent = '';
+        this.endingText.innerHTML = '';
         this.endingText.style.opacity = '0';
         
         // フェードイン後にテキストアニメーション開始
@@ -359,16 +490,28 @@ ${baseText}`;
     typewriterEffect(text) {
         if (!this.endingText) return;
         
-        const textArray = Array.from(text);
+        // HTMLタグを考慮したタイプライター効果
+        const htmlContent = text.replace(/<br>/g, '\n'); // <br>を改行文字に変換
+        const textArray = Array.from(htmlContent);
         let currentIndex = 0;
+        let displayText = '';
         
         const typeInterval = setInterval(() => {
             if (currentIndex < textArray.length) {
-                this.endingText.textContent += textArray[currentIndex];
+                const char = textArray[currentIndex];
+                
+                // 改行文字を<br>タグに戻す
+                if (char === '\n') {
+                    displayText += '<br>';
+                } else {
+                    displayText += char;
+                }
+                
+                this.endingText.innerHTML = displayText;
                 currentIndex++;
                 
                 // 改行や句読点で少し停止
-                if (textArray[currentIndex - 1].match(/[。！？\n]/)) {
+                if (char.match(/[。！？\n]/)) {
                     setTimeout(() => {}, 300);
                 }
             } else {
@@ -530,7 +673,7 @@ ${baseText}`;
                 this.getTrueEndText(endingData) : 
                 this.getBadEndText(endingData);
             
-            this.endingText.textContent = fullText;
+            this.endingText.innerHTML = fullText;
             this.onTextAnimationComplete();
         }
     }
@@ -542,8 +685,13 @@ ${baseText}`;
         console.log('タイトル画面に戻る');
         this.game.audioManager.playSE('se_click.mp3', 0.7);
         
+        // エンディング画面を完全に非表示
         this.hide();
-        this.game.showTitleScreen();
+        
+        // 少し遅延してからタイトル画面を表示（DOMの更新を確実にするため）
+        setTimeout(() => {
+            this.game.showTitleScreen();
+        }, 100);
     }
 
     /**

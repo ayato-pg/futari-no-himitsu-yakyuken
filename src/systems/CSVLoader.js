@@ -12,6 +12,7 @@ class CSVLoader {
             'characters.csv',
             'dialogues.csv',
             'victory_talk.csv',
+            'bad_end.csv',
             'misaki_costumes.csv',
             'endings.csv',
             'ui_elements.csv',
@@ -301,10 +302,30 @@ class CSVLoader {
         console.log(`📂 利用可能なテーブル: ${Object.keys(this.csvData).join(', ')}`);
         
         if (tableName === 'victory_talk' && data.length > 0) {
-            console.log('🎯 victory_talkデータの詳細:');
-            data.forEach((item, index) => {
-                console.log(`  [${index}] ${item.talk_id}: "${item.text?.substring(0, 20)}..." (sequence: ${item.sequence_order})`);
-            });
+            console.log('🎯 victory_talkデータの詳細（最新チェック）:');
+            console.log(`📊 総件数: ${data.length} 件`);
+            
+            // 最初の3件と最後の3件を表示
+            const showItems = Math.min(3, data.length);
+            for (let i = 0; i < showItems; i++) {
+                const item = data[i];
+                console.log(`  [${i}] ${item.talk_id}: "${item.text?.substring(0, 30)}..." (sequence: ${item.sequence_order})`);
+            }
+            
+            if (data.length > 6) {
+                console.log('  ... （中略）');
+            }
+            
+            const startIndex = Math.max(showItems, data.length - 3);
+            for (let i = startIndex; i < data.length; i++) {
+                const item = data[i];
+                console.log(`  [${i}] ${item.talk_id}: "${item.text?.substring(0, 30)}..." (sequence: ${item.sequence_order})`);
+            }
+            
+            // キーポイントチェック
+            const hasPlayerThought = data.some(item => item.character === 'player_thought');
+            const hasSoundEffect = data.some(item => item.character === 'sound_effect');
+            console.log(`🔍 内容チェック: プレイヤー心の声=${hasPlayerThought}, 効果音=${hasSoundEffect}`);
         }
         
         return data;
