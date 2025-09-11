@@ -144,13 +144,14 @@ class DialogueScene {
         }
 
         // ボタンホバー効果
-        Object.values(this.controlButtons).forEach(button => {
-            if (button) {
-                button.addEventListener('mouseenter', () => {
-                    this.game.audioManager.playSE('se_click.mp3', 0.2);
-                });
-            }
-        });
+        // マウスホバー音（ClickSoundManagerと重複するため無効化）
+        // Object.values(this.controlButtons).forEach(button => {
+        //     if (button) {
+        //         button.addEventListener('mouseenter', () => {
+        //             this.game.audioManager.playSE('se_click.mp3', 0.2);
+        //         });
+        //     }
+        // });
     }
 
     /**
@@ -1103,10 +1104,10 @@ class DialogueScene {
             return; // 以降の処理をスキップ
         }
         
-        // ボイス再生
-        if (dialogue.voice_file && dialogue.voice_file !== '') {
-            this.game.audioManager.playSE(dialogue.voice_file, 0.7);
-        }
+        // ボイス再生（トーク表示時は不要なため無効化）
+        // if (dialogue.voice_file && dialogue.voice_file !== '') {
+        //     this.game.audioManager.playSE(dialogue.voice_file, 0.7);
+        // }
         
         // テキストアニメーション表示
         this.animateText(dialogue.text);
@@ -1179,12 +1180,14 @@ class DialogueScene {
         if (this.isTextAnimating) {
             // テキストアニメーション中なら完了
             console.log('⚡ テキストアニメーション中 - 即座に完了');
-            this.playDialogueSE('text_complete');
+            // テキスト完了時のクリック音のみ復活
+            this.game.audioManager.playSE('se_click.mp3', 0.5);
             this.completeTextAnimation();
         } else {
             // 次の会話へ
             console.log('➡️ 次の会話に進む');
-            this.playDialogueSE('text_advance');
+            // トーク進行時のクリック音のみ復活
+            this.game.audioManager.playSE('se_click.mp3', 0.6);
             this.showNextDialogue();
         }
     }
@@ -1210,31 +1213,32 @@ class DialogueScene {
     }
 
     /**
-     * 会話用効果音を再生
+     * 会話用効果音を再生（ClickSoundManagerと重複するため無効化）
      * @param {string} type - 効果音タイプ
      */
     playDialogueSE(type) {
-        const soundEffects = {
-            'text_advance': { file: 'se_click.mp3', volume: 0.6 },
-            'text_complete': { file: 'se_click.mp3', volume: 0.5 },
-            'dialogue_end': { file: 'se_click.mp3', volume: 0.7 },
-            'choice_select': { file: 'se_click.mp3', volume: 0.8 },
-            'misaki_click': { file: 'se_click.mp3', volume: 0.4 },
-            'page_turn': { file: 'se_click.mp3', volume: 0.5 },
-            'text_type': { file: 'se_click.mp3', volume: 0.3 }
-        };
+        // ClickSoundManagerが統一的にクリック音を管理するため無効化
+        // const soundEffects = {
+        //     'text_advance': { file: 'se_click.mp3', volume: 0.6 },
+        //     'text_complete': { file: 'se_click.mp3', volume: 0.5 },
+        //     'dialogue_end': { file: 'se_click.mp3', volume: 0.7 },
+        //     'choice_select': { file: 'se_click.mp3', volume: 0.8 },
+        //     'misaki_click': { file: 'se_click.mp3', volume: 0.4 },
+        //     'page_turn': { file: 'se_click.mp3', volume: 0.5 },
+        //     'text_type': { file: 'se_click.mp3', volume: 0.3 }
+        // };
 
-        const se = soundEffects[type];
-        if (se) {
-            // 指定した効果音を再生、ファイルがない場合はフォールバック
-            this.game.audioManager.playSE(se.file, se.volume).catch(() => {
-                // フォールバック: 基本のクリック音
-                this.game.audioManager.playSE('se_click.mp3', 0.4);
-            });
-        } else {
-            // デフォルトのクリック音
-            this.game.audioManager.playSE('se_click.mp3', 0.4);
-        }
+        // const se = soundEffects[type];
+        // if (se) {
+        //     // 指定した効果音を再生、ファイルがない場合はフォールバック
+        //     this.game.audioManager.playSE(se.file, se.volume).catch(() => {
+        //         // フォールバック: 基本のクリック音
+        //         // this.game.audioManager.playSE('se_click.mp3', 0.4); // ClickSoundManagerと重複するため無効化
+        //     });
+        // } else {
+        //     // デフォルトのクリック音
+        //     this.game.audioManager.playSE('se_click.mp3', 0.4);
+        // }
     }
 
     /**
@@ -1314,7 +1318,7 @@ class DialogueScene {
      */
     skipDialogue() {
         console.log('会話をスキップ');
-        this.game.audioManager.playSE('se_click.mp3', 0.5);
+        // this.game.audioManager.playSE('se_click.mp3', 0.5); // ClickSoundManagerと重複するため無効化
         
         // 確認ダイアログ
         const result = confirm('会話をスキップしますか？');
@@ -1336,7 +1340,7 @@ class DialogueScene {
         }
         
         console.log(`オートプレイ: ${this.autoPlay ? 'ON' : 'OFF'}`);
-        this.game.audioManager.playSE('se_click.mp3', 0.4);
+        // this.game.audioManager.playSE('se_click.mp3', 0.4); // ClickSoundManagerと重複するため無効化
     }
 
     /**
@@ -1344,7 +1348,7 @@ class DialogueScene {
      */
     showLog() {
         console.log('ログを表示');
-        this.game.audioManager.playSE('se_click.mp3', 0.4);
+        // this.game.audioManager.playSE('se_click.mp3', 0.4); // ClickSoundManagerと重複するため無効化
         
         // ログ機能（将来実装）
         alert('ログ機能は開発中です');
@@ -1355,7 +1359,7 @@ class DialogueScene {
      */
     saveGame() {
         console.log('ゲームを保存');
-        this.game.audioManager.playSE('se_click.mp3', 0.5);
+        // this.game.audioManager.playSE('se_click.mp3', 0.5); // ClickSoundManagerと重複するため無効化
         
         const gameData = {
             currentScene: 'dialogue',
@@ -1400,7 +1404,7 @@ class DialogueScene {
      */
     showMenu() {
         console.log('メニューを表示');
-        this.game.audioManager.playSE('se_click.mp3', 0.4);
+        // this.game.audioManager.playSE('se_click.mp3', 0.4); // ClickSoundManagerと重複するため無効化
         
         // インゲームメニュー（将来実装）
         const result = confirm('タイトル画面に戻りますか？');
@@ -1414,7 +1418,7 @@ class DialogueScene {
      */
     returnToTitle() {
         console.log('タイトル画面に戻る');
-        this.game.audioManager.playSE('se_click.mp3', 0.5);
+        // this.game.audioManager.playSE('se_click.mp3', 0.5); // ClickSoundManagerと重複するため無効化
         
         const confirmReturn = confirm('タイトル画面に戻りますか？\n進行中のゲームは失われます。');
         if (confirmReturn) {

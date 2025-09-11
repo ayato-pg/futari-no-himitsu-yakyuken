@@ -1,0 +1,2 @@
+﻿setting_id,sound_file,volume,cooldown_ms,max_per_second,debounce_ms,enabled,description
+click_sound,se_click.mp3,0.7,100,1,50,TRUE,全ボタンのクリック音設定

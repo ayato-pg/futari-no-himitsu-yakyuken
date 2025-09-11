@@ -28,7 +28,8 @@ class CSVLoader {
             'misaki_reactions.csv',
             'save_data_structure.csv',
             'how_to_play.csv',
-            'game_end_messages.csv'
+            'game_end_messages.csv',
+            'click_sound_settings.csv'
         ];
     }
 

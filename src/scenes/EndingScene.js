@@ -587,7 +587,7 @@ ${baseText}`;
      * エンディング画像クリック時の処理
      */
     onEndingImageClick() {
-        this.game.audioManager.playSE('se_click.mp3', 0.3);
+        // this.game.audioManager.playSE('se_click.mp3', 0.3); // ClickSoundManagerと重複するため無効化
         
         // 画像を拡大表示（簡易ギャラリー機能）
         this.showImageFullscreen();

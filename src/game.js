@@ -116,6 +116,15 @@ class GameController {
         // 隠しクリック領域システム
         this.clickAreaSystem = new ClickAreaSystem(this);
         
+        // クリック音管理システム
+        if (window.clickSoundManager) {
+            window.clickSoundManager.setAudioManager(this.audioManager, this.csvLoader);
+            // ページ読み込み完了後にグローバルクリック音を設定
+            setTimeout(() => {
+                window.clickSoundManager.setupGlobalClickSound();
+            }, 100);
+        }
+        
         console.log('✅ システム初期化完了');
     }
 

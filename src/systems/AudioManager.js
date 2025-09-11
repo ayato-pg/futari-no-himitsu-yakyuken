@@ -215,29 +215,39 @@ class AudioManager {
      */
     async playSE(filename, volume = 1.0) {
         if (!this.isInitialized) {
+            console.log('🔇 AudioManager未初期化のため効果音スキップ');
             return;
         }
 
         try {
-            let seAudio = this.seAudioPool.get(filename);
+            console.log(`🎵 AudioManager.playSE開始: ${filename} (volume: ${volume})`);
+            console.time(`AudioManager.playSE-${filename}`);
             
-            if (!seAudio) {
-                seAudio = new Audio(this.sePath + filename);
-                this.seAudioPool.set(filename, seAudio);
-            }
-
+            // 毎回新しいAudioインスタンスを作成（プール化を一時的に無効化）
+            const seAudio = new Audio(this.sePath + filename);
+            console.log(`🎵 新しいAudioインスタンス作成: ${this.sePath + filename}`);
+            
             // 音量設定
-            seAudio.volume = this.volumes.se * this.volumes.master * volume;
-            seAudio.currentTime = 0; // 再生位置をリセット
+            const finalVolume = this.volumes.se * this.volumes.master * volume;
+            seAudio.volume = finalVolume;
+            console.log(`🔊 音量設定: ${finalVolume} (se:${this.volumes.se} × master:${this.volumes.master} × volume:${volume})`);
+            
+            // オーディオ生成状況をログ
+            console.log(`🎵 Audio準備完了 - duration: ${seAudio.duration}, readyState: ${seAudio.readyState}`);
+            
+            // クローン再生の防止
+            seAudio.addEventListener('ended', () => {
+                console.log(`🎵 Audio再生終了: ${filename}`);
+                seAudio.remove();
+            }, { once: true });
 
             await seAudio.play();
-            // SE再生成功時のみログを出力
-            // console.log(`✅ SE再生: ${filename}`);
+            console.log(`✅ SE再生開始成功: ${filename}`);
+            console.timeEnd(`AudioManager.playSE-${filename}`);
             
         } catch (error) {
-            // 効果音ファイルが見つからない場合は静かに無視
-            // デバッグが必要な場合のみコメントアウト
-            // console.warn(`⚠️ SE: ${filename} - ファイルが見つからないため無視`);
+            console.warn(`⚠️ SE再生エラー: ${filename} -`, error);
+            console.timeEnd(`AudioManager.playSE-${filename}`);
         }
     }
 

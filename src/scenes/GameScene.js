@@ -752,10 +752,10 @@ class GameScene {
                     setTimeout(() => {
                         heart.classList.add('show');
                         
-                        // 効果音（最初のハートのみ）
-                        if (index === 0) {
-                            this.game.audioManager.playSE('se_click.mp3', 0.3);
-                        }
+                        // 効果音（最初のハートのみ） - ClickSoundManagerと重複するため無効化
+                        // if (index === 0) {
+                        //     this.game.audioManager.playSE('se_click.mp3', 0.3);
+                        // }
                         
                         animationCount++;
                         if (animationCount === hearts.length) {
@@ -2578,7 +2578,7 @@ class GameScene {
      * 美咲クリック時の処理
      */
     onMisakiClick() {
-        this.game.audioManager.playSE('se_click.mp3', 0.3);
+        // this.game.audioManager.playSE('se_click.mp3', 0.3); // ClickSoundManagerと重複するため無効化
         
         // 現在の衣装情報を表示
         const costumeName = this.game.costumeSystem.getCurrentCostumeName();

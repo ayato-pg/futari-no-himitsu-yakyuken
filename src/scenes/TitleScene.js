@@ -371,14 +371,14 @@ class TitleScene {
             console.warn('❌ ゲーム終了画面編集ボタンが見つかりませんでした');
         }
 
-        // ボタンホバー効果
-        this.menuButtonElements.forEach(button => {
-            if (button) {
-                button.addEventListener('mouseenter', () => {
-                    this.game.audioManager.playSE('se_click.mp3', 0.3);
-                });
-            }
-        });
+        // ボタンホバー効果 (ClickSoundManagerと重複するため無効化)
+        // this.menuButtonElements.forEach(button => {
+        //     if (button) {
+        //         button.addEventListener('mouseenter', () => {
+        //             this.game.audioManager.playSE('se_click.mp3', 0.3);
+        //         });
+        //     }
+        // });
     }
 
 
@@ -675,7 +675,7 @@ class TitleScene {
         
         // フォーカス設定
         enabledButtons[this.currentMenuIndex].focus();
-        this.game.audioManager.playSE('se_click.mp3', 0.3);
+        // this.game.audioManager.playSE('se_click.mp3', 0.3); // ClickSoundManagerと重複するため無効化
     }
 
     /**
