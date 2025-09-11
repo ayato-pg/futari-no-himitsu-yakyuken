@@ -1493,16 +1493,76 @@ class DialogueScene {
             z-index: 1000;
         `;
         
+        // CSVからゲーム終了メッセージを取得
+        let titleText = 'ゲーム終了';
+        let messageText = 'お疲れさまでした！';
+        let button1Text = 'もう一度プレイ';
+        let button2Text = 'タイトルに戻る';
+        
+        // 勝利時のみCSVからゲーム終了メッセージを取得
+        if (this.game.gameState && this.game.gameState.playerWins >= 5) {
+            console.log('🎯 勝利状態を検出、CSVから最新メッセージを読み込みます');
+            
+            // CSVLoaderのキャッシュをクリアして強制再読み込み
+            const csvLoader = this.game.csvLoader;
+            if (csvLoader && csvLoader.csvData) {
+                // game_end_messagesのキャッシュを削除
+                delete csvLoader.csvData['game_end_messages'];
+                console.log('🗑️ game_end_messagesのキャッシュを削除しました');
+            }
+            
+            // CSVファイルを直接再読み込み（async）
+            csvLoader.loadCSV('game_end_messages.csv').then(() => {
+                const endMessages = csvLoader.getData('game_end_messages');
+                console.log('📋 再読み込みしたCSVデータ:', endMessages);
+                
+                if (endMessages && Array.isArray(endMessages) && endMessages.length > 0) {
+                    const victoryMessage = endMessages.find(msg => msg.scene_type === 'victory');
+                    console.log('🎯 勝利メッセージ検出:', victoryMessage);
+                    
+                    if (victoryMessage) {
+                        // DOMが既に作成されている場合は直接更新
+                        const endingOptions = document.getElementById('ending-options');
+                        if (endingOptions) {
+                            const existingTitle = endingOptions.querySelector('h2');
+                            const existingMessage = endingOptions.querySelector('p');
+                            
+                            if (existingTitle) {
+                                existingTitle.textContent = victoryMessage.title_text || 'ゲームクリア！';
+                            }
+                            if (existingMessage) {
+                                const messageText = victoryMessage.message_text || 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
+                                existingMessage.innerHTML = messageText.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                            }
+                            
+                            console.log(`🏆 CSVから勝利メッセージを適用: ${victoryMessage.title_text}`);
+                        }
+                    }
+                }
+            }).catch(error => {
+                console.error('❌ CSV再読み込みエラー:', error);
+            });
+            
+            // 即座に最新のメッセージを設定（CSVの内容と同じ、改行付き）
+            titleText = 'ゲームクリア！';
+            messageText = 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
+            button1Text = 'もう一度プレイ';
+            button2Text = 'タイトルに戻る';
+            
+            console.log(`📝 即座に設定: ${titleText} - ${messageText}`);
+        }
+        // 敗北時はbad_end.csv、引き分けはデフォルト値を使用
+        
         const title = document.createElement('h2');
-        title.textContent = 'ゲーム終了';
+        title.textContent = titleText;
         title.style.cssText = 'margin-bottom: 20px; color: #FF6B7D;';
         
         const message = document.createElement('p');
-        message.textContent = 'お疲れさまでした！';
-        message.style.cssText = 'margin-bottom: 30px; font-size: 18px;';
+        message.innerHTML = messageText.replace(/\n/g, '<br>');  // 改行をHTMLのbrタグに変換
+        message.style.cssText = 'margin-bottom: 30px; font-size: 18px; line-height: 1.6;';
         
         const restartButton = document.createElement('button');
-        restartButton.textContent = 'もう一度プレイ';
+        restartButton.textContent = button1Text;
         restartButton.style.cssText = `
             padding: 12px 24px;
             margin: 0 10px;
@@ -1519,7 +1579,7 @@ class DialogueScene {
         restartButton.onclick = () => this.restartGame();
         
         const titleButton = document.createElement('button');
-        titleButton.textContent = 'タイトルに戻る';
+        titleButton.textContent = button2Text;
         titleButton.style.cssText = `
             padding: 12px 24px;
             margin: 0 10px;
@@ -1541,6 +1601,29 @@ class DialogueScene {
         endingContainer.appendChild(titleButton);
         
         document.body.appendChild(endingContainer);
+        
+        // 作成後に再度CSVからメッセージを更新（確実に反映させるため）
+        if (this.game.gameState && this.game.gameState.playerWins >= 5) {
+            // 少し遅延を入れてDOMが確実に作成された後に更新
+            setTimeout(() => {
+                const csvLoader = this.game.csvLoader;
+                const endMessages = csvLoader.getData('game_end_messages');
+                
+                if (endMessages && Array.isArray(endMessages) && endMessages.length > 0) {
+                    const victoryMessage = endMessages.find(msg => msg.scene_type === 'victory');
+                    
+                    if (victoryMessage) {
+                        title.textContent = victoryMessage.title_text || 'ゲームクリア！';
+                        const messageText = victoryMessage.message_text || 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
+                        message.innerHTML = messageText.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');  // エスケープされた改行と通常の改行の両方に対応
+                        restartButton.textContent = victoryMessage.button1_text || 'もう一度プレイ';
+                        titleButton.textContent = victoryMessage.button2_text || 'タイトルに戻る';
+                        
+                        console.log(`✅ 最終的に適用されたメッセージ: ${title.textContent}`);
+                    }
+                }
+            }, 100);
+        }
         
         // 音響効果
         this.playDialogueSE('dialogue_end');

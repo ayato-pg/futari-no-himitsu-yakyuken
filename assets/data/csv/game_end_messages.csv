@@ -1,0 +1,2 @@
+﻿message_id,scene_type,title_text,message_text,button1_text,button2_text,description
+ending_victory,victory,ゲームクリア！,ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！,もう一度プレイ,タイトルに戻る,勝利時のゲーム終了メッセージ

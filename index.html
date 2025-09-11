@@ -45,6 +45,8 @@
                         <button class="game-btn dev-btn" id="btn-bad-end-editor" style="background: #9B59B6 !important; color: white !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important; margin: 10px 0 !important; padding: 15px 30px !important; border: none !important; border-radius: 25px !important; cursor: pointer !important; font-weight: bold !important;">BAD END編集</button>
                         <button class="game-btn dev-btn" id="btn-show-bad-end" style="background: #E74C3C !important; color: white !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important; margin: 10px 0 !important; padding: 15px 30px !important; border: none !important; border-radius: 25px !important; cursor: pointer !important; font-weight: bold !important;">BAD END表示</button>
                         <button class="game-btn dev-btn" id="btn-clear-cache" style="background: #F39C12 !important; color: white !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important; margin: 10px 0 !important; padding: 15px 30px !important; border: none !important; border-radius: 25px !important; cursor: pointer !important; font-weight: bold !important;">キャッシュクリア</button>
+                        <button class="game-btn dev-btn" id="btn-victory-talk" style="background: #27AE60 !important; color: white !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important; margin: 10px 0 !important; padding: 15px 30px !important; border: none !important; border-radius: 25px !important; cursor: pointer !important; font-weight: bold !important;">🏆エンディングトーク</button>
+                        <button class="game-btn dev-btn" id="btn-game-over-editor" style="background: #8E44AD !important; color: white !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important; margin: 10px 0 !important; padding: 15px 30px !important; border: none !important; border-radius: 25px !important; cursor: pointer !important; font-weight: bold !important;">🛠️終了画面編集</button>
                     </div>
                 </div>
             </div>
@@ -299,6 +301,163 @@
     <script src="src/scenes/GameScene.js"></script>
     <script src="src/scenes/EndingScene.js"></script>
     <script src="src/scenes/BadEndEditorScene.js"></script>
+    <script src="src/scenes/GameOverEditorScene.js"></script>
     <script src="src/game.js"></script>
+    
+    <!-- 🏆 エンディングトークボタンの直接実装 -->
+    <script>
+        // ゲーム初期化後にボタン機能を追加
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1秒後にボタン機能を設定（ゲーム初期化待ち）
+            setTimeout(function() {
+                const victoryTalkBtn = document.getElementById('btn-victory-talk');
+                
+                if (victoryTalkBtn) {
+                    console.log('🏆 エンディングトークボタンを直接設定');
+                    
+                    victoryTalkBtn.addEventListener('click', function(event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        console.log('🏆 エンディングトークボタンがクリックされました');
+                        
+                        // 効果音再生
+                        if (window.gameController && window.gameController.audioManager) {
+                            window.gameController.audioManager.playSE('se_click.mp3', 0.7).catch(() => {});
+                        }
+                        
+                        // ゲームコントローラーが初期化されているか確認
+                        if (window.gameController && window.gameController.isInitialized) {
+                            showVictoryTalkDirectly();
+                        } else {
+                            console.warn('ゲームコントローラーが未初期化です');
+                            alert('ゲームがまだ読み込み中です。しばらくお待ちください。');
+                        }
+                    });
+                    
+                    console.log('✅ エンディングトークボタンの直接実装完了');
+                } else {
+                    console.warn('❌ エンディングトークボタンが見つかりません');
+                }
+                
+                // 🛠️ ゲーム終了画面編集ボタンの直接実装
+                const gameOverEditorBtn = document.getElementById('btn-game-over-editor');
+                
+                if (gameOverEditorBtn) {
+                    console.log('🛠️ ゲーム終了画面編集ボタンを直接設定');
+                    
+                    gameOverEditorBtn.addEventListener('click', function(event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        console.log('🛠️ ゲーム終了画面編集ボタンがクリックされました');
+                        
+                        // 効果音再生
+                        if (window.gameController && window.gameController.audioManager) {
+                            window.gameController.audioManager.playSE('se_click.mp3', 0.7).catch(() => {});
+                        }
+                        
+                        // ゲームコントローラーが初期化されているか確認
+                        if (window.gameController && window.gameController.isInitialized) {
+                            showGameOverEditor();
+                        } else {
+                            console.warn('ゲームコントローラーが未初期化です');
+                            alert('ゲームがまだ読み込み中です。しばらくお待ちください。');
+                        }
+                    });
+                    
+                    console.log('✅ ゲーム終了画面編集ボタンの直接実装完了');
+                } else {
+                    console.warn('❌ ゲーム終了画面編集ボタンが見つかりません');
+                }
+            }, 1000);
+        });
+        
+        /**
+         * 🏆 直接エンディングトークを表示（勝利後トーク）
+         */
+        function showVictoryTalkDirectly() {
+            console.log('🏆 直接エンディングトークを表示します');
+            
+            try {
+                // ゲームコントローラーの参照を取得
+                const game = window.gameController;
+                
+                if (!game || !game.scenes || !game.scenes.title) {
+                    throw new Error('ゲームコンポーネントが初期化されていません');
+                }
+                
+                // タイトル画面を非表示
+                if (game.scenes.title.isActive) {
+                    game.scenes.title.hide();
+                }
+                
+                // ゲーム状態を勝利後トーク用にセット
+                if (game.gameState) {
+                    game.gameState.isGameActive = false;
+                    game.gameState.currentPhase = 'victory_talk';
+                    // プレイヤーが5勝した状態をシミュレート
+                    game.gameState.playerWins = 5;
+                    game.gameState.misakiWins = 0;
+                    console.log('🏆 ゲーム状態を勝利状態に設定完了');
+                }
+                
+                // 直接勝利後トークを表示（'victory'シーン）
+                game.showDialogue('victory');
+                console.log('✅ エンディングトーク表示完了');
+                
+            } catch (error) {
+                console.error('❌ エンディングトーク表示エラー:', error);
+                
+                // フォールバック：通常の会話シーンを表示
+                try {
+                    if (window.gameController) {
+                        window.gameController.showDialogue('living');
+                        console.log('🛠️ フォールバック: 通常の会話シーンを表示');
+                    } else {
+                        alert('エラーが発生しました。ページを再読み込みしてください。');
+                    }
+                } catch (fallbackError) {
+                    console.error('❌ フォールバックエラー:', fallbackError);
+                    alert('重大なエラーが発生しました。ページを再読み込みしてください。');
+                }
+            }
+        }
+        
+        /**
+         * 🛠️ ゲーム終了画面編集システムを表示
+         */
+        function showGameOverEditor() {
+            console.log('🛠️ ゲーム終了画面編集システムを表示します');
+            
+            try {
+                // ゲームコントローラーの参照を取得
+                const game = window.gameController;
+                
+                if (!game || !game.scenes) {
+                    throw new Error('ゲームコンポーネントが初期化されていません');
+                }
+                
+                // GameOverEditorSceneが存在しない場合は作成
+                if (!game.scenes.gameOverEditor) {
+                    console.log('🆕 GameOverEditorSceneを新規作成');
+                    game.scenes.gameOverEditor = new GameOverEditorScene(game);
+                }
+                
+                // エディター画面を表示
+                game.scenes.gameOverEditor.show();
+                
+                console.log('✅ ゲーム終了画面編集システム表示完了');
+                
+            } catch (error) {
+                console.error('❌ ゲーム終了画面編集システム表示エラー:', error);
+                
+                // フォールバックメッセージ
+                alert('エラーが発生しました。\n\n' + 
+                      'ゲームが完全に読み込まれていない可能性があります。\n' + 
+                      'ページを再読み込みしてから再度お試しください。');
+            }
+        }
+    </script>
 </body>
 </html>

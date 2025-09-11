@@ -27,7 +27,8 @@ class CSVLoader {
             'janken_patterns.csv',
             'misaki_reactions.csv',
             'save_data_structure.csv',
-            'how_to_play.csv'
+            'how_to_play.csv',
+            'game_end_messages.csv'
         ];
     }
 
@@ -40,6 +41,8 @@ class CSVLoader {
             console.log('🔄 CSVファイルの強制リロードを開始します...');
             // 既存のキャッシュをクリア
             this.csvData = {};
+            // ブラウザキャッシュを回避するためのタイムスタンプ追加
+            this.cacheBreaker = Date.now();
         } else {
             console.log('📂 CSVファイルの読み込みを開始します...');
         }
