@@ -39,7 +39,7 @@
                     <div class="menu-buttons">
                         <button class="game-btn" id="btn-new-game">はじめる</button>
                         <button class="game-btn" id="btn-howtoplay">遊び方</button>
-                        <button class="game-btn" id="btn-gallery" disabled>ギャラリー</button>
+                        <button class="game-btn" id="btn-gallery">ギャラリー</button>
                         <button class="game-btn" id="btn-settings">設定</button>
                         <button class="game-btn dev-btn" id="btn-csv-reload" style="background: #ff6b7d !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important;">CSV更新</button>
                         <button class="game-btn dev-btn" id="btn-bad-end-editor" style="background: #9B59B6 !important; color: white !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 999 !important; margin: 10px 0 !important; padding: 15px 30px !important; border: none !important; border-radius: 25px !important; cursor: pointer !important; font-weight: bold !important;">BAD END編集</button>
@@ -291,6 +291,7 @@
     </div>
 
     <!-- JavaScript -->
+    <script src="assets/data/gallery_data.js"></script>
     <script src="src/systems/CSVLoader.js"></script>
     <script src="src/systems/SaveSystem.js"></script>
     <script src="src/systems/AudioManager.js"></script>
@@ -303,6 +304,7 @@
     <script src="src/scenes/EndingScene.js"></script>
     <script src="src/scenes/BadEndEditorScene.js"></script>
     <script src="src/scenes/GameOverEditorScene.js"></script>
+    <script src="src/scenes/GalleryScene.js"></script>
     <script src="src/game.js"></script>
     
     <!-- 🏆 エンディングトークボタンの直接実装 -->

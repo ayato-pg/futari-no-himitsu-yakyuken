@@ -9,6 +9,7 @@ class SaveSystem {
         this.savePrefix = 'yakyuken_save_';
         this.autoSaveKey = 'yakyuken_autosave';
         this.settingsKey = 'yakyuken_settings';
+        this.galleryKey = 'yakyuken_gallery';
         this.maxSaveSlots = 12;
         
         // デフォルト設定
@@ -22,7 +23,16 @@ class SaveSystem {
             language: 'ja'
         };
         
+        // ギャラリーデータの初期化
+        this.galleryData = {
+            unlockedImages: [], // バトル開始前は全て未開放
+            viewedEndings: [],
+            totalWins: 0,
+            lastUnlock: null
+        };
+        
         this.initializeSettings();
+        this.initializeGallery();
     }
 
     /**
@@ -32,6 +42,18 @@ class SaveSystem {
         const settings = this.loadSettings();
         if (!settings) {
             this.saveSettings(this.defaultSettings);
+        }
+    }
+
+    /**
+     * ギャラリーを初期化
+     */
+    initializeGallery() {
+        const galleryData = this.loadGallery();
+        if (!galleryData) {
+            this.saveGallery(this.galleryData);
+        } else {
+            this.galleryData = galleryData;
         }
     }
 
@@ -216,6 +238,116 @@ class SaveSystem {
         const settings = this.loadSettings();
         settings[key] = value;
         return this.saveSettings(settings);
+    }
+
+    /**
+     * ギャラリーデータを保存
+     * @param {Object} galleryData - ギャラリーデータ
+     * @returns {boolean} 保存成功フラグ
+     */
+    saveGallery(galleryData) {
+        try {
+            localStorage.setItem(this.galleryKey, JSON.stringify(galleryData));
+            this.galleryData = galleryData;
+            return true;
+        } catch (error) {
+            console.error('ギャラリーデータ保存失敗:', error);
+            return false;
+        }
+    }
+
+    /**
+     * ギャラリーデータを読み込み
+     * @returns {Object|null} ギャラリーデータ
+     */
+    loadGallery() {
+        try {
+            const galleryString = localStorage.getItem(this.galleryKey);
+            if (!galleryString) {
+                return null;
+            }
+            return JSON.parse(galleryString);
+        } catch (error) {
+            console.error('ギャラリーデータ読み込み失敗:', error);
+            return null;
+        }
+    }
+
+    /**
+     * 立ち絵をギャラリーに追加
+     * @param {string} imageName - 画像ファイル名
+     * @param {number} stage - ステージ番号
+     * @returns {boolean} 新規追加かどうか
+     */
+    unlockGalleryImage(imageName, stage) {
+        const galleryData = this.loadGallery() || this.galleryData;
+        const imageId = `stage${stage}_${imageName}`;
+        
+        // 既に解放済みの場合
+        if (galleryData.unlockedImages.includes(imageId)) {
+            return false;
+        }
+        
+        // 新規解放
+        galleryData.unlockedImages.push(imageId);
+        galleryData.lastUnlock = {
+            imageId: imageId,
+            imageName: imageName,
+            stage: stage,
+            timestamp: new Date().toISOString()
+        };
+        galleryData.totalWins = (galleryData.totalWins || 0) + 1;
+        
+        this.saveGallery(galleryData);
+        console.log(`🎉 ギャラリー解放: ${imageName} (Stage ${stage})`);
+        return true;
+    }
+
+    /**
+     * ギャラリーの解放状況を取得
+     * @returns {Object} ギャラリーデータ
+     */
+    getGalleryData() {
+        return this.loadGallery() || this.galleryData;
+    }
+
+    /**
+     * 特定の立ち絵が解放済みかチェック
+     * @param {string} imageName - 画像ファイル名
+     * @param {number} stage - ステージ番号
+     * @returns {boolean} 解放済みかどうか
+     */
+    isImageUnlocked(imageName, stage) {
+        const galleryData = this.getGalleryData();
+        const imageId = `stage${stage}_${imageName}`;
+        return galleryData.unlockedImages.includes(imageId);
+    }
+
+    /**
+     * ギャラリーデータをリセット
+     */
+    resetGallery() {
+        this.galleryData = {
+            unlockedImages: [], // リセット時は全て未開放
+            viewedEndings: [],
+            totalWins: 0,
+            lastUnlock: null
+        };
+        this.saveGallery(this.galleryData);
+        console.log('ギャラリーデータをリセットしました（全て未開放）');
+    }
+
+    /**
+     * エンディングを記録
+     * @param {string} endingType - エンディングタイプ
+     */
+    recordEnding(endingType) {
+        const galleryData = this.getGalleryData();
+        if (!galleryData.viewedEndings.includes(endingType)) {
+            galleryData.viewedEndings.push(endingType);
+            this.saveGallery(galleryData);
+            console.log(`🎊 エンディング記録: ${endingType}`);
+        }
     }
 
     /**

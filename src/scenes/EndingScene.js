@@ -106,16 +106,18 @@ class EndingScene {
         // エンディングデータを読み込み
         const endingData = this.loadEndingData(endingType);
         
-        // エンディング専用BGMを再生
-        if (endingType === 'true_end') {
-            await this.game.audioManager.playSceneBGM('ending_true', 2.0);
-        } else if (endingType === 'bad_end') {
-            await this.game.audioManager.playSceneBGM('ending_bad', 2.0);
-        }
-        
-        // CSVからの個別BGM設定があれば優先
+        // エンディング専用BGMを再生（CSV設定優先でフォールバック処理）
         if (endingData && endingData.bgm_file) {
+            // CSVに個別BGM設定がある場合はそちらを優先
+            console.log(`🎵 エンディング個別BGM: ${endingData.bgm_file}`);
             await this.game.audioManager.playBGM(endingData.bgm_file, true, 2.0);
+        } else {
+            // CSVに設定がない場合はシーンBGMを使用
+            if (endingType === 'true_end') {
+                await this.game.audioManager.playSceneBGM('ending_true', 2.0);
+            } else if (endingType === 'bad_end') {
+                await this.game.audioManager.playSceneBGM('ending_bad', 2.0);
+            }
         }
         
         // 背景設定
@@ -195,7 +197,7 @@ class EndingScene {
                 title_text: 'また今度ね♪',
                 special_text: '',
                 bg_image: 'bg_night.png',
-                bgm_file: 'game_over.mp3',
+                bgm_file: 'bgm_ending_bad.mp3',
                 cg_image: 'cg_bad.png',
                 description: '美咲に5敗した時のエンディング',
                 opening_text: '今日はここまでだね♪',
@@ -224,7 +226,7 @@ class EndingScene {
                 ending_name: 'TRUE ENDING',
                 title_text: '大人になった二人の約束',
                 bg_image: 'bg_sunrise.png',
-                bgm_file: 'eternal_summer.mp3',
+                bgm_file: 'bgm_ending_true.mp3',
                 cg_image: 'cg_true_adult.png',
                 special_text: 'これから二人の新しい関係が始まる...'
             },
@@ -233,7 +235,7 @@ class EndingScene {
                 ending_name: 'BAD ENDING',
                 title_text: 'また今度ね♪',
                 bg_image: 'bg_night.png',
-                bgm_file: 'game_over.mp3',
+                bgm_file: 'bgm_ending_bad.mp3',
                 cg_image: 'cg_bad.png',
                 special_text: '',
                 opening_text: '今日はここまでだね♪',
@@ -258,13 +260,30 @@ class EndingScene {
         if (backgroundElement && endingData && endingData.bg_image) {
             const imagePath = `./assets/images/backgrounds/${endingData.bg_image}`;
             backgroundElement.style.backgroundImage = `url('${imagePath}')`;
+            backgroundElement.style.backgroundSize = 'cover';
+            backgroundElement.style.backgroundPosition = 'center';
+            backgroundElement.style.backgroundRepeat = 'no-repeat';
+            
+            console.log(`🎬 エンディング背景を設定: ${endingData.bg_image}`);
         } else {
             // デフォルト背景
             if (backgroundElement) {
-                const gradientColor = this.currentEnding === 'true_end' ? 
-                    'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)' :
-                    'linear-gradient(135deg, #434343 0%, #000000 100%)';
-                backgroundElement.style.background = gradientColor;
+                // 利用可能な背景画像またはグラデーション
+                const isVictory = this.currentEnding === 'true_end';
+                
+                if (isVictory) {
+                    // 勝利時：夜のリビング
+                    backgroundElement.style.backgroundImage = "url('./assets/images/backgrounds/bg_living_night.png')";
+                    backgroundElement.style.backgroundSize = 'cover';
+                    backgroundElement.style.backgroundPosition = 'center';
+                    backgroundElement.style.backgroundRepeat = 'no-repeat';
+                } else {
+                    // 敗北時：グラデーション背景
+                    const gradientColor = 'linear-gradient(135deg, #434343 0%, #000000 100%)';
+                    backgroundElement.style.background = gradientColor;
+                }
+                
+                console.log(`🎬 エンディング背景を設定: ${isVictory ? '夜のリビング' : 'ダークグラデーション'}`);
             }
         }
     }

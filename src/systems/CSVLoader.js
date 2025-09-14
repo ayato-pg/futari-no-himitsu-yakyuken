@@ -29,8 +29,48 @@ class CSVLoader {
             'save_data_structure.csv',
             'how_to_play.csv',
             'game_end_messages.csv',
-            'click_sound_settings.csv'
+            'click_sound_settings.csv',
+            'bgm_settings.csv',
+            'gallery_images.csv',
+            'gallery_images_keys.csv'
         ];
+    }
+
+    /**
+     * 日本語文字の妥当性を検証（文字化けチェック）
+     * @param {string} text - 検証するテキスト
+     * @returns {boolean} 日本語文字が正常かどうか
+     */
+    validateJapaneseText(text) {
+        // ひらがな、カタカナ、漢字の範囲をチェック
+        const japaneseRegex = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/;
+        
+        if (!japaneseRegex.test(text)) {
+            // 日本語文字が含まれていない場合は有効とみなす
+            return true;
+        }
+        
+        // 文字化けでよく出現する不正な文字をチェック
+        const corruptedChars = /[��\uFFFD\u0000-\u001F\u007F-\u009F]/;
+        if (corruptedChars.test(text)) {
+            console.warn('⚠️ 文字化けの可能性のある文字を検出');
+            return false;
+        }
+        
+        // 「美咲」という文字が正しく読み込まれているかチェック（gallery_images.csvには必ず含まれる）
+        if (text.includes('美咲')) {
+            console.log('✅ 日本語文字「美咲」が正常に検出されました');
+            return true;
+        }
+        
+        // その他の一般的な日本語文字の存在確認
+        const commonJapanese = /[あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん]/;
+        if (commonJapanese.test(text)) {
+            return true;
+        }
+        
+        console.warn('⚠️ 日本語文字の妥当性検証に失敗');
+        return false;
     }
 
     /**
@@ -113,14 +153,41 @@ class CSVLoader {
                 throw new Error(`CSVファイル '${filePath}' が見つかりません (${response.status})`);
             }
             
-            // BOM付きUTF-8として読み込み
+            // 強化された文字エンコーディング処理
             const arrayBuffer = await response.arrayBuffer();
-            const decoder = new TextDecoder('utf-8');
-            let csvText = decoder.decode(arrayBuffer);
+            let csvText = '';
+            
+            // 複数のエンコーディングを試行（フォールバック機能）
+            const encodings = ['utf-8', 'shift_jis', 'euc-jp', 'iso-2022-jp'];
+            let decodingSuccess = false;
+            
+            for (const encoding of encodings) {
+                try {
+                    const decoder = new TextDecoder(encoding, { fatal: true });
+                    csvText = decoder.decode(arrayBuffer);
+                    
+                    // 日本語文字の検証（文字化けチェック）
+                    if (this.validateJapaneseText(csvText)) {
+                        console.log(`✅ ${encoding} エンコーディングで正常に読み込み完了`);
+                        decodingSuccess = true;
+                        break;
+                    }
+                } catch (error) {
+                    console.warn(`⚠️ ${encoding} での読み込みに失敗: ${error.message}`);
+                    continue;
+                }
+            }
+            
+            if (!decodingSuccess) {
+                console.warn('⚠️ 全てのエンコーディングでの読み込みに失敗、UTF-8 (非fatal) で再試行');
+                const fallbackDecoder = new TextDecoder('utf-8', { fatal: false });
+                csvText = fallbackDecoder.decode(arrayBuffer);
+            }
             
             // BOMを除去（もし存在する場合）
             if (csvText.charCodeAt(0) === 0xFEFF) {
                 csvText = csvText.slice(1);
+                console.log('🔧 BOMを除去しました');
             }
             
             // CSVデータをパース
@@ -129,7 +196,7 @@ class CSVLoader {
             this.csvData[tableName] = parsedData;
             console.log(`✓ ${tableName} を読み込みました (${parsedData.length} 行)`);
             
-            // デバッグ: 読み込んだデータの内容を表示（dialoguesの場合のみ）
+            // デバッグ: 読み込んだデータの内容を表示（dialoguesとgallery_imagesの場合）
             if (tableName === 'dialogues') {
                 console.log('📋 読み込んだdialoguesデータ:');
                 parsedData.slice(0, 5).forEach((row, index) => {
@@ -148,6 +215,25 @@ class CSVLoader {
                 } else {
                     console.warn('⚠️ d022データが見つかりませんでした');
                 }
+            }
+            
+            // デバッグ: gallery_imagesの日本語文字確認
+            if (tableName === 'gallery_images') {
+                console.log('📋 読み込んだgallery_imagesデータ:');
+                parsedData.forEach((row, index) => {
+                    console.log(`  ${index + 1}. Stage ${row.stage}: ${row.display_name} - ${row.description?.substring(0, 30)}...`);
+                    
+                    // 各フィールドの文字コードをチェック
+                    if (row.display_name) {
+                        const nameBytes = Array.from(row.display_name).map(char => char.charCodeAt(0));
+                        console.log(`    display_name 文字コード: ${nameBytes.slice(0, 10).join(', ')}...`);
+                        console.log(`    display_name 検証結果: ${this.validateJapaneseText(row.display_name) ? '✅正常' : '❌文字化け'}`);
+                    }
+                    
+                    if (row.description) {
+                        console.log(`    description 検証結果: ${this.validateJapaneseText(row.description) ? '✅正常' : '❌文字化け'}`);
+                    }
+                });
             }
             
         } catch (error) {
@@ -234,9 +320,9 @@ class CSVLoader {
         
         const fallbackData = {
             scenes: [
-                { scene_id: 'title', scene_name: 'タイトル画面', background_image: 'bg_title_adult.png', bgm_file: 'nostalgic_summer.mp3' },
-                { scene_id: 'living', scene_name: 'リビング', background_image: 'bg_living_night.png', bgm_file: 'reunion.mp3' },
-                { scene_id: 'game', scene_name: 'じゃんけんバトル', background_image: 'bg_game_room.png', bgm_file: 'battle_sexy.mp3' }
+                { scene_id: 'title', scene_name: 'タイトル画面', background_image: 'bg_title_adult.png', bgm_file: 'bgm_title.mp3' },
+                { scene_id: 'living', scene_name: 'リビング', background_image: 'bg_living_night.png', bgm_file: 'bgm_dialogue.mp3' },
+                { scene_id: 'game', scene_name: 'じゃんけんバトル', background_image: 'bg_game_room.png', bgm_file: 'bgm_battle_tension.mp3' }
             ],
             characters: [
                 { character_id: 'misaki', name: '美咲', default_image: 'misaki_adult_normal.png', age: '25' },

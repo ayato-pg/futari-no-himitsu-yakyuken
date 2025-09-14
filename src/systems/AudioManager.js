@@ -35,7 +35,8 @@ class AudioManager {
         this.fadingBgm = null;
         this.fadeInterval = null;
         
-        // BGMファイルマッピング（playSceneBGMメソッド内で管理）
+        // BGM設定（CSVから読み込み）
+        this.bgmSettings = new Map();
         
         this.initialize();
     }
@@ -49,10 +50,63 @@ class AudioManager {
             document.addEventListener('click', this.enableAudio.bind(this), { once: true });
             document.addEventListener('keydown', this.enableAudio.bind(this), { once: true });
             
+            // BGM設定をCSVから読み込み
+            await this.loadBGMSettings();
+            
             console.log('AudioManager初期化完了');
         } catch (error) {
             console.error('AudioManager初期化エラー:', error);
         }
+    }
+
+    /**
+     * BGM設定をCSVから読み込み
+     */
+    async loadBGMSettings() {
+        try {
+            if (window.csvLoader && window.csvLoader.bgm_settings) {
+                const bgmData = window.csvLoader.bgm_settings;
+                console.log('🎵 BGM設定をCSVから読み込み開始');
+                
+                bgmData.forEach(row => {
+                    this.bgmSettings.set(row.scene_id, {
+                        bgm_file: row.bgm_file,
+                        volume: parseFloat(row.volume) || 0.7,
+                        loop: row.loop === 'TRUE',
+                        fade_in_time: parseFloat(row.fade_in_time) || 2.0,
+                        fade_out_time: parseFloat(row.fade_out_time) || 1.0,
+                        description: row.description
+                    });
+                });
+                
+                console.log('🎵 BGM設定読み込み完了:', this.bgmSettings.size, 'シーン');
+            } else {
+                console.warn('⚠️ CSVLoaderまたはBGM設定が見つかりません。フォールバック設定を使用します。');
+                this.loadFallbackBGMSettings();
+            }
+        } catch (error) {
+            console.error('BGM設定読み込みエラー:', error);
+            this.loadFallbackBGMSettings();
+        }
+    }
+
+    /**
+     * フォールバック用のBGM設定をロード
+     */
+    loadFallbackBGMSettings() {
+        const fallbackSettings = {
+            'title': { bgm_file: 'bgm_title.mp3', volume: 0.7, loop: true, fade_in_time: 2.0, fade_out_time: 1.0 },
+            'dialogue': { bgm_file: 'bgm_dialogue.mp3', volume: 0.6, loop: true, fade_in_time: 2.5, fade_out_time: 2.0 },
+            'game': { bgm_file: 'bgm_battle_tension.mp3', volume: 0.8, loop: true, fade_in_time: 1.5, fade_out_time: 1.5 },
+            'ending_true': { bgm_file: 'bgm_ending_true.mp3', volume: 0.7, loop: true, fade_in_time: 3.0, fade_out_time: 2.0 },
+            'ending_bad': { bgm_file: 'bgm_ending_bad.mp3', volume: 0.5, loop: false, fade_in_time: 2.0, fade_out_time: 0 },
+            'loading': { bgm_file: 'bgm_title.mp3', volume: 0.4, loop: true, fade_in_time: 1.0, fade_out_time: 1.0 }
+        };
+
+        for (const [sceneId, settings] of Object.entries(fallbackSettings)) {
+            this.bgmSettings.set(sceneId, settings);
+        }
+        console.log('🎵 フォールバックBGM設定をロード完了（実際のファイル名に更新済み）');
     }
 
     /**
@@ -105,8 +159,10 @@ class AudioManager {
         }
 
         try {
-            // 同じBGMが再生中の場合は何もしない
-            if (this.currentBgm === filename && this.bgmAudio && !this.bgmAudio.paused) {
+            // 同じBGMが再生中の場合は何もしない（より厳密なチェック）
+            if (this.currentBgm === filename && this.bgmAudio && !this.bgmAudio.paused && !this.bgmAudio.ended) {
+                console.log(`🎵 BGM重複チェック: ${filename} は既に再生中です`);
+                console.log(`📊 現在の状態: paused=${this.bgmAudio.paused}, ended=${this.bgmAudio.ended}, readyState=${this.bgmAudio.readyState}`);
                 return;
             }
 
@@ -149,26 +205,47 @@ class AudioManager {
     }
 
     /**
-     * シーン専用BGMを再生（自動クロスフェード）
+     * シーン専用BGMを再生（CSV設定ベース）
      * @param {string} sceneId - シーンID
-     * @param {number} fadeTime - フェード時間（秒）
+     * @param {number} customFadeTime - カスタムフェード時間（秒）、指定しない場合はCSV設定を使用
+     * @param {boolean} useSmootherTransition - より滑らかなクロスフェードを使用するか（デフォルト: true）
      */
-    async playSceneBGM(sceneId, fadeTime = 2.0) {
-        const bgmMap = {
-            'title': 'bgm_nostalgic_summer.mp3',
-            'dialogue': 'bgm_reunion_memories.mp3', 
-            'game': 'bgm_battle_tension.mp3',
-            'ending_true': 'bgm_eternal_love.mp3',
-            'ending_bad': 'bgm_melancholy_night.mp3',
-            'loading': 'bgm_gentle_piano.mp3'
-        };
-
-        const bgmFile = bgmMap[sceneId];
-        if (bgmFile) {
-            console.log(`🎵 シーン「${sceneId}」のBGMを再生: ${bgmFile}`);
-            await this.playBGM(bgmFile, true, fadeTime);
+    async playSceneBGM(sceneId, customFadeTime = null, useSmootherTransition = true) {
+        const bgmConfig = this.bgmSettings.get(sceneId);
+        
+        if (bgmConfig) {
+            const fadeTime = customFadeTime || bgmConfig.fade_in_time;
+            const volume = bgmConfig.volume;
+            const loop = bgmConfig.loop;
+            
+            console.log(`🎵 シーン「${sceneId}」のBGMを再生: ${bgmConfig.bgm_file} (volume: ${volume}, loop: ${loop}, fade: ${fadeTime}s)`);
+            console.log(`📝 説明: ${bgmConfig.description}`);
+            
+            // 同じBGMが既に再生中の場合はスキップ（より厳密なチェック）
+            if (this.currentBgm === bgmConfig.bgm_file && this.bgmAudio && !this.bgmAudio.paused && !this.bgmAudio.ended) {
+                console.log(`🎵 同じBGM（${bgmConfig.bgm_file}）が既に再生中のため、再生をスキップ`);
+                console.log(`📊 BGM状態: paused=${this.bgmAudio.paused}, ended=${this.bgmAudio.ended}, currentTime=${this.bgmAudio.currentTime}`);
+                return;
+            }
+            
+            // BGMが既に再生中で、異なるBGMに切り替える場合は、より滑らかなクロスフェードを使用
+            if (useSmootherTransition && this.bgmAudio && !this.bgmAudio.paused && this.currentBgm !== bgmConfig.bgm_file) {
+                console.log(`🎵 クロスフェード切り替えモード使用: ${this.currentBgm} → ${bgmConfig.bgm_file}`);
+                await this.crossfadeToScene(sceneId, customFadeTime);
+                return;
+            }
+            
+            // 音量を一時的に設定値に更新
+            const originalBgmVolume = this.volumes.bgm;
+            this.volumes.bgm = volume;
+            
+            await this.playBGM(bgmConfig.bgm_file, loop, fadeTime);
+            
+            // 音量設定を元に戻す（次回のために）
+            this.volumes.bgm = originalBgmVolume;
         } else {
-            console.log(`シーン '${sceneId}' に対応するBGMが見つかりません`);
+            console.warn(`⚠️ シーン '${sceneId}' に対応するBGM設定が見つかりません`);
+            console.log('利用可能なシーン:', Array.from(this.bgmSettings.keys()));
         }
     }
 
@@ -177,19 +254,26 @@ class AudioManager {
      */
     async playFallbackBGM() {
         const fallbackBgms = [
-            'bgm_default.mp3',
-            'bgm_ambient.mp3', 
-            'bgm_peaceful.mp3'
+            'bgm_title.mp3',
+            'bgm_dialogue.mp3', 
+            'bgm_battle_tension.mp3'
         ];
 
+        console.log('🔄 フォールバックBGMを試行中...');
         for (const bgm of fallbackBgms) {
             try {
+                console.log(`📝 フォールバック試行: ${bgm}`);
                 const audio = new Audio(this.bgmPath + bgm);
-                await audio.play();
-                audio.pause(); // テストのみ
+                await new Promise((resolve, reject) => {
+                    audio.addEventListener('canplaythrough', resolve, { once: true });
+                    audio.addEventListener('error', reject, { once: true });
+                    audio.load();
+                });
+                console.log(`✅ フォールバックBGM見つかりました: ${bgm}`);
                 await this.playBGM(bgm, true, 1.0);
                 break;
             } catch (error) {
+                console.log(`❌ フォールバック失敗: ${bgm} - ${error.message}`);
                 continue; // 次のフォールバックを試行
             }
         }
@@ -428,6 +512,57 @@ class AudioManager {
         setTimeout(async () => {
             await this.playBGM(newBgm, true, fadeTime * 0.8);
         }, fadeTime * 200); // 20%地点でクロススタート
+    }
+
+    /**
+     * シーンベースでのクロスフェードBGM切り替え
+     * @param {string} newSceneId - 新しいシーンID
+     * @param {number} customFadeTime - カスタムフェード時間（秒）、指定しない場合はCSV設定を使用
+     */
+    async crossfadeToScene(newSceneId, customFadeTime = null) {
+        const bgmConfig = this.bgmSettings.get(newSceneId);
+        
+        if (!bgmConfig) {
+            console.warn(`⚠️ シーン '${newSceneId}' のBGM設定が見つかりません（クロスフェード）`);
+            return;
+        }
+
+        // 同じBGMが再生中の場合はスキップ
+        if (this.currentBgm === bgmConfig.bgm_file) {
+            console.log(`🎵 同じBGM（${bgmConfig.bgm_file}）が既に再生中のため、クロスフェードをスキップ`);
+            return;
+        }
+        
+        const fadeOutTime = customFadeTime || bgmConfig.fade_out_time;
+        const fadeInTime = customFadeTime || bgmConfig.fade_in_time;
+        
+        console.log(`🎵 シーンクロスフェード開始: ${newSceneId} → ${bgmConfig.bgm_file}`);
+        console.log(`📝 フェード設定: OUT=${fadeOutTime}s, IN=${fadeInTime}s`);
+        
+        // 現在のBGMをフェードアウト開始
+        if (this.bgmAudio && !this.bgmAudio.paused) {
+            this.fadeOut(this.bgmAudio, fadeOutTime, () => {
+                console.log(`🔇 前のBGM（${this.currentBgm}）フェードアウト完了`);
+            });
+        }
+        
+        // 新しいBGMを準備して少し遅れてフェードイン開始
+        setTimeout(async () => {
+            try {
+                // 音量を一時的に設定値に更新
+                const originalBgmVolume = this.volumes.bgm;
+                this.volumes.bgm = bgmConfig.volume;
+                
+                await this.playBGM(bgmConfig.bgm_file, bgmConfig.loop, fadeInTime);
+                
+                // 音量設定を元に戻す
+                this.volumes.bgm = originalBgmVolume;
+                
+                console.log(`🎵 新しいBGM（${bgmConfig.bgm_file}）フェードイン完了`);
+            } catch (error) {
+                console.error(`❌ クロスフェード中のBGM再生エラー:`, error);
+            }
+        }, Math.min(fadeOutTime * 300, 1000)); // フェードアウトの30%地点でスタート（最大1秒遅延）
     }
 
     /**

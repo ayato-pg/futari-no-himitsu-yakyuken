@@ -1,0 +1,7 @@
+stage,image_file,display_key,description_key,unlock_key
+1,misaki_game_stage1.png,gallery_name_1,gallery_desc_1,gallery_unlock_1
+2,misaki_game_stage2.png,gallery_name_2,gallery_desc_2,gallery_unlock_2
+3,misaki_game_stage3.png,gallery_name_3,gallery_desc_3,gallery_unlock_3
+4,misaki_game_stage4.png,gallery_name_4,gallery_desc_4,gallery_unlock_4
+5,misaki_game_stage5.png,gallery_name_5,gallery_desc_5,gallery_unlock_5
+6,misaki_game_stage6.png,gallery_name_6,gallery_desc_6,gallery_unlock_6

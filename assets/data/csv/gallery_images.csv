@@ -1,0 +1,7 @@
+﻿stage,image_file,display_name,description,unlock_condition
+1,misaki_game_stage1.png,美咲,,ゲーム開始時から利用可能
+2,misaki_game_stage2.png,美咲,あ、あれ…、負けちゃった…。次は勝つからね！,1回勝利で解放
+3,misaki_game_stage3.png,美咲,うっ…いつもすぐ負けるくせにぃ…。まぐれだよね？,2回勝利で解放
+4,misaki_game_stage4.png,美咲,こ、こんなはずじゃ…恥ずかしい…。ここから先は…もうやめておかない？…,3回勝利で解放
+5,misaki_game_stage5.png,美咲,や、やばい…。。。隠してもいいでしょ！！早く次はじめるよ！ジロジロ見ないの！,4回勝利で解放
+6,misaki_game_stage6.png,美咲,あ、あぁ…負けちゃった…。そんなに見ないでよ…。野球拳だと強すぎない…？,5回勝利で解放

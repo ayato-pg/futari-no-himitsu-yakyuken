@@ -403,6 +403,15 @@ class GameScene {
             this.resetGameState();
         }
         
+        // 🎉 バトル開始時にStage 1を解放
+        const stage1ImageName = 'misaki_game_stage1.png';
+        const isNewUnlock = this.game.saveSystem.unlockGalleryImage(stage1ImageName, 1);
+        if (isNewUnlock) {
+            console.log('✨ バトル開始: Stage 1をギャラリーに解放しました');
+        } else {
+            console.log('📋 Stage 1は既に解放済みです');
+        }
+        
         // ゲームシーン専用BGMを再生
         await this.game.audioManager.playSceneBGM('game', 1.5);
         
@@ -499,7 +508,15 @@ class GameScene {
     setupBackground() {
         const backgroundElement = document.getElementById('game-bg');
         if (backgroundElement) {
-            backgroundElement.style.backgroundImage = "url('./assets/images/backgrounds/bg_game_room.png')";
+            // 利用可能な背景画像を使用、存在しない場合はグラデーション背景
+            backgroundElement.style.backgroundImage = "url('./assets/images/backgrounds/bg_living_night.png')";
+            backgroundElement.style.backgroundSize = 'cover';
+            backgroundElement.style.backgroundPosition = 'center';
+            backgroundElement.style.backgroundRepeat = 'no-repeat';
+            
+            console.log('🎮 ゲーム画面の背景を設定しました');
+        } else {
+            console.warn('❌ ゲーム画面の背景要素が見つかりません');
         }
     }
 
@@ -1676,6 +1693,22 @@ class GameScene {
             // 🎨 プレイヤー勝利時に美咲の立ち絵を更新
             this.updateMisakiSprite(this.playerWins);
             
+            // 🎉 ギャラリーに立ち絵を追加
+            // Stage1はバトル開始時に解放済み、Stage2～6は1～5勝で解放
+            const currentStage = this.playerWins + 1; // 1勝でStage2、2勝でStage3...
+            const imageName = `misaki_game_stage${currentStage}.png`;
+            
+            // Stage 1は既にバトル開始時に解放済みなので、Stage 2～6のみ処理
+            if (currentStage >= 2 && currentStage <= 6) {
+                const isNewUnlock = this.game.saveSystem.unlockGalleryImage(imageName, currentStage);
+                
+                if (isNewUnlock) {
+                    console.log(`✨ ギャラリーに新しい立ち絵が追加されました: Stage ${currentStage}`);
+                    // オプション: 解放通知を表示
+                    this.showGalleryUnlockNotification(currentStage);
+                }
+            }
+            
             // ハート減少アニメーション
             if (oldMisakiHP > this.misakiHP) {
                 this.animateHeartLoss(this.misakiHP, false);
@@ -2178,6 +2211,76 @@ class GameScene {
             'paper': 'パー'
         };
         return names[hand] || hand;
+    }
+
+    /**
+     * ギャラリー解放通知を表示
+     * @param {number} stage - 解放されたステージ番号
+     */
+    showGalleryUnlockNotification(stage) {
+        // 通知要素を作成
+        const notification = document.createElement('div');
+        notification.className = 'gallery-unlock-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            animation: slideInRight 0.5s ease-out;
+            font-family: 'Noto Sans JP', sans-serif;
+        `;
+        
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 24px;">🎨</span>
+                <div>
+                    <div style="font-weight: bold; font-size: 14px;">ギャラリー解放！</div>
+                    <div style="font-size: 12px; opacity: 0.9;">Stage ${stage} の立ち絵が追加されました</div>
+                </div>
+            </div>
+        `;
+        
+        // アニメーション用CSS追加
+        if (!document.querySelector('#gallery-notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'gallery-notification-styles';
+            style.textContent = `
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                @keyframes fadeOut {
+                    from {
+                        opacity: 1;
+                    }
+                    to {
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(notification);
+        
+        // 3秒後にフェードアウトして削除
+        setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.5s ease-out';
+            setTimeout(() => {
+                notification.remove();
+            }, 500);
+        }, 3000);
     }
 
     /**

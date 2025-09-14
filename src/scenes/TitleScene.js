@@ -109,6 +109,9 @@ class TitleScene {
             });
             // ギャラリーボタンを有効化
             galleryBtn.disabled = false;
+            console.log('✅ ギャラリーボタンを有効化しました');
+        } else {
+            console.warn('❌ ギャラリーボタンが見つかりません');
         }
 
         // 設定 ボタン
@@ -927,21 +930,29 @@ class TitleScene {
      * ギャラリーを開く
      */
     openGallery() {
-        console.log('ギャラリーを開く');
+        console.log('🎨 ギャラリーを開く');
         this.game.audioManager.playSE('se_click.mp3', 0.7);
         
-        // ギャラリー画面を表示
+        // シンプルなモーダル方式でギャラリーを表示
         this.showGalleryModal();
     }
 
     /**
      * ギャラリーモーダルを表示
      */
-    showGalleryModal() {
+    async showGalleryModal() {
         // 既存のギャラリーモーダルを削除
         const existingModal = document.getElementById('gallery-modal');
         if (existingModal) {
             existingModal.remove();
+        }
+        
+        // JavaScriptデータの確認
+        console.log('🔄 ギャラリー表示前にJavaScriptデータを確認');
+        if (window.GalleryData) {
+            console.log('✅ window.GalleryData利用可能:', window.GalleryData.length, '件');
+        } else {
+            console.warn('⚠️ window.GalleryDataが利用できません');
         }
 
         // ギャラリーモーダルを作成
@@ -1025,21 +1036,19 @@ class TitleScene {
             margin-bottom: 20px;
         `;
 
-        // ギャラリーアイテム（デモ用）
-        const galleryItems = [
-            { id: 'misaki_suit', name: '美咲 - OLスーツ', unlocked: true },
-            { id: 'misaki_casual', name: '美咲 - カジュアル', unlocked: true },
-            { id: 'misaki_room', name: '美咲 - 部屋着', unlocked: false },
-            { id: 'misaki_camisole', name: '美咲 - キャミソール', unlocked: false },
-            { id: 'misaki_towel', name: '美咲 - バスタオル', unlocked: false },
-            { id: 'secret_cg_01', name: '隠しCG #1', unlocked: false }
-        ];
+        // 実際のギャラリーデータを取得
+        const galleryData = this.game.saveSystem.getGalleryData();
+        console.log('📊 ギャラリーデータ取得:', galleryData);
+        
+        // CSVから立ち絵情報を取得
+        const galleryItems = await this.loadGalleryItemsFromCode(galleryData);
+        console.log('🎯 CSVから取得したギャラリーアイテム:', galleryItems);
 
         galleryItems.forEach(item => {
             const itemDiv = document.createElement('div');
             itemDiv.style.cssText = `
                 background: ${item.unlocked ? '#3a3a3a' : '#2a2a2a'};
-                border: 2px solid ${item.unlocked ? '#7ed6c4' : '#555'};
+                border: 2px solid ${item.unlocked ? '#ff6b7d' : '#555'};
                 border-radius: 10px;
                 padding: 15px;
                 text-align: center;
@@ -1052,27 +1061,52 @@ class TitleScene {
             if (item.unlocked) {
                 itemDiv.addEventListener('mouseenter', () => {
                     itemDiv.style.transform = 'scale(1.05)';
-                    itemDiv.style.boxShadow = '0 5px 20px rgba(126, 214, 196, 0.4)';
+                    itemDiv.style.boxShadow = '0 5px 20px rgba(255, 107, 125, 0.4)';
                 });
                 itemDiv.addEventListener('mouseleave', () => {
                     itemDiv.style.transform = 'scale(1)';
                     itemDiv.style.boxShadow = 'none';
                 });
+                
+                // クリックで拡大表示
+                itemDiv.addEventListener('click', () => {
+                    this.showImagePreview(item);
+                });
             }
 
-            const placeholder = document.createElement('div');
-            placeholder.style.cssText = `
+            // 画像表示エリア
+            const imageArea = document.createElement('div');
+            imageArea.style.cssText = `
                 width: 150px;
-                height: 100px;
-                background: ${item.unlocked ? 'linear-gradient(135deg, #7ed6c4, #48a999)' : '#666'};
+                height: 200px;
                 border-radius: 5px;
                 margin: 0 auto 10px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 2rem;
+                background: ${item.unlocked ? '#444' : '#666'};
+                overflow: hidden;
             `;
-            placeholder.textContent = item.unlocked ? '🎨' : '🔒';
+            
+            if (item.unlocked) {
+                // 実際の画像を表示
+                const img = document.createElement('img');
+                img.src = item.imagePath;
+                img.alt = item.name;
+                img.style.cssText = `
+                    max-width: 100%;
+                    max-height: 100%;
+                    object-fit: contain;
+                `;
+                img.onerror = () => {
+                    console.error(`❌ ギャラリー画像読み込みエラー Stage ${item.stage}: ${item.imagePath}`);
+                    imageArea.innerHTML = '<div style="color: #ff6b7d; font-size: 2rem;">🎨</div>';
+                };
+                imageArea.appendChild(img);
+            } else {
+                // ロック状態
+                imageArea.innerHTML = '<div style="color: #888; font-size: 2rem;">🔒</div>';
+            }
 
             const nameLabel = document.createElement('div');
             nameLabel.textContent = item.name;
@@ -1081,10 +1115,24 @@ class TitleScene {
                 font-family: 'Noto Sans JP', sans-serif;
                 font-size: 0.9rem;
                 font-weight: ${item.unlocked ? '700' : '400'};
+                margin-bottom: 5px;
+            `;
+            
+            const descLabel = document.createElement('div');
+            // 未獲得の場合は解放条件を表示、獲得済みの場合は説明を表示
+            // ただし、解放条件が空の場合は何も表示しない
+            const displayText = item.unlocked ? item.description : (item.unlockCondition || '');
+            descLabel.textContent = displayText;
+            descLabel.style.cssText = `
+                color: ${item.unlocked ? '#ccc' : '#666'};
+                font-family: 'Noto Sans JP', sans-serif;
+                font-size: 0.7rem;
+                line-height: 1.2;
             `;
 
-            itemDiv.appendChild(placeholder);
+            itemDiv.appendChild(imageArea);
             itemDiv.appendChild(nameLabel);
+            itemDiv.appendChild(descLabel);
             grid.appendChild(itemDiv);
         });
 
@@ -1102,14 +1150,84 @@ class TitleScene {
         
         const unlockedCount = galleryItems.filter(item => item.unlocked).length;
         const totalCount = galleryItems.length;
+        const percentage = totalCount > 0 ? Math.round(unlockedCount/totalCount*100) : 0;
+        
+        // 現在の進行状況に応じたメッセージ
+        let progressMessage = '';
+        if (unlockedCount === 0) {
+            progressMessage = '美咲との野球拳バトルで勝利して立ち絵を獲得しよう！';
+        } else if (unlockedCount < 3) {
+            progressMessage = '順調に獲得中！もっと勝利を重ねよう！';
+        } else if (unlockedCount < 6) {
+            progressMessage = 'もう少しで全ての立ち絵をコンプリート！';
+        } else {
+            progressMessage = '🎉 全ての立ち絵をコンプリートしました！';
+        }
+        
         stats.innerHTML = `
-            <strong>収集状況:</strong> ${unlockedCount}/${totalCount} (${Math.round(unlockedCount/totalCount*100)}%)
-            <br><small>隠し要素を見つけて新しいアイテムを解放しよう！</small>
+            <strong>収集状況:</strong> ${unlockedCount}/${totalCount} (${percentage}%)
+            <br>
+            <strong>総勝利数:</strong> ${galleryData.totalWins || 0}回
+            <br><small>${progressMessage}</small>
         `;
 
+        // デバッグ用：立ち絵解放ボタン
+        const debugButtons = document.createElement('div');
+        debugButtons.style.cssText = `
+            margin-top: 15px;
+            text-align: center;
+        `;
+        
+        const unlockButton = document.createElement('button');
+        unlockButton.textContent = '🧪 テスト: Stage 1-3を解放';
+        unlockButton.style.cssText = `
+            background: #27AE60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 0.8rem;
+        `;
+        unlockButton.addEventListener('click', () => {
+            for (let stage = 1; stage <= 3; stage++) {
+                const imageName = `misaki_game_stage${stage}.png`;
+                this.game.saveSystem.unlockGalleryImage(imageName, stage);
+            }
+            modal.remove();
+            this.showGalleryModal(); // ギャラリーを再表示
+        });
+        
+        const clearButton = document.createElement('button');
+        clearButton.textContent = '🗑️ テスト: 全削除';
+        clearButton.style.cssText = `
+            background: #E74C3C;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 0.8rem;
+        `;
+        clearButton.addEventListener('click', () => {
+            if (confirm('全ての立ち絵を削除しますか？')) {
+                // SaveSystemのresetGalleryメソッドを使用
+                this.game.saveSystem.resetGallery();
+                console.log('✅ ギャラリーデータをリセットしました');
+                modal.remove();
+                this.showGalleryModal(); // ギャラリーを再表示
+            }
+        });
+        
+        debugButtons.appendChild(unlockButton);
+        debugButtons.appendChild(clearButton);
+        
         galleryContent.appendChild(header);
         galleryContent.appendChild(grid);
         galleryContent.appendChild(stats);
+        galleryContent.appendChild(debugButtons);
         modal.appendChild(galleryContent);
         document.body.appendChild(modal);
 
@@ -1432,6 +1550,212 @@ class TitleScene {
                   'ゲームが完全に読み込まれていない可能性があります。\n' + 
                   'ページを再読み込みしてから再度お試しください。');
         }
+    }
+
+    /**
+     * CSVから立ち絵データを読み込み
+     * @param {Object} galleryData - 現在のギャラリーデータ
+     * @returns {Array} 立ち絵アイテムの配列
+     */
+    async loadGalleryItemsFromCode(galleryData) {
+        try {
+            console.log('📋 gallery_data.jsから立ち絵データを読み込み開始...');
+            
+            // gallery_data.jsからデータを取得
+            if (!window.GalleryData || !Array.isArray(window.GalleryData)) {
+                console.warn('⚠️ window.GalleryDataが利用できません。フォールバックデータを使用します。');
+                return this.getFallbackGalleryItems(galleryData);
+            }
+
+            const galleryDataSource = window.GalleryData;
+            console.log('📋 gallery_data.js 読み込み完了:', galleryDataSource);
+
+            // JavaScriptデータからギャラリーアイテムを作成
+            const galleryItems = galleryDataSource.map(row => {
+                const stage = parseInt(row.stage);
+                const imageName = row.image_file;
+                const imageId = `stage${stage}_${imageName}`;
+                const isUnlocked = galleryData.unlockedImages.includes(imageId);
+                
+                console.log(`🔍 Stage ${stage} データ:`, {
+                    displayName: row.display_name,
+                    description: row.description,
+                    unlockCondition: row.unlock_condition
+                });
+                
+                return {
+                    id: imageId,
+                    name: row.display_name || `美咲 Stage ${stage}`,
+                    imagePath: `./assets/images/characters/misaki/${imageName}`,
+                    unlocked: isUnlocked,
+                    stage: stage,
+                    description: row.description || (stage === 1 ? '' : `${stage}勝で解放`),
+                    unlockCondition: row.unlock_condition || (stage === 1 ? '' : `${stage}回勝利で解放`)
+                };
+            });
+
+            // ステージ順でソート
+            galleryItems.sort((a, b) => a.stage - b.stage);
+            
+            console.log('✅ JavaScriptファイルから立ち絵データを正常に読み込みました');
+            console.log('✅ 最終的なギャラリーアイテム:', galleryItems);
+            return galleryItems;
+            
+        } catch (error) {
+            console.error('❌ JavaScript読み込みエラー:', error);
+            console.warn('⚠️ フォールバックデータを使用します。');
+            return this.getFallbackGalleryItems(galleryData);
+        }
+    }
+
+
+    /**
+     * フォールバック用の立ち絵データを取得
+     * @param {Object} galleryData - 現在のギャラリーデータ
+     * @returns {Array} 立ち絵アイテムの配列
+     */
+    getFallbackGalleryItems(galleryData) {
+        const fallbackData = [
+            { stage: 1, display_name: '美咲 - 初期状態', description: 'ゲーム開始時の美咲の姿' },
+            { stage: 2, display_name: '美咲 - 1勝後', description: '少し動揺した美咲の表情' },
+            { stage: 3, display_name: '美咲 - 2勝後', description: '上着を脱いだ美咲' },
+            { stage: 4, display_name: '美咲 - 3勝後', description: 'さらに薄着になった美咲' },
+            { stage: 5, display_name: '美咲 - 4勝後', description: '恥ずかしそうな美咲' },
+            { stage: 6, display_name: '美咲 - 完全勝利', description: '完全に負けた美咲' }
+        ];
+
+        return fallbackData.map(item => {
+            const imageName = `misaki_game_stage${item.stage}.png`;
+            const imageId = `stage${item.stage}_${imageName}`;
+            const isUnlocked = galleryData.unlockedImages.includes(imageId);
+            
+            return {
+                id: imageId,
+                name: item.display_name,
+                imagePath: `./assets/images/characters/misaki/${imageName}`,
+                unlocked: isUnlocked,
+                stage: item.stage,
+                description: item.description,
+                unlockCondition: item.stage === 1 ? '' : `${item.stage}回勝利で解放`
+            };
+        });
+    }
+
+    /**
+     * ステージの説明を取得（レガシー関数、CSVで管理するため非推奨）
+     * @param {number} stage - ステージ番号
+     * @returns {string} ステージの説明
+     * @deprecated CSVから取得するため、この関数は使用されません
+     */
+    getStageDescription(stage) {
+        const descriptions = {
+            1: '初期衣装 - バトル開始時',
+            2: '1勝後 - 少し乱れた様子',
+            3: '2勝後 - 上着を脱いだ状態',
+            4: '3勝後 - さらに薄着に',
+            5: '4勝後 - 最終段階',
+            6: '5勝後 - 完全勝利'
+        };
+        return descriptions[stage] || `${stage}勝で解放`;
+    }
+    
+    /**
+     * 画像プレビューを表示
+     * @param {Object} item - ギャラリーアイテム
+     */
+    showImagePreview(item) {
+        console.log('🖼️ 画像プレビューを表示:', item.name);
+        
+        // プレビューモーダルを作成
+        const previewModal = document.createElement('div');
+        previewModal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        `;
+        
+        const imageContainer = document.createElement('div');
+        imageContainer.style.cssText = `
+            max-width: 90%;
+            max-height: 90%;
+            text-align: center;
+        `;
+        
+        const previewImg = document.createElement('img');
+        previewImg.src = item.imagePath;
+        previewImg.alt = item.name;
+        previewImg.style.cssText = `
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.8);
+        `;
+        
+        // 画像読み込みエラーハンドリング
+        previewImg.onerror = () => {
+            console.error(`❌ 画像読み込みエラー: ${item.imagePath}`);
+            console.log('🔍 画像情報:', {
+                name: item.name,
+                stage: item.stage,
+                imagePath: item.imagePath,
+                description: item.description
+            });
+            previewImg.src = './assets/images/placeholder.png'; // フォールバック画像
+        };
+        
+        previewImg.onload = () => {
+            console.log(`✅ 画像読み込み成功: ${item.imagePath}`);
+        };
+        
+        const titleLabel = document.createElement('div');
+        titleLabel.textContent = item.name;
+        titleLabel.style.cssText = `
+            color: white;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        `;
+        
+        const closeHint = document.createElement('div');
+        closeHint.textContent = 'クリックして閉じる';
+        closeHint.style.cssText = `
+            color: #ccc;
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 1rem;
+            margin-top: 10px;
+        `;
+        
+        imageContainer.appendChild(previewImg);
+        imageContainer.appendChild(titleLabel);
+        imageContainer.appendChild(closeHint);
+        previewModal.appendChild(imageContainer);
+        
+        // クリックで閉じる
+        previewModal.addEventListener('click', () => {
+            previewModal.remove();
+        });
+        
+        // ESCキーで閉じる
+        const handleKeydown = (e) => {
+            if (e.key === 'Escape') {
+                previewModal.remove();
+                document.removeEventListener('keydown', handleKeydown);
+            }
+        };
+        document.addEventListener('keydown', handleKeydown);
+        
+        document.body.appendChild(previewModal);
     }
 
     /**

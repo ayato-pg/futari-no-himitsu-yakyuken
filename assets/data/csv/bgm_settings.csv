@@ -1,0 +1,7 @@
+﻿scene_id,bgm_file,volume,loop,fade_in_time,fade_out_time,description
+title,bgm_title.mp3,0.7,TRUE,2,1,タイトル画面BGM - ノスタルジックな夏の思い出
+dialogue,bgm_dialogue.mp3,0.6,TRUE,2.5,2,バトル前トーク画面BGM - 穏やかな会話シーン
+game,bgm_battle_tension.mp3,0.8,TRUE,1.5,1.5,バトル画面BGM - 緊張感のある野球拳バトル
+ending_true,bgm_ending_true.mp3,0.7,TRUE,3,2,真エンディングBGM - 感動的な勝利シーン
+ending_bad,bgm_ending_bad.mp3,0.5,FALSE,2,0,BADエンディングBGM - 物悲しい敗北シーン
+loading,bgm_gentle_piano.mp3,0.4,TRUE,1,1,ローディング画面BGM - 静かなピアノ

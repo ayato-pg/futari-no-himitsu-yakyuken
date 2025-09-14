@@ -22,7 +22,8 @@ class GameController {
             dialogue: null,
             game: null,
             ending: null,
-            badEndEditor: null
+            badEndEditor: null,
+            gallery: null
         };
         
         // ゲーム状態
@@ -50,10 +51,10 @@ class GameController {
             // システムを初期化
             await this.initializeSystems();
             
-            // ローディング中のBGMを再生
-            this.audioManager.playSceneBGM('loading', 1.0).catch(() => {
-                console.log('ローディングBGMが見つかりません');
-            });
+            // ローディング中のBGM再生は削除（タイトル画面で自動開始するため不要）
+            // this.audioManager.playSceneBGM('loading', 1.0).catch(() => {
+            //     console.log('ローディングBGMが見つかりません');
+            // });
             
             // シーンを初期化
             this.initializeScenes();
@@ -203,6 +204,7 @@ class GameController {
         this.scenes.game = new GameScene(this);
         this.scenes.ending = new EndingScene(this);
         this.scenes.badEndEditor = new BadEndEditorScene(this);
+        this.scenes.gallery = new GalleryScene(this);
         
         console.log('シーン初期化完了');
     }
