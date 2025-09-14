@@ -27,6 +27,8 @@ class AudioManager {
         // 現在再生中の情報
         this.currentBgm = null;
         this.isInitialized = false;
+        this.currentScene = null; // 現在のシーンを追跡
+        this.pendingSceneBgm = null; // 初期化待ちのBGM情報
         
         // プリロード済みオーディオ
         this.preloadedAudio = new Map();
@@ -47,15 +49,16 @@ class AudioManager {
     async initialize() {
         try {
             // ユーザー操作により音声再生を許可する処理
+            console.log('🎵 AudioManager: ユーザー操作待ちイベントリスナーを設定');
             document.addEventListener('click', this.enableAudio.bind(this), { once: true });
             document.addEventListener('keydown', this.enableAudio.bind(this), { once: true });
-            
+
             // BGM設定をCSVから読み込み
             await this.loadBGMSettings();
-            
-            console.log('AudioManager初期化完了');
+
+            console.log('🎵 AudioManager初期化完了 - BGM自動再生準備OK');
         } catch (error) {
-            console.error('AudioManager初期化エラー:', error);
+            console.error('❌ AudioManager初期化エラー:', error);
         }
     }
 
@@ -118,9 +121,16 @@ class AudioManager {
             const dummyAudio = new Audio();
             dummyAudio.volume = 0;
             dummyAudio.play().catch(() => {});
-            
+
             this.isInitialized = true;
-            console.log('音声再生が有効になりました');
+            console.log('🎵 音声再生が有効になりました');
+
+            // 保留されているBGMがある場合は即座に再生開始
+            if (this.pendingSceneBgm) {
+                console.log('🎵 保留BGMを再生開始:', this.pendingSceneBgm);
+                this.playSceneBGM(this.pendingSceneBgm.sceneId, this.pendingSceneBgm.fadeTime);
+                this.pendingSceneBgm = null;
+            }
         }
     }
 
@@ -211,6 +221,16 @@ class AudioManager {
      * @param {boolean} useSmootherTransition - より滑らかなクロスフェードを使用するか（デフォルト: true）
      */
     async playSceneBGM(sceneId, customFadeTime = null, useSmootherTransition = true) {
+        // 現在のシーンを記録
+        this.currentScene = sceneId;
+
+        // まだ初期化されていない場合は、BGM情報を保留
+        if (!this.isInitialized) {
+            console.log('🎵 音声未初期化のため、BGMを保留:', sceneId);
+            this.pendingSceneBgm = { sceneId, fadeTime: customFadeTime };
+            return;
+        }
+
         const bgmConfig = this.bgmSettings.get(sceneId);
         
         if (bgmConfig) {

@@ -417,7 +417,18 @@ class TitleScene {
         }
         
         // タイトル専用BGMを再生（自動クロスフェード）
+        console.log('🎵 タイトル画面: BGM再生を試行');
         await this.game.audioManager.playSceneBGM('title', 2.0);
+
+        // BGM再生確認とフォールバック処理
+        setTimeout(() => {
+            if (!this.game.audioManager.isInitialized) {
+                console.log('🎵 タイトル画面: 音声未初期化のため、初回クリック後にBGM再生予定');
+            } else if (!this.game.audioManager.currentBgm) {
+                console.log('🎵 タイトル画面: BGM再生を再試行');
+                this.game.audioManager.playSceneBGM('title', 1.0);
+            }
+        }, 1000);
         
         // 夏の夕暮れアンビエント音を再生（セミの声・風鈴）
         this.game.audioManager.playSE('se_cicada_evening.mp3', 0.3).catch(() => {
