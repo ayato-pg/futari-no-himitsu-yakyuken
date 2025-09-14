@@ -68,9 +68,6 @@ class TitleScene {
                 this.onMisakiLeave();
             });
             
-            this.misakiImage.addEventListener('click', () => {
-                this.onMisakiClick();
-            });
         }
 
         // キーボード操作
@@ -572,71 +569,6 @@ class TitleScene {
         }
     }
 
-    /**
-     * 美咲クリック時の処理
-     */
-    onMisakiClick() {
-        console.log('美咲がクリックされました');
-        
-        // 特別な反応を追加可能
-        this.game.audioManager.playSE('se_click.mp3', 0.5);
-        
-        // 隠し要素のヒント表示など
-        this.showMisakiMessage();
-    }
-
-    /**
-     * 美咲からのメッセージ表示
-     */
-    showMisakiMessage() {
-        // 簡単なメッセージ表示
-        const messages = [
-            'あら、私をクリックしたのね♪',
-            '今夜は二人きり...どうする？',
-            '昔みたいに野球拳、してみる？',
-            'お姉ちゃんと呼んでくれる？'
-        ];
-        
-        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-        
-        // 一時的にメッセージを表示
-        this.showTemporaryMessage(randomMessage);
-    }
-
-    /**
-     * 一時的なメッセージ表示
-     * @param {string} message - 表示するメッセージ
-     */
-    showTemporaryMessage(message) {
-        const messageDiv = document.createElement('div');
-        messageDiv.style.cssText = `
-            position: absolute;
-            top: 60%;
-            left: 60%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: #ffb6c1;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            z-index: 100;
-            animation: fadeIn 0.3s ease;
-        `;
-        
-        messageDiv.textContent = message;
-        this.titleScreen.appendChild(messageDiv);
-        
-        // 3秒後に削除
-        setTimeout(() => {
-            if (messageDiv.parentNode) {
-                messageDiv.style.animation = 'fadeOut 0.3s ease';
-                setTimeout(() => {
-                    messageDiv.remove();
-                }, 300);
-            }
-        }, 3000);
-    }
 
     /**
      * キーボード入力処理

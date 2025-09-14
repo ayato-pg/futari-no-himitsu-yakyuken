@@ -14,7 +14,6 @@ class GameController {
         this.saveSystem = null;
         this.audioManager = null;
         this.costumeSystem = null;
-        this.clickAreaSystem = null;
         
         // シーン管理
         this.scenes = {
@@ -115,7 +114,6 @@ class GameController {
         this.costumeSystem = new CostumeSystem(this);
         
         // 隠しクリック領域システム
-        this.clickAreaSystem = new ClickAreaSystem(this);
         
         // クリック音管理システム
         if (window.clickSoundManager) {
@@ -293,12 +291,10 @@ class GameController {
         this.gameState.currentPhase = 'title';
         
         // 隠しクリック領域を無効化
-        this.clickAreaSystem.deactivateAllAreas();
         
         await this.scenes.title.show();
         
         // タイトル画面の隠し領域を有効化
-        this.clickAreaSystem.activateAreasForScene('title');
     }
 
     /**
@@ -318,7 +314,6 @@ class GameController {
         this.currentScene = 'badEndEditor';
         
         // 隠しクリック領域を無効化
-        this.clickAreaSystem.deactivateAllAreas();
         
         console.log('badEndEditorシーンのshow()を呼び出し中...');
         try {
@@ -345,13 +340,11 @@ class GameController {
         this.gameState.isGameActive = true;
         
         // 隠しクリック領域を更新
-        this.clickAreaSystem.deactivateAllAreas();
         
         // 「intro」シーンで開始（CSVのscene_idに対応）
         await this.scenes.dialogue.show('living');
         
         // 会話シーンの隠し領域を有効化
-        this.clickAreaSystem.activateAreasForScene('dialogue');
     }
 
     /**
@@ -401,12 +394,10 @@ class GameController {
         this.gameState.currentPhase = 'game';
         
         // 隠しクリック領域を更新
-        this.clickAreaSystem.deactivateAllAreas();
         
         await this.scenes.game.show();
         
         // ゲームシーンの隠し領域を有効化
-        this.clickAreaSystem.activateAreasForScene('game');
     }
 
     /**
@@ -429,14 +420,12 @@ class GameController {
         this.gameState.isGameActive = false;
         
         // 隠しクリック領域を更新
-        this.clickAreaSystem.deactivateAllAreas();
         
         // トークシーンを表示（美咲の立ち絵は現状のstage6を維持）
         // livingシーンを使用してゲーム開始前と同じトーク画面に戻る
         await this.scenes.dialogue.show(sceneType);
         
         // 会話シーンの隠し領域を有効化
-        this.clickAreaSystem.activateAreasForScene('dialogue');
     }
 
     /**
@@ -725,7 +714,7 @@ function checkClassesLoaded() {
            typeof GameScene !== 'undefined' &&
            typeof EndingScene !== 'undefined' &&
            typeof CostumeSystem !== 'undefined' &&
-           typeof ClickAreaSystem !== 'undefined';
+           true; // ClickAreaSystem removed
 }
 
 // DOMContentLoadedイベントでゲームを初期化

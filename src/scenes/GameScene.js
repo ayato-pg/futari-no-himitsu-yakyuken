@@ -242,12 +242,6 @@ class GameScene {
             });
         }
 
-        // 美咲の画像クリック（衣装確認）
-        if (this.misakiGameDisplay) {
-            this.misakiGameDisplay.addEventListener('click', () => {
-                this.onMisakiClick();
-            });
-        }
 
         // じゃんけんボタンでトーク進行も可能にする（既存のmakeChoiceを拡張）
 
@@ -2624,10 +2618,6 @@ class GameScene {
         
         const confirmReturn = confirm('タイトル画面に戻りますか？\n進行中のゲームは失われます。');
         if (confirmReturn) {
-            // 隠しクリック領域を無効化
-            if (this.game.clickAreaSystem) {
-                this.game.clickAreaSystem.deactivateAllAreas();
-            }
             
             this.hide();
             this.game.showTitleScreen();
@@ -2677,18 +2667,6 @@ class GameScene {
         return true; // エラーではないのでtrueを返す
     }
 
-    /**
-     * 美咲クリック時の処理
-     */
-    onMisakiClick() {
-        // this.game.audioManager.playSE('se_click.mp3', 0.3); // ClickSoundManagerと重複するため無効化
-        
-        // 現在の衣装情報を表示
-        const costumeName = this.game.costumeSystem.getCurrentCostumeName();
-        const message = `現在の美咲: ${costumeName} (HP: ${this.misakiHP})`;
-        
-        this.showTemporaryMessage(message);
-    }
 
     /**
      * キーボード入力処理

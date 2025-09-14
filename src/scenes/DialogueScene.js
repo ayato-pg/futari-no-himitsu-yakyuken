@@ -72,12 +72,6 @@ class DialogueScene {
             });
         }
 
-        // 美咲の画像クリック
-        if (this.misakiDisplay) {
-            this.misakiDisplay.addEventListener('click', () => {
-                this.onMisakiClick();
-            });
-        }
 
         // コントロールボタン
         this.setupControlButtons();
@@ -1241,53 +1235,6 @@ class DialogueScene {
         // }
     }
 
-    /**
-     * 美咲クリック時の処理
-     */
-    onMisakiClick() {
-        this.playDialogueSE('misaki_click');
-        
-        // 美咲の特別反応
-        this.showMisakiReaction();
-    }
-
-    /**
-     * 美咲の特別反応
-     */
-    showMisakiReaction() {
-        // 美咲がクリックされた時の特別会話
-        const reactions = [
-            { text: 'あら、私のことが気になるの？', emotion: 'teasing' },
-            { text: '昔から、じっと見つめるのが好きよね', emotion: 'nostalgic' },
-            { text: 'そんなに見つめられると...恥ずかしい', emotion: 'embarrassed' }
-        ];
-        
-        const randomReaction = reactions[Math.floor(Math.random() * reactions.length)];
-        
-        // 一時的に反応を表示
-        this.showTemporaryDialogue(randomReaction);
-    }
-
-    /**
-     * 一時的な会話表示
-     * @param {Object} dialogue - 会話データ
-     */
-    showTemporaryDialogue(dialogue) {
-        const originalText = this.dialogueText.textContent;
-        const originalName = this.characterName.textContent;
-        
-        // 反応を表示
-        this.characterName.textContent = '美咲';
-        this.characterName.style.color = '#ffb6c1';
-        this.changeMisakiEmotion(dialogue.emotion, 1);
-        this.animateText(dialogue.text);
-        
-        // 3秒後に元に戻す
-        setTimeout(() => {
-            this.dialogueText.textContent = originalText;
-            this.characterName.textContent = originalName;
-        }, 3000);
-    }
 
     /**
      * キーボード入力処理
@@ -1425,10 +1372,6 @@ class DialogueScene {
             // 自動再生を停止
             this.stopAutoPlay();
             
-            // 隠しクリック領域を無効化
-            if (this.game.clickAreaSystem) {
-                this.game.clickAreaSystem.deactivateAllAreas();
-            }
             
             this.hide();
             this.game.showTitleScreen();

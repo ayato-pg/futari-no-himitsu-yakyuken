@@ -18,7 +18,6 @@ class CSVLoader {
             'ui_elements.csv',
             'ui_panels.csv',
             'ui_icons.csv',
-            'click_areas.csv',
             'ui_animations.csv',
             'ui_fonts.csv',
             'ui_responsive.csv',
