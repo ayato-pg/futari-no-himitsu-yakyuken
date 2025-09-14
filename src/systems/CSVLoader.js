@@ -374,6 +374,18 @@ class CSVLoader {
                 { section_id: 'controls', title: '操作方法', content: '<ul><li><strong>マウス：</strong> ボタンをクリックして選択</li><li><strong>キーボード：</strong> 矢印キーでメニュー移動、Enterで決定</li><li><strong>美咲をクリック：</strong> 特別なメッセージが表示されます</li><li><strong>ヒント機能：</strong> 美咲の次の手を予測できます</li></ul>', icon: '🎮', display_order: '5' },
                 { section_id: 'secrets', title: '隠し要素', content: '<ul><li>画面をクリックすると隠しCGが解放されることがあります</li><li>特定の条件で特別なエンディングが見られます</li><li>ギャラリーで収集したアイテムを確認できます</li><li>美咲の表情や反応にも注目してみてください</li></ul>', icon: '🔍', display_order: '6' },
                 { section_id: 'footer', title: 'メッセージ', content: '🌸 大人になった二人の秘密の時間を楽しんでください 🌸', icon: '🌸', display_order: '7' }
+            ],
+            game_end_messages: [
+                { message_id: 'ending_victory', scene_type: 'victory', title_text: 'ゲームクリア！', message_text: 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！', button1_text: 'もう一度プレイ', button2_text: 'タイトルに戻る', description: '勝利時のゲーム終了メッセージ' }
+            ],
+            gallery_images: [
+                { stage: '1', image_file: 'misaki_game_stage1.png', display_name: '美咲', description: '', unlock_condition: 'ゲーム開始時から利用可能' },
+                { stage: '2', image_file: 'misaki_game_stage2.png', display_name: '美咲', description: 'あ、あれ…、負けちゃった…。次は勝つからね！', unlock_condition: '1回勝利で解放' },
+                { stage: '3', image_file: 'misaki_game_stage3.png', display_name: '美咲', description: 'うっ…いつもすぐ負けるくせにぃ…。まぐれだよね？', unlock_condition: '2回勝利で解放' },
+                { stage: '4', image_file: 'misaki_game_stage4.png', display_name: '美咲', description: 'こ、こんなはずじゃ…恥ずかしい…。ここから先は…もうやめておかない？…', unlock_condition: '3回勝利で解放' },
+                { stage: '5', image_file: 'misaki_game_stage5.png', display_name: '美咲', description: 'や、やばい…。。。隠してもいいでしょ！！早く次はじめるよ！ジロジロ見ないの！', unlock_condition: '4回勝利で解放' },
+                { stage: '6', image_file: 'misaki_game_stage6.png', display_name: '美咲', description: 'あ、あぁ…負けちゃった…。そんなに見ないでよ…。野球拳だと強すぎない…？', unlock_condition: '5回勝利で解放' },
+                { stage: '7', image_file: 'misaki_secret_victory.png', display_name: '美咲（シークレット）', description: 'おめでとう…ここまで来るなんて…♪ 君だけの特別な美咲よ', unlock_condition: 'ゲームクリアで解放' }
             ]
         };
         

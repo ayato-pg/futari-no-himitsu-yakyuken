@@ -1505,55 +1505,36 @@ class DialogueScene {
         
         // 勝利時のみCSVからゲーム終了メッセージを取得
         if (this.game.gameState && this.game.gameState.playerWins >= 5) {
-            console.log('🎯 勝利状態を検出、CSVから最新メッセージを読み込みます');
-            
-            // CSVLoaderのキャッシュをクリアして強制再読み込み
+            console.log('🎯 勝利状態を検出、CSVから勝利メッセージを適用');
+
+            // CSVから勝利メッセージを取得
             const csvLoader = this.game.csvLoader;
-            if (csvLoader && csvLoader.csvData) {
-                // game_end_messagesのキャッシュを削除
-                delete csvLoader.csvData['game_end_messages'];
-                console.log('🗑️ game_end_messagesのキャッシュを削除しました');
-            }
-            
-            // CSVファイルを直接再読み込み（async）
-            csvLoader.loadCSV('game_end_messages.csv').then(() => {
-                const endMessages = csvLoader.getData('game_end_messages');
-                console.log('📋 再読み込みしたCSVデータ:', endMessages);
-                
-                if (endMessages && Array.isArray(endMessages) && endMessages.length > 0) {
-                    const victoryMessage = endMessages.find(msg => msg.scene_type === 'victory');
-                    console.log('🎯 勝利メッセージ検出:', victoryMessage);
-                    
-                    if (victoryMessage) {
-                        // DOMが既に作成されている場合は直接更新
-                        const endingOptions = document.getElementById('ending-options');
-                        if (endingOptions) {
-                            const existingTitle = endingOptions.querySelector('h2');
-                            const existingMessage = endingOptions.querySelector('p');
-                            
-                            if (existingTitle) {
-                                existingTitle.textContent = victoryMessage.title_text || 'ゲームクリア！';
-                            }
-                            if (existingMessage) {
-                                const messageText = victoryMessage.message_text || 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
-                                existingMessage.innerHTML = messageText.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
-                            }
-                            
-                            console.log(`🏆 CSVから勝利メッセージを適用: ${victoryMessage.title_text}`);
-                        }
-                    }
+            const endMessages = csvLoader.getData('game_end_messages');
+
+            if (endMessages && Array.isArray(endMessages) && endMessages.length > 0) {
+                const victoryMessage = endMessages.find(msg => msg.scene_type === 'victory');
+
+                if (victoryMessage) {
+                    titleText = victoryMessage.title_text || 'ゲームクリア！';
+                    messageText = victoryMessage.message_text || 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
+                    button1Text = victoryMessage.button1_text || 'もう一度プレイ';
+                    button2Text = victoryMessage.button2_text || 'タイトルに戻る';
+
+                    console.log(`✅ CSVから勝利メッセージを適用: ${titleText}`);
+                } else {
+                    console.warn('⚠️ 勝利メッセージがCSVに見つからないため、デフォルト値を使用');
                 }
-            }).catch(error => {
-                console.error('❌ CSV再読み込みエラー:', error);
-            });
-            
-            // 即座に最新のメッセージを設定（CSVの内容と同じ、改行付き）
-            titleText = 'ゲームクリア！';
-            messageText = 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
-            button1Text = 'もう一度プレイ';
-            button2Text = 'タイトルに戻る';
-            
-            console.log(`📝 即座に設定: ${titleText} - ${messageText}`);
+            } else {
+                console.warn('⚠️ game_end_messages.csvが読み込まれていないため、デフォルト値を使用');
+            }
+
+            // デフォルト値を確実に設定（CSVが読み込まれていない場合のフォールバック）
+            if (!titleText || titleText === 'ゲーム終了') {
+                titleText = 'ゲームクリア！';
+                messageText = 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
+                button1Text = 'もう一度プレイ';
+                button2Text = 'タイトルに戻る';
+            }
         }
         // 敗北時はbad_end.csv、引き分けはデフォルト値を使用
         
@@ -1608,29 +1589,303 @@ class DialogueScene {
         
         // 作成後に再度CSVからメッセージを更新（確実に反映させるため）
         if (this.game.gameState && this.game.gameState.playerWins >= 5) {
-            // 少し遅延を入れてDOMが確実に作成された後に更新
-            setTimeout(() => {
-                const csvLoader = this.game.csvLoader;
-                const endMessages = csvLoader.getData('game_end_messages');
-                
-                if (endMessages && Array.isArray(endMessages) && endMessages.length > 0) {
-                    const victoryMessage = endMessages.find(msg => msg.scene_type === 'victory');
-                    
-                    if (victoryMessage) {
-                        title.textContent = victoryMessage.title_text || 'ゲームクリア！';
-                        const messageText = victoryMessage.message_text || 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
-                        message.innerHTML = messageText.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');  // エスケープされた改行と通常の改行の両方に対応
-                        restartButton.textContent = victoryMessage.button1_text || 'もう一度プレイ';
-                        titleButton.textContent = victoryMessage.button2_text || 'タイトルに戻る';
-                        
-                        console.log(`✅ 最終的に適用されたメッセージ: ${title.textContent}`);
-                    }
-                }
-            }, 100);
+            // CSVデータを確実に取得する処理
+            this.updateEndingMessage(title, message, restartButton, titleButton);
         }
         
         // 音響効果
         this.playDialogueSE('dialogue_end');
+    }
+
+    /**
+     * エンディングメッセージをCSVから確実に取得して更新
+     */
+    async updateEndingMessage(title, message, restartButton, titleButton) {
+        console.log('🔄 エンディングメッセージの更新を開始...');
+
+        try {
+            const csvLoader = this.game.csvLoader;
+
+            // まずは既存のデータをチェック
+            let endMessages = csvLoader.getData('game_end_messages');
+
+            // データが存在しないか空の場合は再読み込み
+            if (!endMessages || !Array.isArray(endMessages) || endMessages.length === 0) {
+                console.log('📥 game_end_messages.csvを再読み込み中...');
+
+                // CSVファイルを非同期で読み込み
+                await csvLoader.loadCSV('game_end_messages.csv');
+                endMessages = csvLoader.getData('game_end_messages');
+
+                console.log('📊 再読み込み後のデータ:', endMessages);
+            }
+
+            // データが正常に読み込まれた場合
+            if (endMessages && Array.isArray(endMessages) && endMessages.length > 0) {
+                console.log('📊 検索対象のendMessages:', endMessages);
+
+                const victoryMessage = endMessages.find(msg => {
+                    console.log('🔍 メッセージをチェック:', msg);
+                    return msg && msg.scene_type === 'victory';
+                });
+
+                if (victoryMessage) {
+                    console.log('🎯 勝利メッセージを発見:', victoryMessage);
+
+                    title.textContent = victoryMessage.title_text || 'ゲームクリア！';
+                    const messageText = victoryMessage.message_text || 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
+                    message.innerHTML = messageText.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+                    restartButton.textContent = victoryMessage.button1_text || 'もう一度プレイ';
+                    titleButton.textContent = victoryMessage.button2_text || 'タイトルに戻る';
+
+                    console.log(`✅ CSVメッセージを適用完了: ${title.textContent}`);
+                    console.log(`📝 メッセージ内容: ${messageText}`);
+
+                    // シークレットギャラリー画像を解放
+                    this.unlockSecretGallery();
+                    return; // 🚨 確実にここで処理を終了
+                } else {
+                    console.warn('⚠️ victory タイプのメッセージが見つかりませんでした');
+                }
+            } else {
+                console.warn('⚠️ endMessages が無効です:', endMessages);
+            }
+
+            console.warn('⚠️ CSV読み込みに失敗したため、デフォルトメッセージを使用');
+
+        } catch (error) {
+            console.error('❌ エンディングメッセージ更新中にエラー:', error);
+            console.log('🔄 フォールバック処理でデフォルトメッセージを使用');
+        }
+
+        // フォールバック: デフォルトメッセージを設定（CSVが読み込めなかった場合のみ）
+        console.log('📝 CSVが読み込めなかったため、デフォルトメッセージを適用');
+        title.textContent = 'ゲームクリア！';
+        message.innerHTML = 'お疲れさまでした！<br>ゲームをプレイしていただき、ありがとうございます！';
+        restartButton.textContent = 'もう一度プレイ';
+        titleButton.textContent = 'タイトルに戻る';
+
+        // シークレットギャラリー画像を解放
+        this.unlockSecretGallery();
+    }
+
+    /**
+     * シークレットギャラリー画像を解放
+     */
+    unlockSecretGallery() {
+        try {
+            console.log('🎉 シークレットギャラリー解放処理を開始...');
+
+            const saveSystem = this.game.saveSystem;
+            if (!saveSystem) {
+                console.error('❌ SaveSystemが見つかりません');
+                return;
+            }
+
+            // シークレット立ち絵を解放（ステージ7として設定）
+            const secretImageName = 'misaki_secret_victory.png';
+            const secretStage = 7;
+
+            // 既に解放済みかチェック
+            if (saveSystem.isImageUnlocked(secretImageName, secretStage)) {
+                console.log('✅ シークレット画像は既に解放済みです');
+                return;
+            }
+
+            // 新規解放
+            const isNewUnlock = saveSystem.unlockGalleryImage(secretImageName, secretStage);
+
+            if (isNewUnlock) {
+                console.log(`🎊 シークレットギャラリー解放成功: ${secretImageName}`);
+
+                // 解放通知を表示（通常のギャラリー解放と同じスタイル）
+                this.showGalleryUnlockNotification(7);
+            } else {
+                console.log('⚠️ シークレットギャラリーの解放に失敗しました');
+            }
+
+        } catch (error) {
+            console.error('❌ シークレットギャラリー解放中にエラー:', error);
+        }
+    }
+
+    /**
+     * ギャラリー解放通知を表示（GameSceneと同じスタイル）
+     * @param {number} stage - 解放されたステージ番号
+     */
+    showGalleryUnlockNotification(stage) {
+        // 通知要素を作成
+        const notification = document.createElement('div');
+        notification.className = 'gallery-unlock-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            animation: slideInRight 0.5s ease-out;
+            font-family: 'Noto Sans JP', sans-serif;
+        `;
+
+        // シークレット専用の表示内容
+        if (stage === 7) {
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">🔮</span>
+                    <div>
+                        <div style="font-weight: bold; font-size: 14px;">シークレットギャラリー解放！</div>
+                        <div style="font-size: 12px; opacity: 0.9;">特別な立ち絵が追加されました</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">🎨</span>
+                    <div>
+                        <div style="font-weight: bold; font-size: 14px;">ギャラリー解放！</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Stage ${stage} の立ち絵が追加されました</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // アニメーション用CSS追加
+        if (!document.querySelector('#gallery-notification-styles')) {
+            const style = document.createElement('style');
+            style.id = 'gallery-notification-styles';
+            style.textContent = `
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                @keyframes fadeOut {
+                    from {
+                        opacity: 1;
+                    }
+                    to {
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(notification);
+
+        // 3秒後にフェードアウトして削除
+        setTimeout(() => {
+            notification.style.animation = 'fadeOut 0.5s ease-out';
+            setTimeout(() => {
+                notification.remove();
+            }, 500);
+        }, 3000);
+    }
+
+    /**
+     * シークレットギャラリー解放通知を表示
+     */
+    showSecretGalleryNotification() {
+        try {
+            // 通知要素を作成
+            const notification = document.createElement('div');
+            notification.className = 'secret-gallery-notification';
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <h3>🎊 シークレットギャラリー解放！</h3>
+                    <p>特別な美咲の立ち絵がギャラリーに追加されました！</p>
+                    <p>タイトル画面のギャラリーからご確認ください</p>
+                </div>
+            `;
+
+            // スタイルを設定
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #ff6b7d 0%, #ffa8b8 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
+                border: 3px solid #ffd700;
+                text-align: center;
+                z-index: 2000;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                animation: secretUnlockAnimation 3s ease-in-out;
+                font-family: 'Noto Sans JP', sans-serif;
+                max-width: 400px;
+                pointer-events: none;
+            `;
+
+            // CSSアニメーションを追加
+            if (!document.getElementById('secret-gallery-animation-style')) {
+                const style = document.createElement('style');
+                style.id = 'secret-gallery-animation-style';
+                style.textContent = `
+                    @keyframes secretUnlockAnimation {
+                        0% {
+                            opacity: 0;
+                            transform: translate(-50%, -50%) scale(0.5) rotate(-10deg);
+                        }
+                        20% {
+                            opacity: 1;
+                            transform: translate(-50%, -50%) scale(1.1) rotate(2deg);
+                        }
+                        40% {
+                            transform: translate(-50%, -50%) scale(1) rotate(-1deg);
+                        }
+                        60% {
+                            transform: translate(-50%, -50%) scale(1.05) rotate(0deg);
+                        }
+                        80% {
+                            transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                        }
+                        100% {
+                            opacity: 0;
+                            transform: translate(-50%, -50%) scale(0.8) rotate(0deg);
+                        }
+                    }
+                    .notification-content h3 {
+                        margin: 0 0 15px 0;
+                        font-size: 24px;
+                        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                    }
+                    .notification-content p {
+                        margin: 10px 0;
+                        font-size: 16px;
+                        line-height: 1.4;
+                        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // 通知を表示
+            document.body.appendChild(notification);
+
+            // 3秒後に自動削除
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+
+            console.log('✨ シークレットギャラリー解放通知を表示しました');
+
+        } catch (error) {
+            console.error('❌ 通知表示中にエラー:', error);
+        }
     }
 
     /**

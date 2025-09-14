@@ -44,5 +44,12 @@ window.GalleryData = [
         display_name: '美咲',
         description: 'あ、あぁ…負けちゃった…。そんなに見ないでよ…。野球拳だと強すぎない…？',
         unlock_condition: '5回勝利で解放'
+    },
+    {
+        stage: 7,
+        image_file: 'misaki_secret_victory.png',
+        display_name: '美咲（シークレット）',
+        description: 'おめでとう…ここまで来るなんて…♪ 君だけの特別な美咲よ',
+        unlock_condition: 'ゲームクリアで解放'
     }
 ];
