@@ -67,10 +67,38 @@ class AudioManager {
      */
     async loadBGMSettings() {
         try {
-            if (window.csvLoader && window.csvLoader.bgm_settings) {
-                const bgmData = window.csvLoader.bgm_settings;
+            // CSVLoaderからBGM設定を取得を試行
+            let bgmData = null;
+
+            // 複数の方法でBGM設定を取得試行
+            if (window.csvLoader) {
+                // 方法1: 直接参照
+                bgmData = window.csvLoader.bgm_settings;
+
+                // 方法2: データテーブル経由
+                if (!bgmData && window.csvLoader.csvData) {
+                    bgmData = window.csvLoader.csvData.bgm_settings;
+                }
+
+                // 方法3: getDataメソッド経由
+                if (!bgmData && typeof window.csvLoader.getData === 'function') {
+                    bgmData = window.csvLoader.getData('bgm_settings');
+                }
+            }
+
+            console.log('🎵 BGM設定取得試行結果:', {
+                csvLoader: !!window.csvLoader,
+                bgmData: bgmData ? bgmData.length : 'null',
+                methods: {
+                    direct: !!window.csvLoader?.bgm_settings,
+                    csvData: !!window.csvLoader?.csvData?.bgm_settings,
+                    getData: typeof window.csvLoader?.getData === 'function'
+                }
+            });
+
+            if (bgmData && bgmData.length > 0) {
                 console.log('🎵 BGM設定をCSVから読み込み開始');
-                
+
                 bgmData.forEach(row => {
                     this.bgmSettings.set(row.scene_id, {
                         bgm_file: row.bgm_file,
@@ -81,14 +109,14 @@ class AudioManager {
                         description: row.description
                     });
                 });
-                
+
                 console.log('🎵 BGM設定読み込み完了:', this.bgmSettings.size, 'シーン');
             } else {
                 console.warn('⚠️ CSVLoaderまたはBGM設定が見つかりません。フォールバック設定を使用します。');
                 this.loadFallbackBGMSettings();
             }
         } catch (error) {
-            console.error('BGM設定読み込みエラー:', error);
+            console.error('❌ BGM設定読み込みエラー:', error);
             this.loadFallbackBGMSettings();
         }
     }
@@ -128,8 +156,13 @@ class AudioManager {
             // 保留されているBGMがある場合は即座に再生開始
             if (this.pendingSceneBgm) {
                 console.log('🎵 保留BGMを再生開始:', this.pendingSceneBgm);
-                this.playSceneBGM(this.pendingSceneBgm.sceneId, this.pendingSceneBgm.fadeTime);
-                this.pendingSceneBgm = null;
+
+                // 小さな遅延を入れて、DOM要素が確実に準備されるまで待つ
+                setTimeout(async () => {
+                    await this.playSceneBGM(this.pendingSceneBgm.sceneId, this.pendingSceneBgm.fadeTime);
+                    this.pendingSceneBgm = null;
+                    console.log('🎵 保留BGM再生完了');
+                }, 100);
             }
         }
     }

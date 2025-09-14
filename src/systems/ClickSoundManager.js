@@ -42,12 +42,12 @@ class ClickSoundManager {
     setAudioManager(audioManager, csvLoader = null) {
         this.audioManager = audioManager;
         this.csvLoader = csvLoader;
-        
+
         // CSVLoaderが設定されている場合、設定を読み込み
         if (csvLoader) {
             this.loadSettingsFromCSV();
         }
-        
+
         console.log('✅ ClickSoundManager: AudioManager設定完了');
     }
     
@@ -87,7 +87,13 @@ class ClickSoundManager {
      */
     playClickSound(source = 'unknown') {
         this.callCount++;
-        
+
+        // AudioManagerの音声初期化を確認・トリガー
+        if (this.audioManager && !this.audioManager.isInitialized) {
+            console.log('🎵 ClickSoundManager: AudioManagerの音声初期化をトリガー');
+            this.audioManager.enableAudio();
+        }
+
         // 呼び出し履歴を記録（最新10件）
         const callInfo = {
             time: Date.now(),
@@ -99,7 +105,7 @@ class ClickSoundManager {
         if (this.playAttempts.length > 10) {
             this.playAttempts.shift();
         }
-        
+
         console.log(`🎵 再生試行 #${this.callCount}: ${source}`);
         console.log('📍 呼び出し元:', callInfo.stackTrace[0]);
         
