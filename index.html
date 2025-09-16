@@ -278,14 +278,21 @@
                 <img id="misaki-game" src="assets/images/characters/misaki/misaki_game_stage1.png" alt="美咲">
             </div>
 
-            <!-- ゲーム開始前の会話とボタン -->
+            <!-- ゲーム開始前の会話 -->
             <div class="game-intro" id="game-intro">
                 <div class="intro-dialogue" id="intro-dialogue">
                     <div class="dialogue-text" id="game-dialogue-text">
                         <!-- タイプライター効果で表示されます -->
                     </div>
                 </div>
-                <button class="start-game-btn" id="start-game-btn">ゲーム開始</button>
+            </div>
+
+            <!-- ゲーム開始ボタン（独立配置） -->
+            <div class="start-game-button-container" style="display: none;">
+                <button class="hand-btn advance-btn" id="start-game-btn">
+                    <span style="font-size: 2em;">🎮</span>
+                    <span>ゲーム開始</span>
+                </button>
             </div>
 
             <!-- バトル結果表示 -->

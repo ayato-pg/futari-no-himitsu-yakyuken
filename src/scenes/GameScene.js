@@ -435,6 +435,20 @@ class GameScene {
             // 導入セリフをタイプライター効果で表示
             await this.setIntroDialogue();
         }
+
+        // ゲーム開始ボタンコンテナを表示
+        const startButtonContainer = document.querySelector('.start-game-button-container');
+        if (startButtonContainer) {
+            startButtonContainer.style.display = 'flex';
+            console.log('✅ ゲーム開始ボタンコンテナを表示しました');
+        }
+
+        // ゲーム開始ボタン表示中はじゃんけんボタンを非表示
+        const handButtons = document.querySelector('.hand-buttons');
+        if (handButtons) {
+            handButtons.style.display = 'none';
+            console.log('✅ じゃんけんボタンを非表示にしました（ゲーム開始前）');
+        }
     }
 
     /**
@@ -944,15 +958,22 @@ class GameScene {
             // 効果音
             this.game.audioManager.playSE('se_click.mp3', 0.8);
             
-            // ゲーム開始ボタンを非表示にする
-            const startBtn = document.getElementById('start-game-btn');
-            if (startBtn) {
-                startBtn.style.display = 'none';
-                console.log('✅ ゲーム開始ボタンを非表示にしました');
+            // ゲーム開始ボタンコンテナを非表示にする
+            const startButtonContainer = document.querySelector('.start-game-button-container');
+            if (startButtonContainer) {
+                startButtonContainer.style.display = 'none';
+                console.log('✅ ゲーム開始ボタンコンテナを非表示にしました');
             } else {
-                console.warn('⚠️ start-game-btn要素が見つかりません');
+                console.warn('⚠️ start-game-button-container要素が見つかりません');
             }
-            
+
+            // じゃんけんボタンを表示
+            const handButtons = document.querySelector('.hand-buttons');
+            if (handButtons) {
+                handButtons.style.display = 'flex';
+                console.log('✅ じゃんけんボタンを表示しました（ゲーム開始後）');
+            }
+
             // 「最初はグー！じゃんけん...」をタイプライター効果で表示
             const gameStartText = this.getDialogueText('gs001') || '最初はグー！じゃんけん...';
             await this.animateDialogueText(gameStartText);

@@ -828,7 +828,7 @@ body {
 .misaki-hearts-display {
     position: absolute;
     top: calc(120px - 4vh);  /* 4%上に移動 */
-    left: 23%;  /* 12%左に移動 */
+    left: 33%;  /* 右に10%移動（23% + 10% = 33%） */
     transform: translateX(-50%);
     z-index: 15;
 }
@@ -918,55 +918,6 @@ body {
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.start-game-btn {
-    background: linear-gradient(135deg, #7ed6c4 0%, #48a999 100%);
-    color: white;
-    border: none;
-    width: 400px;  /* 進めるボタンと同じ幅 */
-    height: 120px;  /* 進めるボタンと同じ高さ */
-    font-size: 1.3rem;
-    font-weight: 700;
-    border-radius: 15px;  /* じゃんけんボタンと同じ角丸 */
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 6px 20px rgba(126, 214, 196, 0.4);
-    font-family: 'Noto Sans JP', sans-serif;
-    position: absolute;  /* 絶対位置に変更 */
-    bottom: calc(120px - 49.7vh);  /* 49.7%下に移動 */
-    left: calc(65% - 191px - 9.6vw);  /* 9.6%左に移動 */
-    overflow: hidden;
-    margin: 0;  /* マージンをゼロに */
-    padding: 0 30px;  /* 進めるボタンと同じパディング */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 25;  /* 他の要素より上に表示 */
-}
-
-.start-game-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    transition: left 0.5s;
-}
-
-.start-game-btn:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 10px 30px rgba(126, 214, 196, 0.6);
-    background: linear-gradient(135deg, #48a999 0%, #7ed6c4 100%);
-}
-
-.start-game-btn:hover::before {
-    left: 100%;
-}
-
-.start-game-btn:active {
-    transform: translateY(-1px) scale(1.02);
-}
 
 /* ゲーム開始後は非表示 */
 .game-intro.hidden {
@@ -1080,14 +1031,7 @@ body {
 }
 
 .hand-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s;
+    display: none;  /* 光るエフェクトを完全に削除 */
 }
 
 .hand-btn img {
@@ -1110,61 +1054,154 @@ body {
 }
 
 .hand-btn:hover::before {
-    left: 100%;
+    display: none;  /* 光るエフェクトを削除 */
 }
 
 .hand-btn:hover::after {
-    content: '💎';
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    font-size: 1.2rem;
-    animation: sparkle 1.5s infinite;
+    display: none;  /* 光るエフェクトを削除 */
 }
 
 .hand-btn:active {
     transform: translateY(-2px);
 }
 
-/* 進めるボタンのスタイル - グーアイコンの左端に揃える */
+/* ゲーム開始ボタンコンテナ - 位置固定 */
+.start-game-button-container {
+    display: none;
+    justify-content: flex-start;
+    position: absolute;
+    bottom: calc(120px + 2.8vh) !important;  /* 位置固定 */
+    left: calc(59.4% - 121px) !important;  /* 位置固定 */
+    transform: none;
+    text-align: left;
+    width: calc(400px + 0.6vw);
+    z-index: 25;
+    margin: 0;
+    padding: 0;
+}
+
+/* 進めるボタンのスタイル - 位置固定 */
 .advance-button-container {
     display: none;
-    justify-content: flex-start;  /* 左寄せに変更 */
+    justify-content: flex-start;
     position: absolute;
-    bottom: calc(120px + 2.4vh);  /* 2.4%上に移動 */
-    left: calc(65% - 191px);  /* じゃんけんボタンと同じ位置 */
-    transform: none;  /* transform削除 */
-    width: 400px;  /* じゃんけんボタンと同じ幅 */
+    bottom: calc(120px + 2vh) !important;  /* 位置固定 */
+    left: calc(65% - 191px) !important;  /* 位置固定 */
+    transform: none;
+    width: 400px;
     z-index: 16;
 }
 
 .hand-btn.advance-btn {
     background: linear-gradient(135deg, #ff6b7d 0%, #e53e52 100%);
-    box-shadow: 0 4px 15px rgba(255, 107, 125, 0.4);
-    animation: pulse-advance 2s infinite;
-    width: 400px;  /* じゃんけんボタンコンテナの幅と同じ */
-    height: 120px;  /* じゃんけんボタンと同じ高さ */
-    max-width: 90vw;  /* 画面幅の90%を超えない */
-    margin: 0;  /* マージンを確実にゼロに */
-    padding: 0 30px;  /* 上下パディングを削除、左右のみ */
+    box-shadow: 0 4px 15px rgba(255, 107, 125, 0.3);
+    animation: none;  /* アニメーションなし */
+    width: calc(400px + 0.6vw);
+    height: 120px;
+    max-width: 90vw;
+    margin: 0 !important;
+    padding: 0 30px;
+    position: static !important;
+    font-size: 1.3rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden !important;  /* 光のエフェクトをボタン内に収める */
+    border-radius: 15px !important;  /* 角丸を確実に適用 */
 }
 
-.hand-btn.advance-btn::before {
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+/* ゲーム開始ボタン専用の位置設定 */
+.start-game-button-container .hand-btn.advance-btn {
+    position: static !important;  /* 親コンテナの絶対位置に従う */
+    top: unset !important;
+    left: unset !important;
+    transform: none !important;
 }
 
-.hand-btn.advance-btn:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(255, 107, 125, 0.6);
+/* ゲーム開始ボタン - シンプルなエフェクト */
+.start-game-button-container .hand-btn.advance-btn::before {
+    display: none !important;  /* 光のエフェクトを削除 */
 }
 
-.hand-btn.advance-btn:hover::after {
-    content: '✨';
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    font-size: 1.2rem;
-    animation: sparkle 1.5s infinite;
+.start-game-button-container .hand-btn.advance-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(255, 107, 125, 0.4) !important;
+}
+
+.start-game-button-container .hand-btn.advance-btn:hover::before {
+    display: none !important;  /* 光のエフェクトを削除 */
+}
+
+.start-game-button-container .hand-btn.advance-btn:hover::after {
+    content: '✨' !important;
+    position: absolute !important;
+    top: -5px !important;
+    right: -5px !important;
+    font-size: 1.5rem !important;
+    animation: sparkle 1s infinite !important;
+    display: block !important;
+}
+
+.start-game-button-container .hand-btn.advance-btn:active {
+    transform: translateY(0) !important;
+}
+
+/* ゲーム開始ボタン専用アニメーション */
+@keyframes game-start-pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 20px rgba(255, 107, 125, 0.4);
+        background: linear-gradient(135deg, #ff6b7d 0%, #e53e52 100%);
+    }
+    25% {
+        transform: scale(1.02);
+        box-shadow: 0 6px 25px rgba(255, 107, 125, 0.6);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 8px 30px rgba(255, 107, 125, 0.8);
+        background: linear-gradient(135deg, #ff8a9b 0%, #ff6b7d 100%);
+    }
+    75% {
+        transform: scale(1.02);
+        box-shadow: 0 6px 25px rgba(255, 107, 125, 0.6);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 20px rgba(255, 107, 125, 0.4);
+        background: linear-gradient(135deg, #ff6b7d 0%, #e53e52 100%);
+    }
+}
+
+/* 光の流れるエフェクト */
+@keyframes shine-sweep {
+    0% { left: -100%; }
+    20% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* ホバー時のきらめきエフェクト */
+@keyframes sparkle-rotate {
+    0% {
+        transform: rotate(0deg) scale(1);
+        opacity: 0.8;
+    }
+    25% {
+        transform: rotate(90deg) scale(1.2);
+        opacity: 1;
+    }
+    50% {
+        transform: rotate(180deg) scale(1);
+        opacity: 0.8;
+    }
+    75% {
+        transform: rotate(270deg) scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: rotate(360deg) scale(1);
+        opacity: 0.8;
+    }
 }
 
 @keyframes pulse-advance {
