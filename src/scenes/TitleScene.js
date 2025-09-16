@@ -34,18 +34,12 @@ class TitleScene {
             console.log('🎭 初期化時に美咲立ち絵を設定');
         }
         
-        // メニューボタンを取得（開発用ボタンも含む）
+        // メニューボタンを取得
         this.menuButtonElements = [
             document.getElementById('btn-new-game'),
             document.getElementById('btn-howtoplay'),
             document.getElementById('btn-gallery'),
-            document.getElementById('btn-settings'),
-            document.getElementById('btn-csv-reload'),
-            document.getElementById('btn-bad-end-editor'),
-            document.getElementById('btn-show-bad-end'),
-            document.getElementById('btn-clear-cache'),
-            document.getElementById('btn-victory-talk'),
-            document.getElementById('btn-game-over-editor')
+            document.getElementById('btn-settings')
         ];
 
         this.setupEventListeners();
@@ -119,257 +113,6 @@ class TitleScene {
             });
         }
 
-        // CSV更新 ボタン（開発用）
-        const csvReloadBtn = document.getElementById('btn-csv-reload');
-        if (csvReloadBtn) {
-            csvReloadBtn.style.display = 'block'; // 確実に表示
-            csvReloadBtn.style.visibility = 'visible';
-            csvReloadBtn.style.opacity = '1';
-            console.log('CSV更新ボタンを強制表示:', csvReloadBtn);
-            csvReloadBtn.addEventListener('click', async () => {
-                console.log('🔄 CSV強制リロードボタンが押されました');
-                try {
-                    await this.game.forceReloadAllCSV();
-                } catch (error) {
-                    console.error('❌ CSV更新エラー:', error);
-                    alert('❌ CSV更新に失敗しました: ' + error.message);
-                }
-            });
-            console.log('✅ CSV更新ボタンが設定されました');
-        } else {
-            console.warn('❌ CSV更新ボタンが見つかりませんでした');
-        }
-
-        // BAD END編集ボタン（開発用）
-        const badEndEditorBtn = document.getElementById('btn-bad-end-editor');
-        console.log('BAD END編集ボタン要素を検索:', badEndEditorBtn);
-        
-        if (badEndEditorBtn) {
-            // 強制的にスタイルを設定
-            badEndEditorBtn.style.cssText = `
-                background: #9B59B6 !important;
-                color: white !important;
-                font-size: 0.9em !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                position: relative !important;
-                z-index: 999 !important;
-                margin: 10px 0 !important;
-                padding: 15px 30px !important;
-                border: none !important;
-                border-radius: 25px !important;
-                cursor: pointer !important;
-                font-weight: bold !important;
-                width: auto !important;
-                height: auto !important;
-            `;
-            
-            console.log('BAD END編集ボタンを強制表示:', badEndEditorBtn);
-            
-            // イベントリスナーを追加
-            badEndEditorBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                console.log('📝 BAD END編集ボタンがクリックされました');
-                
-                try {
-                    this.game.audioManager.playSE('se_click.mp3', 0.7);
-                } catch (error) {
-                    console.warn('効果音エラー:', error);
-                }
-                
-                // 正式なBAD END編集画面に遷移
-                this.hide();
-                this.game.showBadEndEditor();
-            });
-            
-            console.log('✅ BAD END編集ボタンが設定されました');
-        } else {
-            console.warn('❌ BAD END編集ボタンが見つかりませんでした');
-            // ボタンを動的に作成
-            this.createBadEndEditorButton();
-        }
-
-        // BAD END表示ボタン（開発用）
-        const showBadEndBtn = document.getElementById('btn-show-bad-end');
-        console.log('BAD END表示ボタン要素を検索:', showBadEndBtn);
-        
-        if (showBadEndBtn) {
-            showBadEndBtn.style.cssText = `
-                background: #E74C3C !important;
-                color: white !important;
-                font-size: 0.9em !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                position: relative !important;
-                z-index: 999 !important;
-                margin: 10px 0 !important;
-                padding: 15px 30px !important;
-                border: none !important;
-                border-radius: 25px !important;
-                cursor: pointer !important;
-                font-weight: bold !important;
-                width: auto !important;
-                height: auto !important;
-            `;
-            
-            console.log('BAD END表示ボタンを強制表示:', showBadEndBtn);
-            
-            showBadEndBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                console.log('🔴 BAD END表示ボタンがクリックされました');
-                
-                try {
-                    this.game.audioManager.playSE('se_click.mp3', 0.7);
-                } catch (error) {
-                    console.warn('効果音エラー:', error);
-                }
-                
-                // 直接BAD ENDを表示
-                this.showBadEndDirectly();
-            });
-            
-            console.log('✅ BAD END表示ボタンが設定されました');
-        } else {
-            console.warn('❌ BAD END表示ボタンが見つかりませんでした');
-        }
-
-        // キャッシュクリアボタン（開発用）
-        const clearCacheBtn = document.getElementById('btn-clear-cache');
-        console.log('キャッシュクリアボタン要素を検索:', clearCacheBtn);
-        
-        if (clearCacheBtn) {
-            clearCacheBtn.style.cssText = `
-                background: #F39C12 !important;
-                color: white !important;
-                font-size: 0.9em !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                position: relative !important;
-                z-index: 999 !important;
-                margin: 10px 0 !important;
-                padding: 15px 30px !important;
-                border: none !important;
-                border-radius: 25px !important;
-                cursor: pointer !important;
-                font-weight: bold !important;
-                width: auto !important;
-                height: auto !important;
-            `;
-            
-            clearCacheBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                console.log('🧹 キャッシュクリアボタンがクリックされました');
-                
-                // 全てのキャッシュを強制クリア
-                localStorage.clear();
-                
-                // CSVLoaderキャッシュもクリア
-                if (this.game.csvLoader && this.game.csvLoader.csvData) {
-                    this.game.csvLoader.csvData = {};
-                }
-                
-                alert('全キャッシュをクリアしました！\nページを再読み込みして最新データを確認してください。');
-                
-                // ページリロード
-                window.location.reload();
-            });
-            
-            console.log('✅ キャッシュクリアボタンが設定されました');
-        }
-
-        // 🏆 エンディングトークボタン（開発用）
-        const victoryTalkBtn = document.getElementById('btn-victory-talk');
-        console.log('エンディングトークボタン要素を検索:', victoryTalkBtn);
-        
-        if (victoryTalkBtn) {
-            victoryTalkBtn.style.cssText = `
-                background: #27AE60 !important;
-                color: white !important;
-                font-size: 0.9em !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                position: relative !important;
-                z-index: 999 !important;
-                margin: 10px 0 !important;
-                padding: 15px 30px !important;
-                border: none !important;
-                border-radius: 25px !important;
-                cursor: pointer !important;
-                font-weight: bold !important;
-                width: auto !important;
-                height: auto !important;
-            `;
-            
-            victoryTalkBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                console.log('🏆 エンディングトークボタンがクリックされました');
-                
-                try {
-                    this.game.audioManager.playSE('se_click.mp3', 0.7);
-                } catch (error) {
-                    console.warn('効果音エラー:', error);
-                }
-                
-                // 直接エンディングトークを表示
-                this.showVictoryTalkDirectly();
-            });
-            
-            console.log('✅ エンディングトークボタンが設定されました');
-        } else {
-            console.warn('❌ エンディングトークボタンが見つかりませんでした');
-        }
-
-        // 🛠️ ゲーム終了画面編集ボタン（開発用）
-        const gameOverEditorBtn = document.getElementById('btn-game-over-editor');
-        console.log('ゲーム終了画面編集ボタン要素を検索:', gameOverEditorBtn);
-        
-        if (gameOverEditorBtn) {
-            gameOverEditorBtn.style.cssText = `
-                background: #8E44AD !important;
-                color: white !important;
-                font-size: 0.9em !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                position: relative !important;
-                z-index: 999 !important;
-                margin: 10px 0 !important;
-                padding: 15px 30px !important;
-                border: none !important;
-                border-radius: 25px !important;
-                cursor: pointer !important;
-                font-weight: bold !important;
-                width: auto !important;
-                height: auto !important;
-            `;
-            
-            gameOverEditorBtn.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                console.log('🛠️ ゲーム終了画面編集ボタンがクリックされました');
-                
-                try {
-                    this.game.audioManager.playSE('se_click.mp3', 0.7);
-                } catch (error) {
-                    console.warn('効果音エラー:', error);
-                }
-                
-                // ゲーム終了画面編集システムを表示
-                this.showGameOverEditor();
-            });
-            
-            console.log('✅ ゲーム終了画面編集ボタンが設定されました');
-        } else {
-            console.warn('❌ ゲーム終了画面編集ボタンが見つかりませんでした');
-        }
 
         // ボタンホバー効果 (ClickSoundManagerと重複するため無効化)
         // this.menuButtonElements.forEach(button => {
@@ -398,23 +141,6 @@ class TitleScene {
             console.log('🗑️ エンディング画面の立ち絵をクリア');
         }
         
-        // 開発用ボタンを強制表示
-        const csvBtn = document.getElementById('btn-csv-reload');
-        if (csvBtn) {
-            csvBtn.style.cssText = 'background: #ff6b7d !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
-        }
-        const badEndBtn = document.getElementById('btn-bad-end-editor');
-        if (badEndBtn) {
-            badEndBtn.style.cssText = 'background: #9B59B6 !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
-        }
-        const showBadEndBtn = document.getElementById('btn-show-bad-end');
-        if (showBadEndBtn) {
-            showBadEndBtn.style.cssText = 'background: #E74C3C !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
-        }
-        const clearCacheBtn = document.getElementById('btn-clear-cache');
-        if (clearCacheBtn) {
-            clearCacheBtn.style.cssText = 'background: #F39C12 !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
-        }
         
         // BGMを即座に再生（環境に関係なく）
         console.log('🎵 タイトル画面: BGMを即座に再生開始');
@@ -836,30 +562,44 @@ class TitleScene {
             {
                 section_id: 'about',
                 title: 'ゲームについて',
-                content: '「2人の秘密、野球拳。」は、幼馴染の美咲お姉ちゃんとの野球拳ゲームです。<br>大人になった二人の秘密の時間を楽しみましょう。',
+                content: '「2人の秘密、野球拳。」は、幼馴染の美咲との野球拳バトルゲームです。<br>じゃんけんで勝負して、先に5勝した方の勝利となります。',
                 icon: '📖',
                 display_order: '1'
             },
             {
                 section_id: 'rules',
                 title: '野球拳のルール',
-                content: '<ul><li><strong>グー：</strong> チョキに勝つ、パーに負ける</li><li><strong>チョキ：</strong> パーに勝つ、グーに負ける</li><li><strong>パー：</strong> グーに勝つ、チョキに負ける</li><li><strong>あいこ：</strong> 同じ手の場合は引き分け</li></ul>',
+                content: '<ul><li><strong>グー（✊）：</strong> チョキに勝つ、パーに負ける</li><li><strong>チョキ（✂️）：</strong> パーに勝つ、グーに負ける</li><li><strong>パー（✋）：</strong> グーに勝つ、チョキに負ける</li><li><strong>あいこ：</strong> 同じ手の場合は引き分け（もう一度）</li></ul>',
                 icon: '✊',
                 display_order: '2'
             },
             {
-                section_id: 'costume',
-                title: '衣装システム',
-                content: '<p>美咲の衣装は勝利数に応じて段階的に変化します。</p><p>勝利を重ねるごとに、より特別な衣装が楽しめます。</p>',
-                icon: '👗',
+                section_id: 'victory',
+                title: '勝利条件',
+                content: '<ul><li><strong>プレイヤー勝利：</strong> 5勝先取で勝利トークへ</li><li><strong>美咲勝利：</strong> 5敗するとBAD END</li><li><strong>最大9ラウンド：</strong> 勝負がつくまで続行</li></ul>',
+                icon: '🏆',
+                display_order: '3'
+            },
+            {
+                section_id: 'features',
+                title: 'ゲーム機能',
+                content: '<ul><li><strong>ヒント機能：</strong> 困った時のヒントボタン</li><li><strong>降参機能：</strong> ゲームを途中で終了可能</li><li><strong>ハートUI：</strong> 残り勝利数をハートで表示</li><li><strong>ギャラリー：</strong> 獲得した立ち絵を鑑賞可能</li></ul>',
+                icon: '🎮',
                 display_order: '4'
+            },
+            {
+                section_id: 'costume',
+                title: '立ち絵システム',
+                content: '<p>美咲の立ち絵は勝利数に応じて段階的に変化します。</p><p>勝利を重ねるほど、より特別な立ち絵が解放されます。</p>',
+                icon: '👗',
+                display_order: '5'
             },
             {
                 section_id: 'footer',
                 title: 'メッセージ',
-                content: '🌸 大人になった二人の秘密の時間を楽しんでください 🌸',
+                content: '🌸 美咲との野球拳バトルをお楽しみください 🌸',
                 icon: '🌸',
-                display_order: '7'
+                display_order: '6'
             }
         ];
     }
@@ -1145,63 +885,10 @@ class TitleScene {
             <br><small>${progressMessage}</small>
         `;
 
-        // デバッグ用：立ち絵解放ボタン
-        const debugButtons = document.createElement('div');
-        debugButtons.style.cssText = `
-            margin-top: 15px;
-            text-align: center;
-        `;
-        
-        const unlockButton = document.createElement('button');
-        unlockButton.textContent = '🧪 テスト: Stage 1-3を解放';
-        unlockButton.style.cssText = `
-            background: #27AE60;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 5px;
-            font-size: 0.8rem;
-        `;
-        unlockButton.addEventListener('click', () => {
-            for (let stage = 1; stage <= 3; stage++) {
-                const imageName = `misaki_game_stage${stage}.png`;
-                this.game.saveSystem.unlockGalleryImage(imageName, stage);
-            }
-            modal.remove();
-            this.showGalleryModal(); // ギャラリーを再表示
-        });
-        
-        const clearButton = document.createElement('button');
-        clearButton.textContent = '🗑️ テスト: 全削除';
-        clearButton.style.cssText = `
-            background: #E74C3C;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 5px;
-            font-size: 0.8rem;
-        `;
-        clearButton.addEventListener('click', () => {
-            if (confirm('全ての立ち絵を削除しますか？')) {
-                // SaveSystemのresetGalleryメソッドを使用
-                this.game.saveSystem.resetGallery();
-                console.log('✅ ギャラリーデータをリセットしました');
-                modal.remove();
-                this.showGalleryModal(); // ギャラリーを再表示
-            }
-        });
-        
-        debugButtons.appendChild(unlockButton);
-        debugButtons.appendChild(clearButton);
         
         galleryContent.appendChild(header);
         galleryContent.appendChild(grid);
         galleryContent.appendChild(stats);
-        galleryContent.appendChild(debugButtons);
         modal.appendChild(galleryContent);
         document.body.appendChild(modal);
 
@@ -1352,186 +1039,10 @@ class TitleScene {
         // 必要に応じてアニメーション更新処理を追加
     }
 
-    /**
-     * BAD END編集ボタンを動的作成
-     */
-    createBadEndEditorButton() {
-        console.log('BAD END編集ボタンを動的作成中...');
-        
-        const menuButtons = document.querySelector('.menu-buttons');
-        if (menuButtons) {
-            const button = document.createElement('button');
-            button.id = 'btn-bad-end-editor-dynamic';
-            button.className = 'game-btn dev-btn';
-            button.textContent = 'BAD END編集 (動的)';
-            button.style.cssText = `
-                background: #9B59B6 !important;
-                color: white !important;
-                font-size: 0.9em !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                position: relative !important;
-                z-index: 999 !important;
-                margin: 10px 0 !important;
-                padding: 15px 30px !important;
-                border: none !important;
-                border-radius: 25px !important;
-                cursor: pointer !important;
-                font-weight: bold !important;
-            `;
-            
-            button.addEventListener('click', () => {
-                alert('動的BAD END編集ボタンがクリックされました！');
-                this.showSimpleBadEndEditor();
-            });
-            
-            menuButtons.appendChild(button);
-            console.log('✅ 動的BAD END編集ボタンを作成しました');
-        }
-    }
 
-    /**
-     * シンプルなBAD END編集画面を表示
-     */
-    showSimpleBadEndEditor() {
-        console.log('シンプルなBAD END編集画面を表示');
-        
-        // 既存の編集画面があれば削除
-        const existing = document.getElementById('simple-bad-end-editor');
-        if (existing) {
-            existing.remove();
-        }
-        
-        // シンプルな編集画面を作成
-        const editorDiv = document.createElement('div');
-        editorDiv.id = 'simple-bad-end-editor';
-        editorDiv.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-        `;
-        
-        editorDiv.innerHTML = `
-            <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%;">
-                <h2 style="text-align: center; color: #333; margin-bottom: 20px;">BAD END テキスト編集</h2>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">タイトル:</label>
-                    <input type="text" id="simple-title" value="また今度ね♪" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-                </div>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">メッセージ:</label>
-                    <textarea id="simple-message" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; height: 100px;">今日はここまでだね♪
 
-またじゃんけんしてあげてもいーよー？</textarea>
-                </div>
-                
-                <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="alert('保存しました！'); localStorage.setItem('bad_end_simple', JSON.stringify({title: document.getElementById('simple-title').value, message: document.getElementById('simple-message').value})); document.getElementById('simple-bad-end-editor').remove()" style="background: #27AE60; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-right: 10px; cursor: pointer;">保存</button>
-                    <button onclick="document.getElementById('simple-bad-end-editor').remove()" style="background: #E74C3C; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">閉じる</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(editorDiv);
-        console.log('✅ シンプルなBAD END編集画面を表示しました');
-    }
 
-    /**
-     * 直接BAD ENDを表示
-     */
-    showBadEndDirectly() {
-        console.log('🔴 直接BAD ENDを表示します');
-        
-        // 🚨 完全にキャッシュをクリア
-        localStorage.clear();
-        if (this.game.csvLoader && this.game.csvLoader.csvData) {
-            this.game.csvLoader.csvData = {};
-            console.log('🗑️ 全CSVキャッシュを削除');
-        }
-        
-        // タイトル画面を非表示
-        this.hide();
-        
-        // ゲーム状態をBAD END用にセット
-        if (this.game.gameState) {
-            this.game.gameState.isGameActive = false;
-            this.game.gameState.currentPhase = 'ending';
-        }
-        
-        // 直接BAD ENDを表示
-        this.game.showEnding('bad_end');
-        
-        console.log('✅ BAD END表示完了');
-    }
 
-    /**
-     * 🏆 直接エンディングトークを表示（勝利後トーク）
-     */
-    showVictoryTalkDirectly() {
-        console.log('🏆 直接エンディングトークを表示します');
-        
-        // タイトル画面を非表示
-        this.hide();
-        
-        // ゲーム状態を勝利後トーク用にセット
-        if (this.game.gameState) {
-            this.game.gameState.isGameActive = false;
-            this.game.gameState.currentPhase = 'victory_talk';
-            // プレイヤーが5勝した状態をシミュレート
-            this.game.gameState.playerWins = 5;
-            this.game.gameState.misakiWins = 0;
-        }
-        
-        try {
-            // 直接勝利後トークを表示（'victory'シーン）
-            this.game.showDialogue('victory');
-            console.log('✅ エンディングトーク表示完了');
-        } catch (error) {
-            console.error('❌ エンディングトーク表示エラー:', error);
-            
-            // フォールバック：通常の会話シーンを表示
-            this.game.showDialogue('living');
-        }
-    }
-
-    /**
-     * 🛠️ ゲーム終了画面編集システムを表示
-     */
-    showGameOverEditor() {
-        console.log('🛠️ ゲーム終了画面編集システムを表示します');
-        
-        try {
-            // GameOverEditorSceneが存在しない場合は作成
-            if (!this.game.scenes.gameOverEditor) {
-                console.log('🆕 GameOverEditorSceneを新規作成');
-                this.game.scenes.gameOverEditor = new GameOverEditorScene(this.game);
-            }
-            
-            // エディター画面を表示
-            this.game.scenes.gameOverEditor.show();
-            
-            console.log('✅ ゲーム終了画面編集システム表示完了');
-            
-        } catch (error) {
-            console.error('❌ ゲーム終了画面編集システム表示エラー:', error);
-            
-            // フォールバックメッセージ
-            alert('エラーが発生しました。\n\n' + 
-                  'ゲームが完全に読み込まれていない可能性があります。\n' + 
-                  'ページを再読み込みしてから再度お試しください。');
-        }
-    }
 
     /**
      * CSVから立ち絵データを読み込み

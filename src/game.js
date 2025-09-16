@@ -205,9 +205,8 @@ class GameController {
         this.scenes.dialogue = new DialogueScene(this);
         this.scenes.game = new GameScene(this);
         this.scenes.ending = new EndingScene(this);
-        this.scenes.badEndEditor = new BadEndEditorScene(this);
         this.scenes.gallery = new GalleryScene(this);
-        
+
         console.log('シーン初期化完了');
     }
 
