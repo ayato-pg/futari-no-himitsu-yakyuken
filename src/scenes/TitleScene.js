@@ -1253,12 +1253,19 @@ class TitleScene {
         `;
         
         const settings = this.game.saveSystem.loadSettings();
-        
+
+        // デバッグ用ログ
+        console.log('🔧 設定画面で読み込んだ設定:', settings);
+        console.log('🔊 BGM音量値:', settings.bgmVolume);
+
+        // BGM音量が未定義の場合はデフォルト値を使用
+        const bgmVolume = settings.bgmVolume !== undefined ? settings.bgmVolume : 0.4;
+
         settingsPanel.innerHTML = `
             <h2 style="margin-bottom: 20px; color: #ffb6c1;">設定</h2>
             <div style="margin-bottom: 15px;">
-                <label>BGM音量: <span id="bgm-value">${Math.round(settings.bgmVolume * 100)}%</span></label>
-                <input type="range" id="bgm-volume" min="0" max="100" value="${settings.bgmVolume * 100}" style="width: 100%; margin-top: 5px;">
+                <label>BGM音量: <span id="bgm-value">${Math.round(bgmVolume * 100)}%</span></label>
+                <input type="range" id="bgm-volume" min="0" max="100" value="${bgmVolume * 100}" style="width: 100%; margin-top: 5px;">
             </div>
             <div style="margin-bottom: 15px;">
                 <label>効果音音量: <span id="se-value">${Math.round(settings.seVolume * 100)}%</span></label>

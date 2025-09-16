@@ -827,8 +827,8 @@ body {
 /* アニメーション付きハート表示 */
 .misaki-hearts-display {
     position: absolute;
-    top: 120px;
-    left: 35%;
+    top: calc(120px - 4vh);  /* 4%上に移動 */
+    left: 23%;  /* 12%左に移動 */
     transform: translateX(-50%);
     z-index: 15;
 }
@@ -905,6 +905,7 @@ body {
     width: 90%;
 }
 
+
 .intro-dialogue {
     margin-bottom: 25px;
 }
@@ -921,16 +922,25 @@ body {
     background: linear-gradient(135deg, #7ed6c4 0%, #48a999 100%);
     color: white;
     border: none;
-    padding: 15px 40px;
+    width: 400px;  /* 進めるボタンと同じ幅 */
+    height: 120px;  /* 進めるボタンと同じ高さ */
     font-size: 1.3rem;
     font-weight: 700;
-    border-radius: 25px;
+    border-radius: 15px;  /* じゃんけんボタンと同じ角丸 */
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 6px 20px rgba(126, 214, 196, 0.4);
     font-family: 'Noto Sans JP', sans-serif;
-    position: relative;
+    position: absolute;  /* 絶対位置に変更 */
+    bottom: calc(120px - 49.7vh);  /* 49.7%下に移動 */
+    left: calc(65% - 191px - 9.6vw);  /* 9.6%左に移動 */
     overflow: hidden;
+    margin: 0;  /* マージンをゼロに */
+    padding: 0 30px;  /* 進めるボタンと同じパディング */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 25;  /* 他の要素より上に表示 */
 }
 
 .start-game-btn::before {

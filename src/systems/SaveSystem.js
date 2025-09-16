@@ -14,7 +14,7 @@ class SaveSystem {
         
         // デフォルト設定
         this.defaultSettings = {
-            bgmVolume: 0.7,
+            bgmVolume: 0.4,  // AudioManagerのデフォルトBGM音量と一致させる
             seVolume: 0.8,
             voiceVolume: 0.9,
             textSpeed: 50,

@@ -12,7 +12,7 @@ class AudioManager {
 
         // デフォルト音量設定
         this.volumes = {
-            bgm: 0.7,
+            bgm: 0.4,  // BGM音量を0.7から0.4に下げる
             se: 0.8,
             voice: 0.9,
             master: 1.0
@@ -197,12 +197,12 @@ class AudioManager {
      */
     loadFallbackBGMSettings() {
         const fallbackSettings = {
-            'title': { bgm_file: 'bgm_title.mp3', volume: 0.7, loop: true, fade_in_time: 2.0, fade_out_time: 1.0 },
-            'dialogue': { bgm_file: 'bgm_dialogue.mp3', volume: 0.6, loop: true, fade_in_time: 2.5, fade_out_time: 2.0 },
-            'game': { bgm_file: 'bgm_battle_tension.mp3', volume: 0.8, loop: true, fade_in_time: 1.5, fade_out_time: 1.5 },
-            'ending_true': { bgm_file: 'bgm_ending_true.mp3', volume: 0.7, loop: true, fade_in_time: 3.0, fade_out_time: 2.0 },
-            'ending_bad': { bgm_file: 'bgm_ending_bad.mp3', volume: 0.5, loop: false, fade_in_time: 2.0, fade_out_time: 0 },
-            'loading': { bgm_file: 'bgm_title.mp3', volume: 0.4, loop: true, fade_in_time: 1.0, fade_out_time: 1.0 }
+            'title': { bgm_file: 'bgm_title.mp3', volume: 0.4, loop: true, fade_in_time: 2.0, fade_out_time: 1.0 },
+            'dialogue': { bgm_file: 'bgm_dialogue.mp3', volume: 0.3, loop: true, fade_in_time: 2.5, fade_out_time: 2.0 },
+            'game': { bgm_file: 'bgm_battle_tension.mp3', volume: 0.45, loop: true, fade_in_time: 1.5, fade_out_time: 1.5 },
+            'ending_true': { bgm_file: 'bgm_ending_true.mp3', volume: 0.4, loop: true, fade_in_time: 3.0, fade_out_time: 2.0 },
+            'ending_bad': { bgm_file: 'bgm_ending_bad.mp3', volume: 0.3, loop: false, fade_in_time: 2.0, fade_out_time: 0 },
+            'loading': { bgm_file: 'bgm_title.mp3', volume: 0.25, loop: true, fade_in_time: 1.0, fade_out_time: 1.0 }
         };
 
         for (const [sceneId, settings] of Object.entries(fallbackSettings)) {
