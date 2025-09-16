@@ -4,9 +4,11 @@
   "description": "2人の秘密、野球拳。- Visual Novel Game with Janken Battle",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electron . --autoplay-policy=no-user-gesture-required --disable-features=PreloadMediaEngagementData,MediaEngagementBypassAutoplayPolicies",
     "build": "electron-builder",
-    "dev": "electron . --dev"
+    "dev": "electron . --dev --autoplay-policy=no-user-gesture-required",
+    "start:autoplay": "electron . --autoplay-policy=no-user-gesture-required --disable-background-timer-throttling --disable-renderer-backgrounding",
+    "test:bgm": "electron . --dev --autoplay-policy=no-user-gesture-required --force-fieldtrials=AutoplayPolicy/NoUserGestureRequired"
   },
   "dependencies": {
     "electron": "^27.0.0"

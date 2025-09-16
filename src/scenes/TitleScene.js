@@ -416,34 +416,77 @@ class TitleScene {
             clearCacheBtn.style.cssText = 'background: #F39C12 !important; font-size: 0.9em !important; display: block !important; visibility: visible !important; opacity: 1 !important;';
         }
         
-        // タイトル専用BGMを再生（自動クロスフェード）
-        console.log('🎵 タイトル画面: BGM再生を試行');
-        await this.game.audioManager.playSceneBGM('title', 2.0);
+        // Electron環境の検出
+        const isElectron = window.electronAPI && window.electronAPI.isElectron;
+        const autoplayEnabled = window.ELECTRON_AUTOPLAY_ENABLED || (window.electronAPI && window.electronAPI.autoplayEnabled);
 
-        // BGM再生確認とフォールバック処理
-        setTimeout(() => {
-            if (!this.game.audioManager.isInitialized) {
-                console.log('🎵 タイトル画面: 音声未初期化のため、初回クリック後にBGM再生予定');
+        if (isElectron || autoplayEnabled) {
+            console.log('🎮 Electron環境検出: BGMを即座に再生');
 
-                // ユーザーの操作を待つメッセージを表示（開発用）
-                if (this.game.debugMode) {
-                    console.log('🎵 デバッグ: 任意のボタンをクリックするとBGMが開始されます');
+            // Electron APIを使用してBGMを強制再生
+            if (window.electronAPI && window.electronAPI.forcePlayBGM) {
+                try {
+                    const bgm = await window.electronAPI.forcePlayBGM('./assets/audio/bgm/bgm_title.mp3');
+                    if (bgm) {
+                        console.log('✅ Electron経由でBGM再生成功');
+                        this.game.audioManager.bgmAudio = bgm;
+                        this.game.audioManager.currentBgm = 'bgm_title.mp3';
+                    } else {
+                        // フォールバック: 通常再生
+                        await this.game.audioManager.playSceneBGM('title', 0.5);
+                        console.log('✅ タイトルBGM再生成功（Electronフォールバック）');
+                    }
+                } catch (error) {
+                    console.log('⚠️ Electron BGM再生失敗:', error.message);
+                    // 通常再生にフォールバック
+                    await this.game.audioManager.playSceneBGM('title', 1.0);
                 }
-            } else if (!this.game.audioManager.currentBgm) {
-                console.log('🎵 タイトル画面: BGM再生を再試行');
-                this.game.audioManager.playSceneBGM('title', 1.0);
             } else {
-                console.log('🎵 タイトル画面: BGM正常再生中 -', this.game.audioManager.currentBgm);
+                // 通常のElectron環境での即座再生
+                await this.game.audioManager.playSceneBGM('title', 0.5);
+                console.log('✅ タイトルBGM即座再生（Electron）');
             }
-        }, 1000);
 
-        // より積極的なBGM開始の試行（3秒後）
-        setTimeout(() => {
-            if (this.game.audioManager.isInitialized && !this.game.audioManager.currentBgm) {
-                console.log('🎵 タイトル画面: 最終BGM開始試行');
-                this.game.audioManager.playSceneBGM('title', 0.5);
-            }
-        }, 3000);
+            // 再生確認（500ms後）
+            setTimeout(() => {
+                if (this.game.audioManager.currentBgm) {
+                    console.log('🎵 BGM再生確認: 正常に再生中 -', this.game.audioManager.currentBgm);
+                } else {
+                    console.log('⚠️ BGM再生確認: 再生されていません、再試行');
+                    this.game.audioManager.playSceneBGM('title', 0.3);
+                }
+            }, 500);
+
+        } else {
+            // 通常のブラウザ環境
+            console.log('🎵 タイトル画面: BGM再生を試行（ブラウザ環境）');
+            await this.game.audioManager.playSceneBGM('title', 2.0);
+
+            // BGM再生確認とフォールバック処理
+            setTimeout(() => {
+                if (!this.game.audioManager.isInitialized) {
+                    console.log('🎵 タイトル画面: 音声未初期化のため、初回クリック後にBGM再生予定');
+
+                    // ユーザーの操作を待つメッセージを表示（開発用）
+                    if (this.game.debugMode) {
+                        console.log('🎵 デバッグ: 任意のボタンをクリックするとBGMが開始されます');
+                    }
+                } else if (!this.game.audioManager.currentBgm) {
+                    console.log('🎵 タイトル画面: BGM再生を再試行');
+                    this.game.audioManager.playSceneBGM('title', 1.0);
+                } else {
+                    console.log('🎵 タイトル画面: BGM正常再生中 -', this.game.audioManager.currentBgm);
+                }
+            }, 1000);
+
+            // より積極的なBGM開始の試行（3秒後）
+            setTimeout(() => {
+                if (this.game.audioManager.isInitialized && !this.game.audioManager.currentBgm) {
+                    console.log('🎵 タイトル画面: 最終BGM開始試行');
+                    this.game.audioManager.playSceneBGM('title', 0.5);
+                }
+            }, 3000);
+        }
         
         // 夏の夕暮れアンビエント音を再生（セミの声・風鈴）
         this.game.audioManager.playSE('se_cicada_evening.mp3', 0.3).catch(() => {

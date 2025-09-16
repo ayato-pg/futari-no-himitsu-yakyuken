@@ -48,10 +48,34 @@ class AudioManager {
      */
     async initialize() {
         try {
-            // ユーザー操作により音声再生を許可する処理
-            console.log('🎵 AudioManager: ユーザー操作待ちイベントリスナーを設定');
-            document.addEventListener('click', this.enableAudio.bind(this), { once: true });
-            document.addEventListener('keydown', this.enableAudio.bind(this), { once: true });
+            // Electron環境をチェック
+            const isElectron = window.electronAPI && window.electronAPI.isElectron;
+            const autoplayEnabled = window.ELECTRON_AUTOPLAY_ENABLED || (window.electronAPI && window.electronAPI.autoplayEnabled);
+
+            if (isElectron || autoplayEnabled) {
+                console.log('🎮 Electron環境検出: 自動再生を即座に有効化');
+
+                // Electron環境では即座に音声を初期化
+                this.isInitialized = true;
+
+                // AudioContextを作成して再開
+                if (window.AudioContext || window.webkitAudioContext) {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    this.audioContext = new AudioContextClass();
+
+                    if (this.audioContext.state === 'suspended') {
+                        await this.audioContext.resume();
+                        console.log('✅ AudioContext自動再開（Electron）');
+                    }
+                }
+
+                console.log('🎵 Electron: BGM即座再生可能');
+            } else {
+                // 通常のブラウザ環境
+                console.log('🎵 AudioManager: ユーザー操作待ちイベントリスナーを設定');
+                document.addEventListener('click', this.enableAudio.bind(this), { once: true });
+                document.addEventListener('keydown', this.enableAudio.bind(this), { once: true });
+            }
 
             // BGM設定をCSVから読み込み
             await this.loadBGMSettings();
