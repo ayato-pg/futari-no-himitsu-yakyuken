@@ -34,13 +34,19 @@
             bgm.volume = 0.5;
             bgm.muted = false;
 
+            let isPlaying = false; // 再生状態フラグ
+
             // BGM再生関数
             const playBGM = () => {
+                if (isPlaying) return; // 既に再生中の場合は何もしない
+
                 try {
                     const playPromise = bgm.play();
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
                             console.log('✅ 即座BGM再生成功！');
+                            isPlaying = true;
+
                             // AudioManagerと同期（遅延実行）
                             setTimeout(() => {
                                 try {
@@ -56,13 +62,17 @@
                             }, 1000);
                         }).catch(error => {
                             console.log('⚠️ 即座BGM再生待機中:', error.message);
-                            // 最初のインタラクションで再生
-                            const events = ['click', 'keydown', 'touchstart', 'mousemove'];
-                            events.forEach(eventType => {
-                                document.addEventListener(eventType, () => {
-                                    playBGM();
-                                }, { once: true, passive: true });
-                            });
+
+                            // 一度だけユーザーインタラクションイベントを設定
+                            if (!window.bgmInteractionListenersSet) {
+                                const events = ['click', 'keydown', 'touchstart'];
+                                events.forEach(eventType => {
+                                    document.addEventListener(eventType, () => {
+                                        if (!isPlaying) playBGM();
+                                    }, { once: true, passive: true });
+                                });
+                                window.bgmInteractionListenersSet = true;
+                            }
                         });
                     }
                 } catch (error) {
@@ -73,11 +83,15 @@
             // 即座実行
             playBGM();
 
-            // 遅延実行（複数のタイミング）
-            [10, 100, 500, 1000].forEach(delay => {
+            // 遅延実行（制限付き）
+            let retryCount = 0;
+            const maxRetries = 3;
+
+            [100, 500, 1000].forEach(delay => {
                 setTimeout(() => {
-                    if (bgm.paused) {
-                        console.log(`🔄 BGM再試行 (${delay}ms後)`);
+                    if (!isPlaying && bgm.paused && retryCount < maxRetries) {
+                        console.log(`🔄 BGM再試行 (${delay}ms後) - ${retryCount + 1}/${maxRetries}`);
+                        retryCount++;
                         playBGM();
                     }
                 }, delay);

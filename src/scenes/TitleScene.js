@@ -459,7 +459,8 @@ class TitleScene {
                     }
                 }
             }, 200);
-        
+        }
+
         // 夏の夕暮れアンビエント音を再生（セミの声・風鈴）
         this.game.audioManager.playSE('se_cicada_evening.mp3', 0.3).catch(() => {
             // ファイルがない場合は無視
