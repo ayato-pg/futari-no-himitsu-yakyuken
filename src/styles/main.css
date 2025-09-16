@@ -839,6 +839,9 @@ body {
     left: 65%;
     transform: translateX(-50%);
     z-index: 15;
+    /* 進めるボタンの相対配置のための設定 */
+    width: fit-content;
+    height: fit-content;
 }
 
 .hearts-container {
@@ -1033,17 +1036,18 @@ body {
 
 .janken-controls {
     position: absolute;
-    bottom: 120px;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
+    bottom: 120px;  /* 元の位置に戻す */
+    left: calc(65% - 191px);  /* ハートの左端と揃える計算 */
+    transform: none;  /* transform削除 */
+    text-align: left;  /* 左寄せに変更 */
     z-index: 10;
+    width: 400px; /* 固定幅を設定 */
 }
 
 .hand-buttons {
     display: flex;
     gap: 20px;
-    justify-content: center;
+    justify-content: flex-start;  /* 左寄せに変更 */
     margin-bottom: 10px;
 }
 
@@ -1112,18 +1116,27 @@ body {
     transform: translateY(-2px);
 }
 
-/* 進めるボタンのスタイル */
+/* 進めるボタンのスタイル - グーアイコンの左端に揃える */
 .advance-button-container {
     display: none;
-    justify-content: center;
-    margin-bottom: 10px;
+    justify-content: flex-start;  /* 左寄せに変更 */
+    position: absolute;
+    bottom: calc(120px + 2.4vh);  /* 2.4%上に移動 */
+    left: calc(65% - 191px);  /* じゃんけんボタンと同じ位置 */
+    transform: none;  /* transform削除 */
+    width: 400px;  /* じゃんけんボタンと同じ幅 */
+    z-index: 16;
 }
 
 .hand-btn.advance-btn {
     background: linear-gradient(135deg, #ff6b7d 0%, #e53e52 100%);
     box-shadow: 0 4px 15px rgba(255, 107, 125, 0.4);
     animation: pulse-advance 2s infinite;
-    width: 180px;  /* 進めるボタンは少し大きめ */
+    width: 400px;  /* じゃんけんボタンコンテナの幅と同じ */
+    height: 120px;  /* じゃんけんボタンと同じ高さ */
+    max-width: 90vw;  /* 画面幅の90%を超えない */
+    margin: 0;  /* マージンを確実にゼロに */
+    padding: 0 30px;  /* 上下パディングを削除、左右のみ */
 }
 
 .hand-btn.advance-btn::before {

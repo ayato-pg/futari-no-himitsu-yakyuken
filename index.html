@@ -18,6 +18,50 @@
         <source src="./assets/audio/bgm/bgm_title.mp3" type="audio/mpeg">
     </audio>
 
+    <!-- 🎮 ブラウザ版環境設定（Electron版と同じ動作を実現） -->
+    <script>
+        (function() {
+            console.log('🌐 ブラウザ版環境設定開始');
+
+            // 🔧 安全なElectron環境検出（process変数エラー回避）
+            let isElectron = false;
+            try {
+                // window.electronAPIやrequireが存在するかチェック
+                isElectron = !!(window.electronAPI || window.require);
+
+                // processオブジェクトを安全にチェック
+                if (!isElectron && typeof process !== 'undefined' && process.versions && process.versions.electron) {
+                    isElectron = true;
+                }
+            } catch (error) {
+                // ブラウザ環境ではprocessが未定義のため、エラーは無視
+                console.log('🌐 ブラウザ環境確定（processオブジェクト未定義）');
+                isElectron = false;
+            }
+
+            if (!isElectron) {
+                console.log('🌐 ブラウザ環境検出：制限付き自動再生モード');
+
+                // ブラウザ版では即座再生を無効化してAudioManagerに統一
+                window.BROWSER_AUTOPLAY_RESTRICTED = true;
+
+                // AudioContextの準備（Electron版と同様）
+                if (window.AudioContext || window.webkitAudioContext) {
+                    console.log('🎵 AudioContext準備完了（ブラウザ版）');
+                }
+            } else {
+                console.log('🎮 Electron環境検出：完全自動再生モード');
+                window.ELECTRON_AUTOPLAY_ENABLED = true;
+            }
+
+            console.log('✅ 環境設定完了:', {
+                isElectron,
+                browserRestricted: window.BROWSER_AUTOPLAY_RESTRICTED,
+                electronEnabled: window.ELECTRON_AUTOPLAY_ENABLED
+            });
+        })();
+    </script>
+
     <!-- 即座BGM再生スクリプト（BGM重複防止のため無効化） -->
     <script>
         // HTMLロード直後に即座にBGM再生を試行（無効化）
@@ -200,9 +244,6 @@
                 <div class="dialogue-controls">
                     <button class="control-btn" id="btn-skip">Skip</button>
                     <button class="control-btn" id="btn-auto">Auto</button>
-                    <button class="control-btn" id="btn-log">Log</button>
-                    <button class="control-btn" id="btn-save">Save</button>
-                    <button class="control-btn" id="btn-menu">Menu</button>
                 </div>
             </div>
         </div>
@@ -308,7 +349,7 @@
                 </div>
             </div>
 
-            <!-- プレイヤーのハート表示（じゃんけんボタンの上） -->
+            <!-- プレイヤーのハート表示 -->
             <div class="player-hearts-display" id="player-hearts-display">
                 <div class="hearts-container" id="player-hearts-container"></div>
             </div>
@@ -329,14 +370,15 @@
                         <span>パー</span>
                     </button>
                 </div>
-                <!-- 進めるボタン（初期は非表示） -->
-                <div class="advance-button-container" style="display: none;">
-                    <button class="hand-btn advance-btn" id="btn-advance">
-                        <span style="font-size: 2em;">▶️</span>
-                        <span>進める</span>
-                    </button>
-                </div>
                 <div class="instruction">選択してください</div>
+            </div>
+
+            <!-- 進めるボタン（じゃんけんボタンと同じ高さ、初期は非表示） -->
+            <div class="advance-button-container" style="display: none;">
+                <button class="hand-btn advance-btn" id="btn-advance">
+                    <span style="font-size: 2em;">▶️</span>
+                    <span>進める</span>
+                </button>
             </div>
 
             <!-- ゲーム制御ボタン -->

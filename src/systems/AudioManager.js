@@ -9,7 +9,7 @@ class AudioManager {
         this.bgmAudio = null;
         this.seAudioPool = new Map();
         this.voiceAudio = null;
-        
+
         // デフォルト音量設定
         this.volumes = {
             bgm: 0.7,
@@ -17,29 +17,64 @@ class AudioManager {
             voice: 0.9,
             master: 1.0
         };
-        
+
         // オーディオファイルのベースパス
         this.audioBasePath = './assets/audio/';
         this.bgmPath = this.audioBasePath + 'bgm/';
         this.sePath = this.audioBasePath + 'se/';
         this.voicePath = this.audioBasePath + 'voice/';
-        
+
         // 現在再生中の情報
         this.currentBgm = null;
         this.isInitialized = false;
         this.currentScene = null; // 現在のシーンを追跡
         this.pendingSceneBgm = null; // 初期化待ちのBGM情報
-        
+
         // プリロード済みオーディオ
         this.preloadedAudio = new Map();
-        
+
         // クロスフェード用
         this.fadingBgm = null;
         this.fadeInterval = null;
-        
+
         // BGM設定（CSVから読み込み）
         this.bgmSettings = new Map();
-        
+
+        // ⚡ ユーザーインタラクション待機フラグをデフォルト値で初期化
+        // 🔧 環境の安全な検出（process変数エラー回避）
+        let isElectron = false;
+        try {
+            // 明示的フラグをまずチェック
+            isElectron = !!(window.ELECTRON_AUTOPLAY_ENABLED || window.AUTOPLAY_FORCE_ENABLED);
+
+            // window.electronAPIやrequireをチェック
+            if (!isElectron) {
+                isElectron = !!(window.electronAPI || window.require);
+            }
+
+            // processオブジェクトを安全にチェック
+            if (!isElectron && typeof process !== 'undefined' && process.versions && process.versions.electron) {
+                isElectron = true;
+            }
+        } catch (error) {
+            // ブラウザ環境ではprocessが未定義のため、エラーは無視
+            isElectron = false;
+        }
+
+        const isBrowser = !isElectron;
+        this.waitingForUserInteraction = isBrowser; // ブラウザは待機、Electronは待機不要
+
+        console.log('🎵 AudioManager constructor: 安全な環境検出結果:', {
+            isElectron,
+            isBrowser,
+            waitingForUserInteraction: this.waitingForUserInteraction,
+            environment: isElectron ? 'Electron' : 'Browser',
+            autoplayFlags: {
+                electronEnabled: window.ELECTRON_AUTOPLAY_ENABLED,
+                browserRestricted: window.BROWSER_AUTOPLAY_RESTRICTED
+            }
+        });
+
         this.initialize();
     }
 
@@ -48,23 +83,40 @@ class AudioManager {
      */
     async initialize() {
         try {
-            console.log('🎵 AudioManager: 即座再生モードで初期化開始');
+            console.log('🎵 AudioManager: 環境統一初期化開始');
 
-            // Electron環境の検出（強化版）
-            const isElectron = !!(window.electronAPI || window.require || process?.versions?.electron || window.ELECTRON_AUTOPLAY_ENABLED || window.AUTOPLAY_FORCE_ENABLED);
+            // 🔧 環境の安全な検出（process変数エラー回避）
+            let isElectron = false;
+            try {
+                // 明示的フラグをまずチェック
+                isElectron = !!(window.ELECTRON_AUTOPLAY_ENABLED || window.AUTOPLAY_FORCE_ENABLED);
 
-            if (isElectron) {
-                console.log('🎮 Electron環境検出！最強自動再生モード有効化');
-                this.isInitialized = true;
-                console.log('✅ Electron: 音声システム即座初期化完了');
-            } else {
-                console.log('🌐 ブラウザ環境: 制限付き自動再生モード');
-                this.isInitialized = true;
-                console.log('✅ ブラウザ: 音声システム即座初期化完了');
+                // window.electronAPIやrequireをチェック
+                if (!isElectron) {
+                    isElectron = !!(window.electronAPI || window.require);
+                }
+
+                // processオブジェクトを安全にチェック
+                if (!isElectron && typeof process !== 'undefined' && process.versions && process.versions.electron) {
+                    isElectron = true;
+                }
+            } catch (error) {
+                // ブラウザ環境ではprocessが未定義のため、エラーは無視
+                isElectron = false;
             }
 
-            // ユーザーインタラクション待機フラグ
-            this.waitingForUserInteraction = true;
+            const isBrowser = !isElectron;
+            this.isInitialized = true;
+
+            if (isElectron) {
+                console.log('🎮 Electron環境：最強自動再生モード有効化');
+                this.waitingForUserInteraction = false;
+                console.log('✅ Electron: 音声システム即座初期化完了 - インタラクション不要');
+            } else {
+                console.log('🌐 ブラウザ環境：制限付き自動再生モード（AudioManager統一）');
+                this.waitingForUserInteraction = true;
+                console.log('✅ ブラウザ: 音声システム即座初期化完了 - インタラクション待機');
+            }
 
             // 🎵 ユーザーインタラクション検出システムを設定
             this.setupUserInteractionDetection();
@@ -224,14 +276,37 @@ class AudioManager {
                 return;
             }
 
-            // 【重複防止強化】まず全てのBGMを停止
-            console.log('🛑 BGM重複防止：既存BGMを完全停止');
-            await this.stopBGM(0); // 即座に停止（非同期で待機）
+            // 🚫 最強重複防止：まずグローバルスキャンで全BGM停止
+            console.log('🚫 BGM最強重複防止：全音源スキャン＆強制停止');
 
-            // 同じBGMが再生中の場合は何もしない（より厳密なチェック）
-            if (this.currentBgm === filename && this.bgmAudio && !this.bgmAudio.paused && !this.bgmAudio.ended) {
-                console.log(`🎵 BGM重複チェック: ${filename} は既に再生中です`);
-                console.log(`📊 現在の状態: paused=${this.bgmAudio.paused}, ended=${this.bgmAudio.ended}, readyState=${this.bgmAudio.readyState}`);
+            // 1. 全ての既存audio要素を強制停止
+            const allAudio = document.querySelectorAll('audio');
+            let stoppedCount = 0;
+            allAudio.forEach((audio, index) => {
+                if (!audio.paused) {
+                    console.log(`🛑 音源[${index}]強制停止: ${audio.src}`);
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audio.volume = 0;
+                    stoppedCount++;
+                }
+            });
+            console.log(`📊 強制停止した音源数: ${stoppedCount}`);
+
+            // 2. AudioManagerの状態もリセット
+            if (this.bgmAudio) {
+                this.bgmAudio.pause();
+                this.bgmAudio.currentTime = 0;
+                this.bgmAudio = null;
+            }
+            this.currentBgm = null;
+
+            // 3. 少し待機して確実に停止を保証
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // 4. 同じファイル名が既に再生要求されているかチェック
+            if (this.currentBgm === filename) {
+                console.log(`🚫 BGM重複検出: ${filename} は既に処理中です`);
                 return;
             }
 

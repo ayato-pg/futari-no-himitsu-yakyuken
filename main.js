@@ -30,6 +30,11 @@ app.commandLine.appendSwitch('disable-web-security');
 app.commandLine.appendSwitch('disable-site-isolation-trials');
 app.commandLine.appendSwitch('allow-running-insecure-content');
 
+// 🔓 ファイルアクセス制限を完全解除（CSVファイル読み込みのため）
+app.commandLine.appendSwitch('allow-file-access-from-files');
+app.commandLine.appendSwitch('disable-features', 'VizDisplayCompositor');
+app.commandLine.appendSwitch('disable-same-origin-policy');
+
 // 音声関連の最適化
 app.commandLine.appendSwitch('enable-exclusive-audio');
 app.commandLine.appendSwitch('try-supported-channel-layouts');
@@ -62,6 +67,9 @@ function createWindow() {
             contextIsolation: true,
             webSecurity: false, // 自動再生のためWebセキュリティを無効化
             allowRunningInsecureContent: true,
+
+            // 🔓 ファイルアクセス完全許可（CSVファイル読み込みのため）
+            allowFileAccessFromFileURLs: true,
 
             // プリロード設定
             preload: path.join(__dirname, 'preload.js'),

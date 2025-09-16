@@ -51,10 +51,7 @@ class DialogueScene {
         // コントロールボタン
         this.controlButtons = {
             skip: document.getElementById('btn-skip'),
-            auto: document.getElementById('btn-auto'),
-            log: document.getElementById('btn-log'),
-            save: document.getElementById('btn-save'),
-            menu: document.getElementById('btn-menu')
+            auto: document.getElementById('btn-auto')
         };
         
         this.setupEventListeners();
@@ -104,29 +101,6 @@ class DialogueScene {
             });
         }
 
-        // ログボタン
-        if (this.controlButtons.log) {
-            this.controlButtons.log.addEventListener('click', () => {
-                this.playDialogueSE('page_turn');
-                this.showLog();
-            });
-        }
-
-        // セーブボタン
-        if (this.controlButtons.save) {
-            this.controlButtons.save.addEventListener('click', () => {
-                this.playDialogueSE('choice_select');
-                this.saveGame();
-            });
-        }
-
-        // メニューボタン
-        if (this.controlButtons.menu) {
-            this.controlButtons.menu.addEventListener('click', () => {
-                this.playDialogueSE('choice_select');
-                this.showMenu();
-            });
-        }
 
         // タイトルへ戻るボタン
         const returnBtn = document.getElementById('dialogue-return-btn');
@@ -1246,16 +1220,8 @@ class DialogueScene {
             case 'Space':
                 this.onDialogueClick();
                 break;
-            case 'KeyS':
-                if (event.ctrlKey) {
-                    this.saveGame();
-                }
-                break;
             case 'KeyA':
                 this.toggleAutoPlay();
-                break;
-            case 'Escape':
-                this.showMenu();
                 break;
         }
     }
@@ -1290,35 +1256,7 @@ class DialogueScene {
         // this.game.audioManager.playSE('se_click.mp3', 0.4); // ClickSoundManagerと重複するため無効化
     }
 
-    /**
-     * ログ表示
-     */
-    showLog() {
-        console.log('ログを表示');
-        // this.game.audioManager.playSE('se_click.mp3', 0.4); // ClickSoundManagerと重複するため無効化
-        
-        // ログ機能（将来実装）
-        alert('ログ機能は開発中です');
-    }
 
-    /**
-     * ゲーム保存
-     */
-    saveGame() {
-        console.log('ゲームを保存');
-        // this.game.audioManager.playSE('se_click.mp3', 0.5); // ClickSoundManagerと重複するため無効化
-        
-        const gameData = {
-            currentScene: 'dialogue',
-            dialogueIndex: this.currentDialogueIndex,
-            sceneId: 'living' // 現在のシーンID
-        };
-        
-        const success = this.game.saveSystem.autoSave(gameData);
-        
-        // 保存結果をメッセージで表示
-        this.showSaveMessage(success ? '保存しました' : '保存に失敗しました');
-    }
 
     /**
      * 保存メッセージ表示
@@ -1346,19 +1284,6 @@ class DialogueScene {
         }, 2000);
     }
 
-    /**
-     * メニュー表示
-     */
-    showMenu() {
-        console.log('メニューを表示');
-        // this.game.audioManager.playSE('se_click.mp3', 0.4); // ClickSoundManagerと重複するため無効化
-        
-        // インゲームメニュー（将来実装）
-        const result = confirm('タイトル画面に戻りますか？');
-        if (result) {
-            this.returnToTitle();
-        }
-    }
 
     /**
      * タイトル画面に戻る
