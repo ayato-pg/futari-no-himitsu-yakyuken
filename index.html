@@ -25,42 +25,64 @@
             console.log('🎵 即座BGM再生システム起動');
 
             const bgm = document.getElementById('immediate-bgm');
-            if (bgm) {
-                bgm.volume = 0.5;
-                bgm.muted = false;
+            if (!bgm) {
+                console.error('❌ immediate-bgm要素が見つかりません');
+                return;
+            }
 
-                // 複数の方法で再生を試行
-                const playBGM = () => {
+            // BGM要素の初期設定
+            bgm.volume = 0.5;
+            bgm.muted = false;
+
+            // BGM再生関数
+            const playBGM = () => {
+                try {
                     const playPromise = bgm.play();
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
                             console.log('✅ 即座BGM再生成功！');
-                            // AudioManagerと同期
+                            // AudioManagerと同期（遅延実行）
                             setTimeout(() => {
-                                if (window.gameController && window.gameController.audioManager) {
-                                    window.gameController.audioManager.bgmAudio = bgm;
-                                    window.gameController.audioManager.currentBgm = 'bgm_title.mp3';
-                                    window.gameController.audioManager.isInitialized = true;
+                                try {
+                                    if (window.gameController && window.gameController.audioManager) {
+                                        window.gameController.audioManager.bgmAudio = bgm;
+                                        window.gameController.audioManager.currentBgm = 'bgm_title.mp3';
+                                        window.gameController.audioManager.isInitialized = true;
+                                        console.log('🔗 AudioManagerと同期完了');
+                                    }
+                                } catch (syncError) {
+                                    console.log('⚠️ AudioManager同期エラー:', syncError.message);
                                 }
                             }, 1000);
                         }).catch(error => {
                             console.log('⚠️ 即座BGM再生待機中:', error.message);
                             // 最初のインタラクションで再生
-                            ['click', 'keydown', 'touchstart', 'mousemove'].forEach(event => {
-                                document.addEventListener(event, playBGM, { once: true });
+                            const events = ['click', 'keydown', 'touchstart', 'mousemove'];
+                            events.forEach(eventType => {
+                                document.addEventListener(eventType, () => {
+                                    playBGM();
+                                }, { once: true, passive: true });
                             });
                         });
                     }
-                };
+                } catch (error) {
+                    console.log('⚠️ BGM再生関数エラー:', error.message);
+                }
+            };
 
-                // 即座実行
-                playBGM();
+            // 即座実行
+            playBGM();
 
-                // さらに遅延して再試行
-                setTimeout(playBGM, 10);
-                setTimeout(playBGM, 100);
-                setTimeout(playBGM, 500);
-            }
+            // 遅延実行（複数のタイミング）
+            [10, 100, 500, 1000].forEach(delay => {
+                setTimeout(() => {
+                    if (bgm.paused) {
+                        console.log(`🔄 BGM再試行 (${delay}ms後)`);
+                        playBGM();
+                    }
+                }, delay);
+            });
+
         })();
     </script>
 

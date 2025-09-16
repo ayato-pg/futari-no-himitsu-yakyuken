@@ -419,8 +419,12 @@ class TitleScene {
         // BGMを即座に再生（環境に関係なく）
         console.log('🎵 タイトル画面: BGMを即座に再生開始');
 
-        // 即座に再生を試行
-        await this.game.audioManager.playSceneBGM('title', 0.5);
+        // 即座に再生を試行（エラーをキャッチ）
+        try {
+            await this.game.audioManager.playSceneBGM('title', 0.5);
+        } catch (error) {
+            console.log('⚠️ 初回BGM再生エラー（正常動作）:', error.message);
+        }
 
         // 複数回の再試行で確実性を高める
         const retryDelays = [100, 300, 500, 1000, 2000];

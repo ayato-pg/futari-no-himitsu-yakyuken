@@ -235,7 +235,7 @@ class AudioManager {
      */
     async playBGM(filename, loop = true, fadeTime = 1.0) {
         // 初期化チェックを削除（常に再生を試行）
-        console.log(`🎵 BGM再生試行: ${filename} (初期化状態: ${this.isInitialized})`)
+        console.log(`🎵 BGM再生試行: ${filename} (初期化状態: ${this.isInitialized})`);
 
         try {
             // 同じBGMが再生中の場合は何もしない（より厳密なチェック）
@@ -266,10 +266,30 @@ class AudioManager {
                 this.fadeOutBGM(fadeTime);
             }
 
-            // 新しいBGMを再生開始
-            await newBgm.play();
-            this.bgmAudio = newBgm;
-            this.currentBgm = filename;
+            // 新しいBGMを再生開始（エラーハンドリング強化）
+            try {
+                await newBgm.play();
+                this.bgmAudio = newBgm;
+                this.currentBgm = filename;
+                console.log(`✅ BGM再生成功: ${filename}`);
+            } catch (playError) {
+                console.warn(`⚠️ BGM再生エラー: ${filename}`, playError.message);
+
+                // エラー時は再度試行
+                setTimeout(async () => {
+                    try {
+                        await newBgm.play();
+                        this.bgmAudio = newBgm;
+                        this.currentBgm = filename;
+                        console.log(`✅ BGM再生成功（リトライ）: ${filename}`);
+                    } catch (retryError) {
+                        console.error(`❌ BGM再生失敗: ${filename}`, retryError);
+                    }
+                }, 500);
+
+                // エラーを上位に伝播させない
+                return;
+            }
 
             // フェードイン
             this.fadeIn(this.bgmAudio, this.volumes.bgm * this.volumes.master, fadeTime);
@@ -294,7 +314,14 @@ class AudioManager {
         this.currentScene = sceneId;
 
         // 初期化チェックを削除 - 常に再生を試行
-        console.log(`🎵 シーンBGM即座再生: ${sceneId} (初期化状態: ${this.isInitialized})`)
+        console.log(`🎵 シーンBGM即座再生: ${sceneId} (初期化状態: ${this.isInitialized})`);
+
+        // BGM設定がまだ読み込まれていない場合は少し待つ
+        if (!this.bgmSettings || this.bgmSettings.size === 0) {
+            console.log('⚠️ BGM設定未読み込み、100ms後に再試行');
+            setTimeout(() => this.playSceneBGM(sceneId, customFadeTime, useSmootherTransition), 100);
+            return;
+        }
 
         const bgmConfig = this.bgmSettings.get(sceneId);
         
