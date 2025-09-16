@@ -63,47 +63,19 @@ class AudioManager {
                 console.log('✅ ブラウザ: 音声システム即座初期化完了');
             }
 
-            // AudioContextを作成して強制的に再開
-            if (window.AudioContext || window.webkitAudioContext) {
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                this.audioContext = new AudioContextClass();
+            // ユーザーインタラクション待機フラグ
+            this.waitingForUserInteraction = true;
 
-                // サイレント音で初期化
-                const oscillator = this.audioContext.createOscillator();
-                const gainNode = this.audioContext.createGain();
-                oscillator.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                gainNode.gain.value = 0;
-                oscillator.start();
-                oscillator.stop(this.audioContext.currentTime + 0.001);
+            // 🎵 ユーザーインタラクション検出システムを設定
+            this.setupUserInteractionDetection();
 
-                if (this.audioContext.state === 'suspended') {
-                    // 強制的にresumeを試行
-                    this.audioContext.resume().then(() => {
-                        console.log('✅ AudioContext強制再開成功');
-                    }).catch(e => {
-                        console.log('⚠️ AudioContext再開失敗（無視して続行）');
-                    });
-                }
-            }
-
-            // ダミー音声で事前初期化
-            const initAudio = new Audio();
-            initAudio.src = 'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAAABAAEAAgACAAMAAwAEAAQABQAFAAYABgAHAAcACAAIAAkACQAKAAoACwALAAwADAANAA0A';
-            initAudio.volume = 0;
-            initAudio.muted = true;
-
-            // play()のエラーは無視
-            initAudio.play().then(() => {
-                console.log('✅ ダミー音声初期化成功');
-            }).catch(() => {
-                console.log('⚠️ ダミー音声初期化スキップ（正常動作）');
-            });
+            // AudioContextを準備（まだ作成しない）
+            this.AudioContextClass = window.AudioContext || window.webkitAudioContext;
 
             // BGM設定をCSVから読み込み
             await this.loadBGMSettings();
 
-            console.log('🎵 AudioManager初期化完了 - 即座再生モード有効');
+            console.log('🎵 AudioManager初期化完了 - ユーザーインタラクション待機中');
         } catch (error) {
             console.error('❌ AudioManager初期化エラー:', error);
         }
@@ -243,15 +215,32 @@ class AudioManager {
      * @param {number} fadeTime - フェードイン時間（秒）
      */
     async playBGM(filename, loop = true, fadeTime = 1.0) {
-        // 初期化チェックを削除（常に再生を試行）
         console.log(`🎵 BGM再生試行: ${filename} (初期化状態: ${this.isInitialized})`);
 
         try {
+            // 停止中は新しいBGM再生をブロック
+            if (this.isStopping) {
+                console.log('⏳ BGM停止処理中のため再生をスキップ');
+                return;
+            }
+
+            // 【重複防止強化】まず全てのBGMを停止
+            console.log('🛑 BGM重複防止：既存BGMを完全停止');
+            await this.stopBGM(0); // 即座に停止（非同期で待機）
+
             // 同じBGMが再生中の場合は何もしない（より厳密なチェック）
             if (this.currentBgm === filename && this.bgmAudio && !this.bgmAudio.paused && !this.bgmAudio.ended) {
                 console.log(`🎵 BGM重複チェック: ${filename} は既に再生中です`);
                 console.log(`📊 現在の状態: paused=${this.bgmAudio.paused}, ended=${this.bgmAudio.ended}, readyState=${this.bgmAudio.readyState}`);
                 return;
+            }
+
+            // HTML側BGMも確実に停止
+            const immediateBgm = document.getElementById('immediate-bgm');
+            if (immediateBgm && !immediateBgm.paused) {
+                console.log('🛑 HTML側BGMを停止してからAudioManager BGMを開始');
+                immediateBgm.pause();
+                immediateBgm.currentTime = 0;
             }
 
             // 新しいBGMをプリロードまたは作成
@@ -275,8 +264,11 @@ class AudioManager {
                 this.fadeOutBGM(fadeTime);
             }
 
-            // 新しいBGMを再生開始（エラーハンドリング強化）
+            // 停止処理完了を待ってから新しいBGMを再生開始（重複防止）
+            await new Promise(resolve => setTimeout(resolve, 100)); // 100ms待機
+
             try {
+                console.log(`🎵 ${filename} の再生を開始します`);
                 await newBgm.play();
                 this.bgmAudio = newBgm;
                 this.currentBgm = filename;
@@ -322,8 +314,14 @@ class AudioManager {
         // 現在のシーンを記録
         this.currentScene = sceneId;
 
-        // 初期化チェックを削除 - 常に再生を試行
-        console.log(`🎵 シーンBGM即座再生: ${sceneId} (初期化状態: ${this.isInitialized})`);
+        console.log(`🎵 シーンBGM再生要求: ${sceneId} (インタラクション待機: ${this.waitingForUserInteraction})`);
+
+        // ユーザーインタラクション待機中は再生を保留
+        if (this.waitingForUserInteraction) {
+            console.log('⏳ ユーザーインタラクション待機中 - BGM再生を保留');
+            this.pendingSceneBgm = { scene: sceneId, fadeTime: customFadeTime };
+            return;
+        }
 
         // BGM設定がまだ読み込まれていない場合は少し待つ
         if (!this.bgmSettings || this.bgmSettings.size === 0) {
@@ -401,16 +399,71 @@ class AudioManager {
     }
 
     /**
-     * BGMを停止
+     * BGMを停止（HTML側BGMも含めて完全停止）
      * @param {number} fadeTime - フェードアウト時間（秒）
+     * @returns {Promise} 停止完了Promise
      */
-    stopBGM(fadeTime = 1.0) {
+    async stopBGM(fadeTime = 1.0) {
+        console.log('🛑 BGM完全停止開始（重複防止強化）');
+
+        // 停止中フラグを設定（新しいBGM再生を一時的にブロック）
+        this.isStopping = true;
+
+        const stopPromises = [];
+
+        // AudioManagerのBGMを停止
         if (this.bgmAudio) {
-            this.fadeOut(this.bgmAudio, fadeTime, () => {
+            if (fadeTime > 0) {
+                const fadePromise = new Promise(resolve => {
+                    this.fadeOut(this.bgmAudio, fadeTime, () => {
+                        if (this.bgmAudio) {
+                            this.bgmAudio.pause();
+                            this.bgmAudio.currentTime = 0;
+                            this.bgmAudio = null;
+                        }
+                        this.currentBgm = null;
+                        console.log('🛑 AudioManagerのBGMを停止しました');
+                        resolve();
+                    });
+                });
+                stopPromises.push(fadePromise);
+            } else {
+                this.bgmAudio.pause();
+                this.bgmAudio.currentTime = 0;
                 this.bgmAudio = null;
                 this.currentBgm = null;
-            });
+            }
         }
+
+        // HTML側のimmediate-bgmも強制停止
+        const immediateBgm = document.getElementById('immediate-bgm');
+        if (immediateBgm && !immediateBgm.paused) {
+            console.log('🛑 HTML側のimmediate-bgmを強制停止');
+            immediateBgm.pause();
+            immediateBgm.currentTime = 0;
+        }
+
+        // 全てのaudio要素を検索して停止（重複BGM対策）
+        const allAudioElements = document.querySelectorAll('audio');
+        allAudioElements.forEach((audio, index) => {
+            if (!audio.paused && audio.src && audio.src.includes('bgm_')) {
+                console.log(`🛑 検出されたBGM要素[${index}]を停止: ${audio.src}`);
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = 0;
+            }
+        });
+
+        // 全ての停止処理の完了を待機
+        if (stopPromises.length > 0) {
+            await Promise.all(stopPromises);
+        }
+
+        // 少し待機して確実に停止
+        await new Promise(resolve => setTimeout(resolve, 150));
+
+        this.isStopping = false;
+        console.log('✅ BGM完全停止完了（非同期）');
     }
 
     /**
@@ -522,17 +575,64 @@ class AudioManager {
      * @param {Function} callback - 完了後のコールバック
      */
     fadeOut(audio, duration, callback = null) {
-        if (!audio) return;
+        if (!audio) {
+            if (callback) callback();
+            return;
+        }
 
-        const startVolume = audio.volume;
-        const volumeStep = startVolume / (duration * 60); // 60fps想定
-        
+        // 📊 音量値と継続時間の検証・修正
+        let startVolume = parseFloat(audio.volume) || 0;
+        let fadeDuration = parseFloat(duration) || 1.0;
+
+        // 異常値のチェックと修正
+        if (!isFinite(startVolume) || startVolume < 0) {
+            console.warn('⚠️ 異常な開始音量を検出、修正:', startVolume, '→ 0');
+            startVolume = 0;
+            audio.volume = 0;
+        }
+
+        if (!isFinite(fadeDuration) || fadeDuration <= 0) {
+            console.warn('⚠️ 異常なフェード時間を検出、修正:', fadeDuration, '→ 1.0');
+            fadeDuration = 1.0;
+        }
+
+        // 開始音量が0以下の場合は即座に終了
+        if (startVolume <= 0) {
+            audio.pause();
+            if (callback) callback();
+            return;
+        }
+
+        const volumeStep = startVolume / (fadeDuration * 60); // 60fps想定
+
+        // volumeStepの有効性を確認
+        if (!isFinite(volumeStep) || volumeStep <= 0) {
+            console.warn('⚠️ 異常な音量ステップを検出、即座にフェードアウト完了:', volumeStep);
+            audio.volume = 0;
+            audio.pause();
+            if (callback) callback();
+            return;
+        }
+
+        console.log(`🔊 フェードアウト開始: ${startVolume.toFixed(3)} → 0 (${fadeDuration}秒, step=${volumeStep.toFixed(6)})`);
+
         const fadeInterval = setInterval(() => {
-            if (audio.volume > 0) {
-                audio.volume = Math.max(audio.volume - volumeStep, 0);
+            const currentVolume = parseFloat(audio.volume) || 0;
+
+            if (currentVolume > 0 && isFinite(currentVolume)) {
+                const newVolume = Math.max(currentVolume - volumeStep, 0);
+
+                // 新しい音量値の有効性を確認
+                if (isFinite(newVolume) && newVolume >= 0) {
+                    audio.volume = newVolume;
+                } else {
+                    console.warn('⚠️ 異常な新音量値を検出、0に設定:', newVolume);
+                    audio.volume = 0;
+                }
             } else {
                 clearInterval(fadeInterval);
                 audio.pause();
+                console.log('✅ フェードアウト完了');
                 if (callback) callback();
             }
         }, 1000 / 60);
@@ -695,11 +795,72 @@ class AudioManager {
     }
 
     /**
+     * ユーザーインタラクション検出システムを設定
+     */
+    setupUserInteractionDetection() {
+        console.log('🖱️ ユーザーインタラクション検出システム設定開始');
+
+        const enableAudioSystem = () => {
+            if (this.waitingForUserInteraction) {
+                console.log('👆 ユーザーインタラクション検出 - オーディオシステム有効化');
+                this.waitingForUserInteraction = false;
+                this.enableAudioContext();
+
+                // BGMの遅延再生を試行
+                if (this.pendingSceneBgm) {
+                    console.log('🎵 保留中のBGMを再生:', this.pendingSceneBgm);
+                    this.playSceneBGM(this.pendingSceneBgm.scene, this.pendingSceneBgm.fadeTime);
+                    this.pendingSceneBgm = null;
+                }
+            }
+        };
+
+        // 複数のユーザーインタラクションを検出
+        const events = ['click', 'tap', 'touchstart', 'keydown', 'mousedown'];
+        events.forEach(eventType => {
+            document.addEventListener(eventType, enableAudioSystem, { once: true, passive: true });
+            console.log(`📱 ${eventType} イベントリスナー登録完了`);
+        });
+
+        // 5秒後にタイムアウト（自動有効化）
+        setTimeout(() => {
+            if (this.waitingForUserInteraction) {
+                console.log('⏰ タイムアウト - オーディオシステム自動有効化');
+                enableAudioSystem();
+            }
+        }, 5000);
+    }
+
+    /**
+     * AudioContextを有効化
+     */
+    enableAudioContext() {
+        if (this.AudioContextClass && !this.audioContext) {
+            try {
+                this.audioContext = new this.AudioContextClass();
+                console.log('✅ AudioContext作成完了:', this.audioContext.state);
+
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume().then(() => {
+                        console.log('✅ AudioContext再開成功');
+                    }).catch(e => {
+                        console.warn('⚠️ AudioContext再開失敗:', e.message);
+                    });
+                }
+            } catch (error) {
+                console.error('❌ AudioContext作成エラー:', error);
+            }
+        }
+    }
+
+    /**
      * デバッグ情報を表示
      */
     debugInfo() {
         console.log('=== Audio Manager Debug Info ===');
         console.log('初期化済み:', this.isInitialized);
+        console.log('ユーザーインタラクション待機中:', this.waitingForUserInteraction);
+        console.log('AudioContext:', this.audioContext ? this.audioContext.state : '未作成');
         console.log('現在のBGM:', this.currentBgm);
         console.log('音量設定:', this.volumes);
         console.log('プリロード済み:', this.preloadedAudio.size, 'ファイル');

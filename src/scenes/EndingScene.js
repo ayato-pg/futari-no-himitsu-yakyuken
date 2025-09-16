@@ -106,19 +106,20 @@ class EndingScene {
         // エンディングデータを読み込み
         const endingData = this.loadEndingData(endingType);
         
-        // エンディング専用BGMを再生（CSV設定優先でフォールバック処理）
-        if (endingData && endingData.bgm_file) {
-            // CSVに個別BGM設定がある場合はそちらを優先
-            console.log(`🎵 エンディング個別BGM: ${endingData.bgm_file}`);
-            await this.game.audioManager.playBGM(endingData.bgm_file, true, 2.0);
-        } else {
-            // CSVに設定がない場合はシーンBGMを使用
+        // エンディング専用BGMを再生（シーンBGMを優先使用）
+        console.log(`🎵 エンディングBGM再生開始: ${endingType}`);
+
+        // 既存BGMを完全停止してから新しいBGMを再生
+        await this.game.audioManager.stopBGM(1.0);
+
+        // 少し待機してから新しいBGMを開始
+        setTimeout(async () => {
             if (endingType === 'true_end') {
                 await this.game.audioManager.playSceneBGM('ending_true', 2.0);
             } else if (endingType === 'bad_end') {
                 await this.game.audioManager.playSceneBGM('ending_bad', 2.0);
             }
-        }
+        }, 200);
         
         // 背景設定
         this.setupBackground(endingData);

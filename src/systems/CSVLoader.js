@@ -385,6 +385,14 @@ class CSVLoader {
                 { stage: '5', image_file: 'misaki_game_stage5.png', display_name: '美咲', description: 'や、やばい…。。。隠してもいいでしょ！！早く次はじめるよ！ジロジロ見ないの！', unlock_condition: '4回勝利で解放' },
                 { stage: '6', image_file: 'misaki_game_stage6.png', display_name: '美咲', description: 'あ、あぁ…負けちゃった…。そんなに見ないでよ…。野球拳だと強すぎない…？', unlock_condition: '5回勝利で解放' },
                 { stage: '7', image_file: 'misaki_secret_victory.png', display_name: '美咲（シークレット）', description: 'おめでとう…ここまで来るなんて…♪ 君だけの特別な美咲よ', unlock_condition: 'ゲームクリアで解放' }
+            ],
+            bgm_settings: [
+                { scene_id: 'title', bgm_file: 'bgm_title.mp3', volume: '0.7', loop: 'TRUE', fade_in_time: '2', fade_out_time: '1', description: 'タイトル画面BGM - ノスタルジックな夏の思い出' },
+                { scene_id: 'dialogue', bgm_file: 'bgm_dialogue.mp3', volume: '0.6', loop: 'TRUE', fade_in_time: '2.5', fade_out_time: '2', description: 'バトル前トーク画面BGM - 穏やかな会話シーン' },
+                { scene_id: 'game', bgm_file: 'bgm_battle_tension.mp3', volume: '0.8', loop: 'TRUE', fade_in_time: '1.5', fade_out_time: '1.5', description: 'バトル画面BGM - 緊張感のある野球拳バトル' },
+                { scene_id: 'ending_true', bgm_file: 'bgm_ending_true.mp3', volume: '0.7', loop: 'TRUE', fade_in_time: '3', fade_out_time: '2', description: '真エンディングBGM - 感動的な勝利シーン' },
+                { scene_id: 'ending_bad', bgm_file: 'bgm_ending_bad.mp3', volume: '0.5', loop: 'FALSE', fade_in_time: '2', fade_out_time: '0', description: 'BADエンディングBGM - 物悲しい敗北シーン' },
+                { scene_id: 'loading', bgm_file: 'bgm_gentle_piano.mp3', volume: '0.4', loop: 'TRUE', fade_in_time: '1', fade_out_time: '1', description: 'ローディング画面BGM - 静かなピアノ' }
             ]
         };
         

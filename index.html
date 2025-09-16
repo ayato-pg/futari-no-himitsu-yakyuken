@@ -18,11 +18,12 @@
         <source src="./assets/audio/bgm/bgm_title.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- 即座BGM再生スクリプト -->
+    <!-- 即座BGM再生スクリプト（BGM重複防止のため無効化） -->
     <script>
-        // HTMLロード直後に即座にBGM再生を試行
+        // HTMLロード直後に即座にBGM再生を試行（無効化）
         (function() {
-            console.log('🎵 即座BGM再生システム起動');
+            console.log('🚫 即座BGM再生システム無効化（AudioManagerに統一）');
+            return; // BGM重複防止のため早期リターン
 
             const bgm = document.getElementById('immediate-bgm');
             if (!bgm) {
@@ -98,6 +99,50 @@
             });
 
         })();
+    </script>
+
+    <!-- グローバルBGM制御関数（重複防止） -->
+    <script>
+        // グローバルBGM停止関数
+        window.stopAllBGM = function() {
+            console.log('🛑 グローバルBGM停止実行');
+
+            // HTML側のBGMを停止
+            const immediateBgm = document.getElementById('immediate-bgm');
+            if (immediateBgm && !immediateBgm.paused) {
+                immediateBgm.pause();
+                immediateBgm.currentTime = 0;
+                console.log('🛑 immediate-bgmを停止');
+            }
+
+            // AudioManagerのBGMも停止
+            if (window.gameController && window.gameController.audioManager) {
+                window.gameController.audioManager.stopBGM(0);
+                console.log('🛑 AudioManagerのBGMを停止');
+            }
+
+            // 全てのaudio要素を停止
+            const allAudio = document.querySelectorAll('audio');
+            allAudio.forEach((audio, index) => {
+                if (!audio.paused) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    console.log(`🛑 audio要素[${index}]を停止`);
+                }
+            });
+
+            console.log('✅ 全BGM停止完了');
+        };
+
+        // AudioManagerが利用可能になったときの連携設定
+        window.addEventListener('load', () => {
+            // 定期的にAudioManagerとの同期をチェック
+            setInterval(() => {
+                if (window.gameController && window.gameController.audioManager) {
+                    // AudioManagerのstopBGMメソッドにHTML側の停止も組み込み済み
+                }
+            }, 1000);
+        });
     </script>
 
     <div id="game-container">

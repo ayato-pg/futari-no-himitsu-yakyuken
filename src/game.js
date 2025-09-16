@@ -89,7 +89,11 @@ class GameController {
         this.csvLoader = new CSVLoader();
         console.log('📊 CSVファイルを強制リロードで読み込み中...');
         await this.csvLoader.loadAllCSV(true); // 強制リロードを有効化
-        
+
+        // AudioManagerがアクセスできるようにwindowオブジェクトに割り当て
+        window.csvLoader = this.csvLoader;
+        console.log('🌐 CSVLoaderをwindowオブジェクトに割り当て完了');
+
         // 読み込み完了後にデバッグ情報を表示
         this.csvLoader.debugInfo();
         
