@@ -62,33 +62,80 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
 // ページ読み込み完了時に自動再生を有効化
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('🎮 Electronプリロード完了');
-    console.log('🎵 自動再生ポリシー: 無効化済み');
+    console.log('🎮 Electronプリロード完了 - 最強設定');
+    console.log('🎵 自動再生ポリシー: 完全無効化済み');
     console.log('✅ BGMは即座に再生可能です');
 
     // グローバル変数として自動再生フラグを設定
     window.ELECTRON_AUTOPLAY_ENABLED = true;
+    window.AUTOPLAY_FORCE_ENABLED = true;
 
-    // 初期化時に音声コンテキストを作成して再生準備
-    setTimeout(() => {
+    // 即座に音声コンテキストを初期化
+    const initializeAudioImmediate = async () => {
         if (window.AudioContext || window.webkitAudioContext) {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            const initContext = new AudioContextClass();
 
-            // サイレント音声で初期化
-            const oscillator = initContext.createOscillator();
-            const gainNode = initContext.createGain();
+            // 複数のコンテキストで確実性を高める
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const initContext = new AudioContextClass();
 
-            oscillator.connect(gainNode);
-            gainNode.connect(initContext.destination);
+                    // 即座に再開
+                    if (initContext.state === 'suspended') {
+                        await initContext.resume();
+                    }
 
-            oscillator.frequency.setValueAtTime(0, initContext.currentTime);
-            gainNode.gain.setValueAtTime(0, initContext.currentTime);
+                    // サイレント音声で初期化
+                    const oscillator = initContext.createOscillator();
+                    const gainNode = initContext.createGain();
 
-            oscillator.start();
-            oscillator.stop(initContext.currentTime + 0.01);
+                    oscillator.connect(gainNode);
+                    gainNode.connect(initContext.destination);
 
-            console.log('🔊 音声コンテキスト初期化完了');
+                    oscillator.frequency.setValueAtTime(440, initContext.currentTime);
+                    gainNode.gain.setValueAtTime(0, initContext.currentTime);
+
+                    oscillator.start();
+                    oscillator.stop(initContext.currentTime + 0.001);
+
+                    console.log(`🔊 音声コンテキスト初期化完了 (${i + 1}/3)`);
+                } catch (error) {
+                    console.log(`⚠️ 音声コンテキスト初期化失敗 (${i + 1}/3):`, error.message);
+                }
+            }
         }
-    }, 100);
+
+        // HTMLAudioElementも即座初期化
+        try {
+            const testAudio = new Audio();
+            testAudio.src = 'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAAABAAEAAgACAAMAAwAEAAQABQAFAAYABgAHAAcACAAIAAkACQAKAAoACwALAAwADAANAA0A';
+            testAudio.volume = 0;
+            await testAudio.play();
+            console.log('🎵 HTMLAudio初期化完了');
+        } catch (error) {
+            console.log('⚠️ HTMLAudio初期化スキップ:', error.message);
+        }
+    };
+
+    // 即座実行と遅延実行の両方
+    initializeAudioImmediate();
+    setTimeout(initializeAudioImmediate, 10);
+    setTimeout(initializeAudioImmediate, 100);
+});
+
+// ページが完全に読み込まれた後にも再度実行
+window.addEventListener('load', () => {
+    console.log('🚀 Electronページ読み込み完了 - 最終音声初期化');
+
+    // 最終的なAudioContext強制初期化
+    if (window.AudioContext || window.webkitAudioContext) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const finalContext = new AudioContextClass();
+
+        if (finalContext.state === 'suspended') {
+            finalContext.resume().then(() => {
+                console.log('✅ 最終AudioContext初期化成功');
+            });
+        }
+    }
 });

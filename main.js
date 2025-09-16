@@ -7,20 +7,39 @@
 const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 
-// 自動再生ポリシーを無効化するChromiumフラグを設定
+// 🎵 最強の自動再生ポリシー無効化設定
+console.log('🚀 Electron: 自動再生ポリシー完全無効化開始');
+
+// 基本的な自動再生設定
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.commandLine.appendSwitch('disable-features', 'PreloadMediaEngagementData,MediaEngagementBypassAutoplayPolicies');
-app.commandLine.appendSwitch('enable-features', 'OverlayScrollbar');
 
-// 追加のChromiumフラグで自動再生を強制許可
+// 追加の強力な自動再生設定
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
-app.commandLine.appendSwitch('disable-features', 'AudioServiceOutOfProcess');
-app.commandLine.appendSwitch('force-color-profile', 'srgb');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('disable-back-forward-cache');
 
-// メディアエンゲージメントスコアを最大に設定（自動再生を確実に許可）
-app.commandLine.appendSwitch('media-engagement-preload-cache');
+// メディア関連の制限を完全無効化
+app.commandLine.appendSwitch('disable-features', 'AudioServiceOutOfProcess,MediaEngagementBypassAutoplayPolicies');
+app.commandLine.appendSwitch('enable-features', 'AutoplayIgnoreWebAudio');
+app.commandLine.appendSwitch('force-fieldtrials', 'AutoplayPolicy/NoUserGestureRequired');
+
+// ウェブセキュリティ関連の制限を緩和（自動再生のため）
+app.commandLine.appendSwitch('disable-web-security');
+app.commandLine.appendSwitch('disable-site-isolation-trials');
+app.commandLine.appendSwitch('allow-running-insecure-content');
+
+// 音声関連の最適化
+app.commandLine.appendSwitch('enable-exclusive-audio');
+app.commandLine.appendSwitch('try-supported-channel-layouts');
+app.commandLine.appendSwitch('audio-buffer-size', '1024');
+
+// キャッシュとデータディレクトリ設定
 app.commandLine.appendSwitch('user-data-dir', path.join(app.getPath('userData'), 'AutoplayEnabled'));
+app.commandLine.appendSwitch('disable-gpu-sandbox');
+
+console.log('✅ Electron: 自動再生ポリシー完全無効化完了');
 
 let mainWindow = null;
 
@@ -28,38 +47,55 @@ let mainWindow = null;
  * ウィンドウを作成
  */
 function createWindow() {
-    // メインウィンドウを作成
+    // メインウィンドウを作成（最強の自動再生設定）
     mainWindow = new BrowserWindow({
         width: 1920,
         height: 1080,
         minWidth: 1024,
         minHeight: 768,
         webPreferences: {
-            // 自動再生を完全に許可
+            // 🎵 自動再生を完全に許可
             autoplayPolicy: 'no-user-gesture-required',
 
-            // セキュリティ設定
+            // セキュリティ設定（自動再生のため緩和）
             nodeIntegration: false,
             contextIsolation: true,
+            webSecurity: false, // 自動再生のためWebセキュリティを無効化
+            allowRunningInsecureContent: true,
 
             // プリロード設定
             preload: path.join(__dirname, 'preload.js'),
 
-            // メディア関連の設定
+            // メディア関連の設定（完全最適化）
             backgroundThrottling: false,
-
-            // Webセキュリティを緩和（開発環境のみ）
-            webSecurity: true,
+            offscreen: false,
 
             // 追加の自動再生設定
-            additionalArguments: ['--autoplay-policy=no-user-gesture-required']
+            additionalArguments: [
+                '--autoplay-policy=no-user-gesture-required',
+                '--disable-features=PreloadMediaEngagementData,MediaEngagementBypassAutoplayPolicies',
+                '--enable-features=AutoplayIgnoreWebAudio',
+                '--force-fieldtrials=AutoplayPolicy/NoUserGestureRequired',
+                '--disable-background-timer-throttling',
+                '--disable-renderer-backgrounding',
+                '--enable-exclusive-audio'
+            ],
+
+            // 実験的機能を有効化
+            experimentalFeatures: true,
+            enableBlinkFeatures: 'AutoplayIgnoreWebAudio'
         },
 
         // ウィンドウ設定
         backgroundColor: '#1a1a1a',
         show: false,
         titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-        icon: path.join(__dirname, 'assets', 'icon.png')
+        icon: path.join(__dirname, 'assets', 'icon.png'),
+
+        // 追加のウィンドウ設定
+        focusable: true,
+        skipTaskbar: false,
+        alwaysOnTop: false
     });
 
     // ウィンドウが準備できたら表示

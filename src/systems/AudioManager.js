@@ -50,9 +50,18 @@ class AudioManager {
         try {
             console.log('🎵 AudioManager: 即座再生モードで初期化開始');
 
-            // 即座に音声を初期化（ユーザー操作不要）
-            this.isInitialized = true;
-            console.log('✅ 音声システム即座初期化完了');
+            // Electron環境の検出（強化版）
+            const isElectron = !!(window.electronAPI || window.require || process?.versions?.electron || window.ELECTRON_AUTOPLAY_ENABLED || window.AUTOPLAY_FORCE_ENABLED);
+
+            if (isElectron) {
+                console.log('🎮 Electron環境検出！最強自動再生モード有効化');
+                this.isInitialized = true;
+                console.log('✅ Electron: 音声システム即座初期化完了');
+            } else {
+                console.log('🌐 ブラウザ環境: 制限付き自動再生モード');
+                this.isInitialized = true;
+                console.log('✅ ブラウザ: 音声システム即座初期化完了');
+            }
 
             // AudioContextを作成して強制的に再開
             if (window.AudioContext || window.webkitAudioContext) {

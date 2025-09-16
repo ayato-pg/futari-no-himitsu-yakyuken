@@ -4,11 +4,12 @@
   "description": "2人の秘密、野球拳。- Visual Novel Game with Janken Battle",
   "main": "main.js",
   "scripts": {
-    "start": "electron . --autoplay-policy=no-user-gesture-required --disable-features=PreloadMediaEngagementData,MediaEngagementBypassAutoplayPolicies",
+    "start": "electron . --autoplay-policy=no-user-gesture-required --disable-web-security --disable-features=PreloadMediaEngagementData,MediaEngagementBypassAutoplayPolicies --enable-features=AutoplayIgnoreWebAudio",
     "build": "electron-builder",
-    "dev": "electron . --dev --autoplay-policy=no-user-gesture-required",
-    "start:autoplay": "electron . --autoplay-policy=no-user-gesture-required --disable-background-timer-throttling --disable-renderer-backgrounding",
-    "test:bgm": "electron . --dev --autoplay-policy=no-user-gesture-required --force-fieldtrials=AutoplayPolicy/NoUserGestureRequired"
+    "dev": "electron . --dev --autoplay-policy=no-user-gesture-required --disable-web-security --enable-features=AutoplayIgnoreWebAudio",
+    "start:autoplay": "electron . --autoplay-policy=no-user-gesture-required --disable-background-timer-throttling --disable-renderer-backgrounding --disable-web-security --force-fieldtrials=AutoplayPolicy/NoUserGestureRequired --enable-features=AutoplayIgnoreWebAudio --disable-features=PreloadMediaEngagementData,MediaEngagementBypassAutoplayPolicies,AudioServiceOutOfProcess",
+    "test:bgm": "electron . --dev --autoplay-policy=no-user-gesture-required --force-fieldtrials=AutoplayPolicy/NoUserGestureRequired --disable-web-security --enable-features=AutoplayIgnoreWebAudio",
+    "ultimate:bgm": "electron . --autoplay-policy=no-user-gesture-required --disable-web-security --disable-features=PreloadMediaEngagementData,MediaEngagementBypassAutoplayPolicies,AudioServiceOutOfProcess --enable-features=AutoplayIgnoreWebAudio --force-fieldtrials=AutoplayPolicy/NoUserGestureRequired --disable-background-timer-throttling --disable-renderer-backgrounding --allow-running-insecure-content --disable-site-isolation-trials --enable-exclusive-audio"
   },
   "dependencies": {
     "electron": "^27.0.0"

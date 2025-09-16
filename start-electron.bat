@@ -17,7 +17,8 @@ echo 🎮 ゲームを起動しています...
 echo 🎵 BGMは即座に再生されます（自動再生ポリシー無効化済み）
 echo.
 
-REM Electronを自動再生有効化フラグ付きで起動
-npm run start:autoplay
+REM Electronを最強の自動再生設定で起動
+echo 🎵 最強BGM自動再生モードで起動中...
+npm run ultimate:bgm
 
 pause

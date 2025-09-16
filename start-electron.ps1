@@ -19,8 +19,9 @@ Write-Host "🎮 ゲームを起動しています..." -ForegroundColor Green
 Write-Host "🎵 BGMは即座に再生されます（自動再生ポリシー無効化済み）" -ForegroundColor Magenta
 Write-Host ""
 
-# Electronを自動再生有効化フラグ付きで起動
-npm run start:autoplay
+# Electronを最強の自動再生設定で起動
+Write-Host "🎵 最強BGM自動再生モードで起動中..." -ForegroundColor Yellow
+npm run ultimate:bgm
 
 # エラーがあった場合は表示
 if ($LASTEXITCODE -ne 0) {
