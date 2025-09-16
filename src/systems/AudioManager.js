@@ -48,39 +48,53 @@ class AudioManager {
      */
     async initialize() {
         try {
-            // Electron環境をチェック
-            const isElectron = window.electronAPI && window.electronAPI.isElectron;
-            const autoplayEnabled = window.ELECTRON_AUTOPLAY_ENABLED || (window.electronAPI && window.electronAPI.autoplayEnabled);
+            console.log('🎵 AudioManager: 即座再生モードで初期化開始');
 
-            if (isElectron || autoplayEnabled) {
-                console.log('🎮 Electron環境検出: 自動再生を即座に有効化');
+            // 即座に音声を初期化（ユーザー操作不要）
+            this.isInitialized = true;
+            console.log('✅ 音声システム即座初期化完了');
 
-                // Electron環境では即座に音声を初期化
-                this.isInitialized = true;
+            // AudioContextを作成して強制的に再開
+            if (window.AudioContext || window.webkitAudioContext) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContextClass();
 
-                // AudioContextを作成して再開
-                if (window.AudioContext || window.webkitAudioContext) {
-                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                    this.audioContext = new AudioContextClass();
+                // サイレント音で初期化
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                gainNode.gain.value = 0;
+                oscillator.start();
+                oscillator.stop(this.audioContext.currentTime + 0.001);
 
-                    if (this.audioContext.state === 'suspended') {
-                        await this.audioContext.resume();
-                        console.log('✅ AudioContext自動再開（Electron）');
-                    }
+                if (this.audioContext.state === 'suspended') {
+                    // 強制的にresumeを試行
+                    this.audioContext.resume().then(() => {
+                        console.log('✅ AudioContext強制再開成功');
+                    }).catch(e => {
+                        console.log('⚠️ AudioContext再開失敗（無視して続行）');
+                    });
                 }
-
-                console.log('🎵 Electron: BGM即座再生可能');
-            } else {
-                // 通常のブラウザ環境
-                console.log('🎵 AudioManager: ユーザー操作待ちイベントリスナーを設定');
-                document.addEventListener('click', this.enableAudio.bind(this), { once: true });
-                document.addEventListener('keydown', this.enableAudio.bind(this), { once: true });
             }
+
+            // ダミー音声で事前初期化
+            const initAudio = new Audio();
+            initAudio.src = 'data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAAABAAEAAgACAAMAAwAEAAQABQAFAAYABgAHAAcACAAIAAkACQAKAAoACwALAAwADAANAA0A';
+            initAudio.volume = 0;
+            initAudio.muted = true;
+
+            // play()のエラーは無視
+            initAudio.play().then(() => {
+                console.log('✅ ダミー音声初期化成功');
+            }).catch(() => {
+                console.log('⚠️ ダミー音声初期化スキップ（正常動作）');
+            });
 
             // BGM設定をCSVから読み込み
             await this.loadBGMSettings();
 
-            console.log('🎵 AudioManager初期化完了 - BGM自動再生準備OK');
+            console.log('🎵 AudioManager初期化完了 - 即座再生モード有効');
         } catch (error) {
             console.error('❌ AudioManager初期化エラー:', error);
         }
@@ -220,10 +234,8 @@ class AudioManager {
      * @param {number} fadeTime - フェードイン時間（秒）
      */
     async playBGM(filename, loop = true, fadeTime = 1.0) {
-        if (!this.isInitialized) {
-            console.warn('音声が初期化されていません');
-            return;
-        }
+        // 初期化チェックを削除（常に再生を試行）
+        console.log(`🎵 BGM再生試行: ${filename} (初期化状態: ${this.isInitialized})`)
 
         try {
             // 同じBGMが再生中の場合は何もしない（より厳密なチェック）
@@ -281,12 +293,8 @@ class AudioManager {
         // 現在のシーンを記録
         this.currentScene = sceneId;
 
-        // まだ初期化されていない場合は、BGM情報を保留
-        if (!this.isInitialized) {
-            console.log('🎵 音声未初期化のため、BGMを保留:', sceneId);
-            this.pendingSceneBgm = { sceneId, fadeTime: customFadeTime };
-            return;
-        }
+        // 初期化チェックを削除 - 常に再生を試行
+        console.log(`🎵 シーンBGM即座再生: ${sceneId} (初期化状態: ${this.isInitialized})`)
 
         const bgmConfig = this.bgmSettings.get(sceneId);
         
