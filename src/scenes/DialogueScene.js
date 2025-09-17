@@ -365,23 +365,33 @@ class DialogueScene {
             console.error(`❌ misakiDisplay要素が見つかりません`);
             return;
         }
-        
+
         if (this.lastDisplayedImage === spriteName) {
             return;
         }
-        
+
         this.lastDisplayedImage = spriteName;
-        const imagePath = `assets/images/characters/misaki/${spriteName}`;
-        
-        console.log(`📸 立ち絵変更: ${spriteName}`);
-        
+
+        // パス処理：既にパスが含まれているかチェック
+        let imagePath;
+        if (spriteName.includes('/')) {
+            // パスが含まれている場合（secret/characters/misaki/...等）
+            imagePath = `assets/images/${spriteName}`;
+        } else {
+            // ファイル名のみの場合は従来の通常パス
+            imagePath = `assets/images/characters/misaki/${spriteName}`;
+        }
+
+        console.log(`📸 立ち絵変更: ${spriteName} → ${imagePath}`);
+        console.log(`🎭 秘密モード: ${this.game.gameState.isSecretMode}`);
+
         const tempImage = new Image();
         tempImage.onload = () => {
             this.misakiDisplay.style.transition = '';
             this.misakiDisplay.style.opacity = '';
             this.misakiDisplay.classList.remove('misaki-costume-change');
             this.misakiDisplay.src = tempImage.src;
-            
+
             requestAnimationFrame(() => {
                 this.misakiDisplay.classList.add('misaki-costume-change');
                 setTimeout(() => {
@@ -389,11 +399,26 @@ class DialogueScene {
                 }, 1200);
             });
         };
-        
+
         tempImage.onerror = () => {
-            console.error(`❌ 画像が見つかりません: ${spriteName}`);
+            console.error(`❌ 画像が見つかりません: ${imagePath}`);
+
+            // 秘密モードの場合、フォールバック画像を試行
+            if (this.game.gameState.isSecretMode && spriteName.includes('secret/')) {
+                console.log(`🔄 秘密モードフォールバック画像を試行`);
+                const fallbackPath = 'assets/images/secret/characters/misaki/misaki_secret_suit.png';
+                const fallbackImage = new Image();
+                fallbackImage.onload = () => {
+                    this.misakiDisplay.src = fallbackImage.src;
+                    console.log(`✅ フォールバック画像を表示: ${fallbackPath}`);
+                };
+                fallbackImage.onerror = () => {
+                    console.error(`❌ フォールバック画像も見つかりません: ${fallbackPath}`);
+                };
+                fallbackImage.src = fallbackPath;
+            }
         };
-        
+
         tempImage.src = imagePath;
     }
     
