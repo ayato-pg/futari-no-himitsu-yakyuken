@@ -519,6 +519,10 @@ class GameScene {
             // CSVからゲーム画面の背景を取得
             const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', 'game');
 
+            console.log(`🎮 GameScene 背景設定開始:`);
+            console.log(`   秘密モード: ${this.game.gameState.isSecretMode}`);
+            console.log(`   sceneData:`, sceneData);
+
             if (sceneData && sceneData.background_image) {
                 // 秘めた想いモードの場合は異なるパス処理
                 let imagePath;
@@ -527,8 +531,10 @@ class GameScene {
                 } else {
                     imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
                 }
+
+                console.log(`   計算されたパス: ${imagePath}`);
                 backgroundElement.style.backgroundImage = `url('${imagePath}')`;
-                console.log(`🎮 ゲーム画面の背景を設定: ${imagePath}`);
+                console.log(`✅ ゲーム画面の背景を設定: ${imagePath}`);
             } else {
                 // フォールバック背景
                 backgroundElement.style.backgroundImage = "url('./assets/images/backgrounds/bg_living_night.png')";

@@ -250,7 +250,12 @@ class DialogueScene {
         
         // 通常シーンの背景処理
         const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', sceneId);
-        
+
+        console.log(`🎭 DialogueScene 背景設定開始:`);
+        console.log(`   シーンID: ${sceneId}`);
+        console.log(`   秘密モード: ${this.game.gameState.isSecretMode}`);
+        console.log(`   sceneData:`, sceneData);
+
         if (backgroundElement && sceneData && sceneData.background_image) {
             // 秘めた想いモードの場合は異なるパス処理
             let imagePath;
@@ -259,7 +264,10 @@ class DialogueScene {
             } else {
                 imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
             }
+
+            console.log(`   計算されたパス: ${imagePath}`);
             backgroundElement.style.backgroundImage = `url('${imagePath}')`;
+            console.log(`✅ 背景画像を設定しました: ${imagePath}`);
         } else {
             // デフォルト背景
             if (backgroundElement) {
