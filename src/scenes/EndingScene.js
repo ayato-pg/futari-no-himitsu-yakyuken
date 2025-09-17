@@ -257,21 +257,45 @@ class EndingScene {
      */
     setupBackground(endingData) {
         const backgroundElement = document.getElementById('ending-bg');
-        
-        if (backgroundElement && endingData && endingData.bg_image) {
-            const imagePath = `./assets/images/backgrounds/${endingData.bg_image}`;
+
+        // まずCSVからシーンデータを取得
+        const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', 'misaki_room');
+
+        if (backgroundElement && sceneData && sceneData.background_image) {
+            let imagePath;
+            if (this.game.gameState.isSecretMode) {
+                imagePath = `./assets/images/${sceneData.background_image}`;
+            } else {
+                imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
+            }
+
             backgroundElement.style.backgroundImage = `url('${imagePath}')`;
             backgroundElement.style.backgroundSize = 'cover';
             backgroundElement.style.backgroundPosition = 'center';
             backgroundElement.style.backgroundRepeat = 'no-repeat';
-            
-            console.log(`🎬 エンディング背景を設定: ${endingData.bg_image}`);
+
+            console.log(`🎬 エンディング背景を設定 (${this.game.gameState.isSecretMode ? 'Secret' : 'Normal'}): ${sceneData.background_image}`);
+        } else if (backgroundElement && endingData && endingData.bg_image) {
+            // フォールバック：endingDataから取得
+            let imagePath;
+            if (this.game.gameState.isSecretMode) {
+                imagePath = `./assets/images/${endingData.bg_image}`;
+            } else {
+                imagePath = `./assets/images/backgrounds/${endingData.bg_image}`;
+            }
+
+            backgroundElement.style.backgroundImage = `url('${imagePath}')`;
+            backgroundElement.style.backgroundSize = 'cover';
+            backgroundElement.style.backgroundPosition = 'center';
+            backgroundElement.style.backgroundRepeat = 'no-repeat';
+
+            console.log(`🎬 エンディング背景を設定 (フォールバック): ${endingData.bg_image}`);
         } else {
             // デフォルト背景
             if (backgroundElement) {
                 // 利用可能な背景画像またはグラデーション
                 const isVictory = this.currentEnding === 'true_end';
-                
+
                 if (isVictory) {
                     // 勝利時：夜のリビング
                     backgroundElement.style.backgroundImage = "url('./assets/images/backgrounds/bg_living_night.png')";
@@ -283,7 +307,7 @@ class EndingScene {
                     const gradientColor = 'linear-gradient(135deg, #434343 0%, #000000 100%)';
                     backgroundElement.style.background = gradientColor;
                 }
-                
+
                 console.log(`🎬 エンディング背景を設定: ${isVictory ? '夜のリビング' : 'ダークグラデーション'}`);
             }
         }

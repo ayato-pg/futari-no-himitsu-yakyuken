@@ -252,7 +252,13 @@ class DialogueScene {
         const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', sceneId);
         
         if (backgroundElement && sceneData && sceneData.background_image) {
-            const imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
+            // 秘めた想いモードの場合は異なるパス処理
+            let imagePath;
+            if (this.game.gameState.isSecretMode) {
+                imagePath = `./assets/images/${sceneData.background_image}`;
+            } else {
+                imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
+            }
             backgroundElement.style.backgroundImage = `url('${imagePath}')`;
         } else {
             // デフォルト背景

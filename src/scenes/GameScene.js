@@ -516,13 +516,28 @@ class GameScene {
     setupBackground() {
         const backgroundElement = document.getElementById('game-bg');
         if (backgroundElement) {
-            // 利用可能な背景画像を使用、存在しない場合はグラデーション背景
-            backgroundElement.style.backgroundImage = "url('./assets/images/backgrounds/bg_living_night.png')";
+            // CSVからゲーム画面の背景を取得
+            const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', 'game');
+
+            if (sceneData && sceneData.background_image) {
+                // 秘めた想いモードの場合は異なるパス処理
+                let imagePath;
+                if (this.game.gameState.isSecretMode) {
+                    imagePath = `./assets/images/${sceneData.background_image}`;
+                } else {
+                    imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
+                }
+                backgroundElement.style.backgroundImage = `url('${imagePath}')`;
+                console.log(`🎮 ゲーム画面の背景を設定: ${imagePath}`);
+            } else {
+                // フォールバック背景
+                backgroundElement.style.backgroundImage = "url('./assets/images/backgrounds/bg_living_night.png')";
+                console.log('🎮 ゲーム画面の背景をフォールバックで設定');
+            }
+
             backgroundElement.style.backgroundSize = 'cover';
             backgroundElement.style.backgroundPosition = 'center';
             backgroundElement.style.backgroundRepeat = 'no-repeat';
-            
-            console.log('🎮 ゲーム画面の背景を設定しました');
         } else {
             console.warn('❌ ゲーム画面の背景要素が見つかりません');
         }
