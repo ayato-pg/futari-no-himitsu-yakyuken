@@ -1,4 +1,0 @@
-ending_id,ending_name,ending_text,cg_image,bgm_name,is_good_ending
-true_end,TRUE END - 秋の約束,"二人は大人になって再会し、新しい関係を築いていく。\n秋の紅葉が舞う中、二人は手を取り合い、これからの未来を誓い合った。\n\n「ずっと一緒にいよう」\n「うん、約束」",cg_true_end_autumn.png,bgm_ending_happy.ogg,true
-bad_end,BAD END - すれ違い,"勝負には負けたけれど、二人の心は近づいていた。\n大人になったからこそ分かる、本当の気持ち。\n\n「また会える？」\n「もちろん」",cg_bad_end_autumn.png,bgm_ending_sad.ogg,false
-normal_end,NORMAL END - 新たな始まり,"引き分けという結果に、二人は顔を見合わせて笑った。\n勝ち負けじゃない、大切なものがここにある。\n\n「これからもよろしくね」\n「こちらこそ」",cg_normal_end_autumn.png,bgm_ending_normal.ogg,true
