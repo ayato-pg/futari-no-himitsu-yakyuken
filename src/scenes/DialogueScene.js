@@ -249,29 +249,33 @@ class DialogueScene {
         }
         
         // 通常シーンの背景処理
-        const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', sceneId);
-
-        console.log(`🎭 DialogueScene 背景設定開始:`);
-        console.log(`   シーンID: ${sceneId}`);
-        console.log(`   秘密モード: ${this.game.gameState.isSecretMode}`);
-        console.log(`   sceneData:`, sceneData);
-
-        if (backgroundElement && sceneData && sceneData.background_image) {
-            // 秘めた想いモードの場合は異なるパス処理
-            let imagePath;
+        if (backgroundElement) {
+            // 秘めた想いモードでは直接背景を指定
             if (this.game.gameState.isSecretMode) {
-                imagePath = `./assets/images/${sceneData.background_image}`;
-            } else {
-                imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
+                const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
+                backgroundElement.style.backgroundImage = `url('${secretBackgroundPath}')`;
+                backgroundElement.style.backgroundSize = 'cover';
+                backgroundElement.style.backgroundPosition = 'center';
+                backgroundElement.style.backgroundRepeat = 'no-repeat';
+                console.log(`✅ 秘密モード背景を強制設定: ${secretBackgroundPath}`);
+                return;
             }
 
-            console.log(`   計算されたパス: ${imagePath}`);
-            backgroundElement.style.backgroundImage = `url('${imagePath}')`;
-            console.log(`✅ 背景画像を設定しました: ${imagePath}`);
-        } else {
-            // デフォルト背景
-            if (backgroundElement) {
+            // 通常モードの場合はCSVから読み込み
+            const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', sceneId);
+
+            console.log(`🎭 DialogueScene 通常モード背景設定:`);
+            console.log(`   シーンID: ${sceneId}`);
+            console.log(`   sceneData:`, sceneData);
+
+            if (sceneData && sceneData.background_image) {
+                const imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
+                backgroundElement.style.backgroundImage = `url('${imagePath}')`;
+                console.log(`✅ 通常モード背景を設定: ${imagePath}`);
+            } else {
+                // デフォルト背景
                 backgroundElement.style.background = 'linear-gradient(135deg, #2c2c2c 0%, #1a1a2e 100%)';
+                console.log(`⚠️ デフォルト背景を設定`);
             }
         }
     }

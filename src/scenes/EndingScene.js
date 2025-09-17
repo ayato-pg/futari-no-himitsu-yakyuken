@@ -258,42 +258,38 @@ class EndingScene {
     setupBackground(endingData) {
         const backgroundElement = document.getElementById('ending-bg');
 
-        // まずCSVからシーンデータを取得
-        const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', 'misaki_room');
-
-        if (backgroundElement && sceneData && sceneData.background_image) {
-            let imagePath;
+        if (backgroundElement) {
+            // 秘めた想いモードでは直接背景を指定
             if (this.game.gameState.isSecretMode) {
-                imagePath = `./assets/images/${sceneData.background_image}`;
-            } else {
-                imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
+                const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
+                backgroundElement.style.backgroundImage = `url('${secretBackgroundPath}')`;
+                backgroundElement.style.backgroundSize = 'cover';
+                backgroundElement.style.backgroundPosition = 'center';
+                backgroundElement.style.backgroundRepeat = 'no-repeat';
+                console.log(`✅ 秘密モードエンディング背景を強制設定: ${secretBackgroundPath}`);
+                return;
             }
 
-            backgroundElement.style.backgroundImage = `url('${imagePath}')`;
-            backgroundElement.style.backgroundSize = 'cover';
-            backgroundElement.style.backgroundPosition = 'center';
-            backgroundElement.style.backgroundRepeat = 'no-repeat';
+            // 通常モードの場合はCSVから読み込み
+            const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', 'misaki_room');
 
-            console.log(`🎬 エンディング背景を設定 (${this.game.gameState.isSecretMode ? 'Secret' : 'Normal'}): ${sceneData.background_image}`);
-        } else if (backgroundElement && endingData && endingData.bg_image) {
-            // フォールバック：endingDataから取得
-            let imagePath;
-            if (this.game.gameState.isSecretMode) {
-                imagePath = `./assets/images/${endingData.bg_image}`;
+            if (sceneData && sceneData.background_image) {
+                const imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
+                backgroundElement.style.backgroundImage = `url('${imagePath}')`;
+                backgroundElement.style.backgroundSize = 'cover';
+                backgroundElement.style.backgroundPosition = 'center';
+                backgroundElement.style.backgroundRepeat = 'no-repeat';
+                console.log(`✅ 通常モードエンディング背景を設定: ${imagePath}`);
+            } else if (endingData && endingData.bg_image) {
+                // フォールバック：endingDataから取得
+                const imagePath = `./assets/images/backgrounds/${endingData.bg_image}`;
+                backgroundElement.style.backgroundImage = `url('${imagePath}')`;
+                backgroundElement.style.backgroundSize = 'cover';
+                backgroundElement.style.backgroundPosition = 'center';
+                backgroundElement.style.backgroundRepeat = 'no-repeat';
+                console.log(`🎬 エンディング背景を設定 (フォールバック): ${endingData.bg_image}`);
             } else {
-                imagePath = `./assets/images/backgrounds/${endingData.bg_image}`;
-            }
-
-            backgroundElement.style.backgroundImage = `url('${imagePath}')`;
-            backgroundElement.style.backgroundSize = 'cover';
-            backgroundElement.style.backgroundPosition = 'center';
-            backgroundElement.style.backgroundRepeat = 'no-repeat';
-
-            console.log(`🎬 エンディング背景を設定 (フォールバック): ${endingData.bg_image}`);
-        } else {
-            // デフォルト背景
-            if (backgroundElement) {
-                // 利用可能な背景画像またはグラデーション
+                // デフォルト背景
                 const isVictory = this.currentEnding === 'true_end';
 
                 if (isVictory) {
