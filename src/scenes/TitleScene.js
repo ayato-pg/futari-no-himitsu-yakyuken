@@ -113,6 +113,14 @@ class TitleScene {
             });
         }
 
+        // 秘めた想い... ボタン
+        const secretFeelingsBtn = document.getElementById('btn-secret-feelings');
+        if (secretFeelingsBtn) {
+            secretFeelingsBtn.addEventListener('click', () => {
+                this.startSecretGame();
+            });
+        }
+
 
         // ボタンホバー効果 (ClickSoundManagerと重複するため無効化)
         // this.menuButtonElements.forEach(button => {
@@ -397,10 +405,22 @@ class TitleScene {
     startNewGame() {
         console.log('新しいゲームを開始');
         this.game.audioManager.playSE('se_click.mp3', 0.7);
-        
+
         // ゲーム開始処理
         this.hide();
         this.game.startNewGame();
+    }
+
+    /**
+     * 秘めた想いモードでゲームを開始
+     */
+    startSecretGame() {
+        console.log('秘めた想いモードを開始');
+        this.game.audioManager.playSE('se_click.mp3', 0.7);
+
+        // 秘めた想いモード（パート2）として開始
+        this.hide();
+        this.game.startNewGame(true); // secretModeフラグをtrueに
     }
 
     /**

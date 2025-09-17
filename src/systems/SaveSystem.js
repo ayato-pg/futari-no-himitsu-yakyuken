@@ -6,10 +6,19 @@
 
 class SaveSystem {
     constructor() {
+        // 通常モード用のキー
         this.savePrefix = 'yakyuken_save_';
         this.autoSaveKey = 'yakyuken_autosave';
         this.settingsKey = 'yakyuken_settings';
         this.galleryKey = 'yakyuken_gallery';
+
+        // 秘めた想いモード用のキー
+        this.secretSavePrefix = 'yakyuken_secret_save_';
+        this.secretAutoSaveKey = 'yakyuken_secret_autosave';
+        this.secretGalleryKey = 'yakyuken_secret_gallery';
+
+        // 現在のモード
+        this.isSecretMode = false;
         this.maxSaveSlots = 12;
         
         // デフォルト設定
@@ -58,6 +67,30 @@ class SaveSystem {
     }
 
     /**
+     * 秘めた想いモードを設定
+     * @param {boolean} isSecret - 秘めた想いモードかどうか
+     */
+    setSecretMode(isSecret) {
+        this.isSecretMode = isSecret;
+        console.log(`SaveSystem: モード切り替え - ${isSecret ? '秘めた想いモード' : '通常モード'}`);
+
+        // ギャラリーデータを再読み込み
+        const gallery = this.loadGallery();
+        if (gallery) {
+            this.galleryData = gallery;
+        } else {
+            // 秘めた想いモード用の新しいギャラリーデータを初期化
+            this.galleryData = {
+                unlockedImages: [],
+                viewedEndings: [],
+                totalWins: 0,
+                lastUnlock: null
+            };
+            this.saveGallery(this.galleryData);
+        }
+    }
+
+    /**
      * ゲームデータを保存
      * @param {number} slot - セーブスロット番号 (1-12、0はオートセーブ)
      * @param {Object} gameData - 保存するゲームデータ
@@ -70,7 +103,13 @@ class SaveSystem {
                 ...gameData
             };
 
-            const key = slot === 0 ? this.autoSaveKey : `${this.savePrefix}${slot}`;
+            // 秘めた想いモードの場合、異なるキーを使用
+            let key;
+            if (this.isSecretMode) {
+                key = slot === 0 ? this.secretAutoSaveKey : `${this.secretSavePrefix}${slot}`;
+            } else {
+                key = slot === 0 ? this.autoSaveKey : `${this.savePrefix}${slot}`;
+            }
             localStorage.setItem(key, JSON.stringify(saveData));
             
             console.log(`セーブ完了: スロット${slot}`);
@@ -89,7 +128,13 @@ class SaveSystem {
      */
     loadGame(slot) {
         try {
-            const key = slot === 0 ? this.autoSaveKey : `${this.savePrefix}${slot}`;
+            // 秘めた想いモードの場合、異なるキーを使用
+            let key;
+            if (this.isSecretMode) {
+                key = slot === 0 ? this.secretAutoSaveKey : `${this.secretSavePrefix}${slot}`;
+            } else {
+                key = slot === 0 ? this.autoSaveKey : `${this.savePrefix}${slot}`;
+            }
             const saveDataString = localStorage.getItem(key);
             
             if (!saveDataString) {
@@ -247,7 +292,9 @@ class SaveSystem {
      */
     saveGallery(galleryData) {
         try {
-            localStorage.setItem(this.galleryKey, JSON.stringify(galleryData));
+            // 秘めた想いモードの場合、異なるギャラリーキーを使用
+            const galleryKey = this.isSecretMode ? this.secretGalleryKey : this.galleryKey;
+            localStorage.setItem(galleryKey, JSON.stringify(galleryData));
             this.galleryData = galleryData;
             return true;
         } catch (error) {
@@ -262,7 +309,9 @@ class SaveSystem {
      */
     loadGallery() {
         try {
-            const galleryString = localStorage.getItem(this.galleryKey);
+            // 秘めた想いモードの場合、異なるギャラリーキーを使用
+            const galleryKey = this.isSecretMode ? this.secretGalleryKey : this.galleryKey;
+            const galleryString = localStorage.getItem(galleryKey);
             if (!galleryString) {
                 return null;
             }

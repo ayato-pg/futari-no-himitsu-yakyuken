@@ -31,6 +31,7 @@ class GameController {
             isGameActive: false,
             isEndingMode: false, // エンディングトーク画面モード
             canReturnToGame: true, // ゲームに戻ることができるか
+            isSecretMode: false, // 秘めた想いモード（パート2）
             gameData: {}
         };
         
@@ -329,24 +330,35 @@ class GameController {
 
     /**
      * 新しいゲームを開始
+     * @param {boolean} secretMode - 秘めた想いモード（パート2）かどうか
      */
-    async startNewGame() {
-        console.log('新しいゲームを開始');
-        
+    async startNewGame(secretMode = false) {
+        console.log('新しいゲームを開始', secretMode ? '（秘めた想いモード）' : '（通常モード）');
+
         // ゲーム状態をリセット
         this.resetGameState();
-        
+
+        // 秘めた想いモードフラグを設定
+        this.gameState.isSecretMode = secretMode;
+
+        // 秘めた想いモードの場合、特別なセーブキーを使用
+        if (secretMode) {
+            this.saveSystem.setSecretMode(true);
+        } else {
+            this.saveSystem.setSecretMode(false);
+        }
+
         // 会話シーンから開始（introシーン）
         this.hideAllScenes();
         this.currentScene = 'dialogue';
         this.gameState.currentPhase = 'dialogue';
         this.gameState.isGameActive = true;
-        
+
         // 隠しクリック領域を更新
-        
+
         // 「intro」シーンで開始（CSVのscene_idに対応）
         await this.scenes.dialogue.show('living');
-        
+
         // 会話シーンの隠し領域を有効化
     }
 
