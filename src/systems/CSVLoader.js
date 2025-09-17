@@ -12,6 +12,7 @@ class CSVLoader {
             'scenes.csv',
             'characters.csv',
             'dialogues.csv',
+            'prologue.csv',
             'victory_talk.csv',
             'bad_end.csv',
             'misaki_costumes.csv',

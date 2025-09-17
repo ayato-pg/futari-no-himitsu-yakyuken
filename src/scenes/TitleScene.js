@@ -415,12 +415,20 @@ class TitleScene {
      * 秘めた想いモードでゲームを開始
      */
     startSecretGame() {
-        console.log('秘めた想いモードを開始');
+        console.log('🔒 秘めた想いモードを開始');
         this.game.audioManager.playSE('se_click.mp3', 0.7);
+
+        // GameStateの状態確認
+        console.log('🔍 現在のGameState:', this.game.gameState);
+        console.log('🔍 CSVLoaderの秘密モード状態:', this.game.csvLoader.isSecretMode);
 
         // 秘めた想いモード（パート2）として開始
         this.hide();
         this.game.startNewGame(true); // secretModeフラグをtrueに
+
+        // 設定後の状態確認
+        console.log('✅ 秘密モード設定後のGameState:', this.game.gameState);
+        console.log('✅ CSVLoader秘密モード設定後:', this.game.csvLoader.isSecretMode);
     }
 
     /**

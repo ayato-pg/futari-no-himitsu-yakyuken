@@ -162,7 +162,7 @@ class DialogueScene {
             if (dialogues) {
                 this.dialogueQueue = dialogues;
             } else {
-                this.loadDialogueData(sceneId);
+                await this.loadDialogueData(sceneId);
             }
         }
         
@@ -880,16 +880,103 @@ class DialogueScene {
      * 会話データを読み込み（修正版：正しいデータを直接使用）
      * @param {string} sceneId - シーンID
      */
-    loadDialogueData(sceneId) {
+    async loadDialogueData(sceneId) {
         console.log(`✅ 会話データを読み込み: ${sceneId}`);
-        
+
         // 画像記録をリセット
         this.lastDisplayedImage = '';
         this.lastSpecifiedSprite = '';
-        
-        // CSVパース問題を回避：正しいデータを直接使用
-        this.dialogueQueue = this.getCorrectDialogueData(sceneId);
-        console.log(`🎉 正しい会話データを使用: ${this.dialogueQueue.length} 件`);
+
+        // 秘めた想いモードの詳細チェック
+        console.log(`🔍 モード判定: isSecretMode=${this.game.gameState.isSecretMode}, sceneId=${sceneId}`);
+
+        // 秘めた想いモードの場合はsecret_prologue.csvから読み込み
+        if (this.game.gameState.isSecretMode && sceneId === 'living') {
+            console.log('🔒 秘めた想いモード: secret_prologue.csvから読み込み中...');
+            this.dialogueQueue = await this.loadSecretPrologueData();
+            console.log(`🎉 秘密プロローグデータを使用: ${this.dialogueQueue.length} 件`);
+
+            // 最初の3行をデバッグ表示
+            this.dialogueQueue.slice(0, 3).forEach((dialogue, index) => {
+                console.log(`  [${index}] ${dialogue.dialogue_id}: ${dialogue.character_id} - "${dialogue.text.substring(0, 30)}..."`);
+            });
+        } else {
+            console.log('📋 通常モード: 標準データを使用');
+            // CSVパース問題を回避：正しいデータを直接使用
+            this.dialogueQueue = this.getCorrectDialogueData(sceneId);
+            console.log(`🎉 正しい会話データを使用: ${this.dialogueQueue.length} 件`);
+        }
+    }
+
+    /**
+     * 秘密プロローグデータを読み込み
+     * @returns {Array} 会話データ配列
+     */
+    async loadSecretPrologueData() {
+        try {
+            console.log('🔒 秘密プロローグデータ読み込み開始...');
+
+            // 直接secret_prologue.csvを読み込み（カスタムパス指定）
+            const customPath = './assets/data/csv/secret_prologue.csv';
+            await this.game.csvLoader.loadCSV('secret_prologue', customPath);
+            const prologueData = this.game.csvLoader.getData('secret_prologue');
+
+            console.log(`📊 読み込み結果: ${prologueData ? prologueData.length : 'null'} 件`);
+
+            if (!prologueData || prologueData.length === 0) {
+                console.error('❌ secret_prologue.csvデータが見つかりません、フォールバック実行');
+                return this.createSecretPrologueFallback();
+            }
+
+            console.log(`📥 secret_prologue.csv読み込み成功: ${prologueData.length} 件`);
+
+            // CSVデータを対話用フォーマットに変換
+            const dialogueQueue = prologueData.map(row => ({
+                dialogue_id: row.dialogue_id || '',
+                scene_id: row.scene_id || 'living',
+                character_id: row.character_id || 'player',
+                text: row.text || '',
+                emotion: row.emotion || '',
+                costume: row.costume || '',
+                voice_file: row.voice_file || '',
+                next_id: row.next_id || '',
+                sprite_file: row.sprite_file || ''
+            }));
+
+            return dialogueQueue;
+        } catch (error) {
+            console.error('❌ secret_prologue.csv読み込みエラー:', error);
+            return this.createSecretPrologueFallback();
+        }
+    }
+
+    /**
+     * 秘密プロローグのフォールバックデータを作成
+     * @returns {Array} 編集されたプロローグデータ
+     */
+    createSecretPrologueFallback() {
+        console.log('🛡️ 秘密プロローグフォールバックデータを使用');
+        return [
+            { dialogue_id: 'd001', scene_id: 'living', character_id: 'sound_effect', text: 'ピンポーン', emotion: '', costume: '', voice_file: 'v_001.mp3', next_id: 'd002', sprite_file: '' },
+            { dialogue_id: 'd002', scene_id: 'living', character_id: 'player_thought', text: '玄関を開けるとみさきが立っていて、びっくりした。美咲とは前のじゃんけん以来で目が合わせられない。', emotion: 'intimate', costume: 'casual', voice_file: '', next_id: 'd003', sprite_file: 'secret/characters/misaki/misaki_secret_intimate.png' },
+            { dialogue_id: 'd003', scene_id: 'living', character_id: 'misaki', text: '弟に風邪って聞いたけど大丈夫？おじさんとおばさん2人ともいないんでしょ？', emotion: '', costume: '', voice_file: '', next_id: 'd004', sprite_file: '' },
+            { dialogue_id: 'd004', scene_id: 'living', character_id: 'player', text: 'え、うん、、心配して来てくれた感じ？', emotion: '', costume: '', voice_file: '', next_id: 'd005', sprite_file: '' },
+            { dialogue_id: 'd005', scene_id: 'living', character_id: 'misaki', text: '熱高いって聞いたから心配して来ちゃった、、、', emotion: 'seductive', costume: 'casual', voice_file: 'v_004.mp3', next_id: 'd006', sprite_file: 'secret/characters/misaki/misaki_secret_seductive.png' },
+            { dialogue_id: 'd006', scene_id: 'living', character_id: 'player', text: 'もう熱はある程度下がったんだよ(笑)。にしても、その大荷物何？', emotion: '', costume: '', voice_file: '', next_id: 'd007', sprite_file: '' },
+            { dialogue_id: 'd007', scene_id: 'living', character_id: 'misaki', text: 'え、そうなの⁈  看病ついでに泊まろうと思って！あ、家には友達の家に泊まるって言ってるから内緒ね！ それより中に入れてよ！', emotion: '', costume: '', voice_file: '', next_id: 'd008', sprite_file: '' },
+            { dialogue_id: 'd008', scene_id: 'living', character_id: 'player', text: 'お、おう。', emotion: 'teasing', costume: 'casual', voice_file: '', next_id: 'd009', sprite_file: 'secret/characters/misaki/misaki_secret_teasing.png' },
+            { dialogue_id: 'd009', scene_id: 'living', character_id: 'player_thought', text: '泊まるって、、え、、ほんと？。風邪の為か分からないが体が熱い。', emotion: '', costume: '', voice_file: '', next_id: 'd010', sprite_file: '' },
+            { dialogue_id: 'd010', scene_id: 'living', character_id: 'misaki', text: 'おじゃましまーす！家来るのひっさしぶりだなー！', emotion: '', costume: '', voice_file: '', next_id: 'd011', sprite_file: '' },
+            { dialogue_id: 'd011', scene_id: 'living', character_id: 'player_thought', text: '玄関に置かれた大きなバッグ。中からスポドリ、ゼリー、おかゆパック、体温計、ブランケットが次々と出てくる。', emotion: 'shy', costume: 'casual', voice_file: '', next_id: 'd012', sprite_file: 'secret/characters/misaki/misaki_secret_shy.png' },
+            { dialogue_id: 'd012', scene_id: 'living', character_id: 'player_thought', text: '本当に泊まる気満々だ…（笑）', emotion: 'confident', costume: 'casual', voice_file: '', next_id: 'd013', sprite_file: 'secret/characters/misaki/misaki_secret_confident.png' },
+            { dialogue_id: 'd013', scene_id: 'living', character_id: 'misaki', text: '元気になったか確認してあげる♪', emotion: '', costume: '', voice_file: '', next_id: 'd014', sprite_file: '' },
+            { dialogue_id: 'd014', scene_id: 'living', character_id: 'player', text: '何するの？', emotion: 'playful', costume: 'casual', voice_file: '', next_id: 'd015', sprite_file: 'secret/characters/misaki/misaki_secret_playful.png' },
+            { dialogue_id: 'd015', scene_id: 'living', character_id: 'misaki', text: 'また、、じゃ、じゃんけんする、、？この前の続き、、。', emotion: '', costume: '', voice_file: '', next_id: 'd016', sprite_file: '' },
+            { dialogue_id: 'd016', scene_id: 'living', character_id: 'player', text: 'え？この前のって野球拳？？', emotion: 'vulnerable', costume: 'casual', voice_file: '', next_id: 'd017', sprite_file: 'secret/characters/misaki/misaki_secret_vulnerable.png' },
+            { dialogue_id: 'd017', scene_id: 'living', character_id: 'misaki', text: 'や、、やっぱりやめとこ、、', emotion: '', costume: '', voice_file: '', next_id: 'd018', sprite_file: '' },
+            { dialogue_id: 'd018', scene_id: 'living', character_id: 'player', text: 'やる！すぐやる！！', emotion: 'intimate', costume: 'casual', voice_file: '', next_id: 'd019', sprite_file: 'secret/characters/misaki/misaki_secret_intimate.png' },
+            { dialogue_id: 'd019', scene_id: 'living', character_id: 'player_thought', text: 'やばい、食い気味に返事してしまった。既に元気になった気がする。', emotion: '', costume: '', voice_file: 'game_start', next_id: '', sprite_file: '' }
+        ];
     }
 
     /**
