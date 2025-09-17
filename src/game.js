@@ -344,8 +344,10 @@ class GameController {
         // 秘めた想いモードの場合、特別なセーブキーを使用
         if (secretMode) {
             this.saveSystem.setSecretMode(true);
+            this.csvLoader.setSecretMode(true);
         } else {
             this.saveSystem.setSecretMode(false);
+            this.csvLoader.setSecretMode(false);
         }
 
         // 会話シーンから開始（introシーン）

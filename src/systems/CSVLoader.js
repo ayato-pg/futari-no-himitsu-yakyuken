@@ -7,6 +7,7 @@
 class CSVLoader {
     constructor() {
         this.csvData = {};
+        this.isSecretMode = false; // 秘めた想いモードフラグ
         this.csvFiles = [
             'scenes.csv',
             'characters.csv',
@@ -73,6 +74,19 @@ class CSVLoader {
     }
 
     /**
+     * 秘めた想いモードを設定
+     * @param {boolean} isSecret - 秘めた想いモードかどうか
+     */
+    setSecretMode(isSecret) {
+        console.log(`CSVLoader: モード切り替え - ${isSecret ? '秘めた想いモード' : '通常モード'}`);
+        this.isSecretMode = isSecret;
+
+        // モード切り替え時にデータをリセットして再読み込み
+        this.csvData = {};
+        this.loadAllCSV(true);
+    }
+
+    /**
      * すべてのCSVファイルを非同期で読み込み
      * @param {boolean} forceReload - 強制リロード
      */
@@ -109,14 +123,20 @@ class CSVLoader {
     async loadCSV(filenameOrTableName, customPath = null) {
         let filePath;
         let tableName;
-        
+
         if (customPath) {
             // カスタムパスが指定された場合
             filePath = customPath;
             tableName = filenameOrTableName;
         } else {
             // 従来の方式：ファイル名のみ指定
-            filePath = `./assets/data/csv/${filenameOrTableName}`;
+            // 秘めた想いモードの場合、secret_プレフィックスを追加
+            let filename = filenameOrTableName;
+            if (this.isSecretMode && !filename.startsWith('secret_')) {
+                filename = `secret_${filename}`;
+                console.log(`🔒 秘めた想いモード: ${filenameOrTableName} → ${filename}`);
+            }
+            filePath = `./assets/data/csv/${filename}`;
             tableName = filenameOrTableName.replace('.csv', '');
         }
         
