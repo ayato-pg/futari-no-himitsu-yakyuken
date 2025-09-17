@@ -418,6 +418,10 @@ body {
     animation: buttonSlideIn 0.6s ease-out 2.3s forwards, buttonPulse 2s ease-in-out infinite 3.4s;
 }
 
+.screen.active .game-btn:nth-child(5) {
+    animation: buttonSlideIn 0.6s ease-out 2.6s forwards, buttonPulse 2s ease-in-out infinite 3.7s;
+}
+
 .game-btn::before {
     content: '';
     position: absolute;
