@@ -137,7 +137,9 @@ class CSVLoader {
                 console.log(`🔒 秘めた想いモード: ${filenameOrTableName} → ${filename}`);
             }
             filePath = `./assets/data/csv/${filename}`;
+            // テーブル名は元のファイル名を基準とする（secret_プレフィックスなし）
             tableName = filenameOrTableName.replace('.csv', '');
+            console.log(`📊 CSVロード: ファイル=${filename}, テーブル名=${tableName}`);
         }
         
         try {
@@ -211,10 +213,23 @@ class CSVLoader {
             
             // CSVデータをパース
             const parsedData = this.parseCSV(csvText);
-            
+
             this.csvData[tableName] = parsedData;
             console.log(`✓ ${tableName} を読み込みました (${parsedData.length} 行)`);
-            
+            console.log(`📂 現在のテーブル数: ${Object.keys(this.csvData).length}`);
+            console.log(`🗂️ テーブルリスト: ${Object.keys(this.csvData).join(', ')}`);
+
+            // scenesテーブルの詳細ログ
+            if (tableName === 'scenes') {
+                console.log(`🎬 scenes テーブルの詳細:`);
+                console.log(`   秘密モード: ${this.isSecretMode}`);
+                console.log(`   読み込んだファイル: ${filePath}`);
+                console.log(`   データ件数: ${parsedData.length}`);
+                if (parsedData.length > 0) {
+                    console.log(`   最初のデータ:`, parsedData[0]);
+                }
+            }
+
             // デバッグ: 読み込んだデータの内容を表示（dialoguesとgallery_imagesの場合）
             if (tableName === 'dialogues') {
                 console.log('📋 読み込んだdialoguesデータ:');
