@@ -241,15 +241,25 @@ class DialogueScene {
         const isBrowser = !isElectron;
 
         if (isBrowser) {
-            console.log('🌐 ブラウザ環境検出 - CSS背景で代替');
+            console.log('🌐 ブラウザ環境検出 - 背景画像も試行');
             if (backgroundElement) {
-                // ブラウザ環境用のCSS背景（画像読み込み問題回避）
+                // 秘めた想いモードの場合は画像背景を試行
+                if (this.game.gameState.isSecretMode) {
+                    const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
+                    backgroundElement.style.backgroundImage = `url('${secretBackgroundPath}')`;
+                    backgroundElement.style.backgroundSize = 'cover';
+                    backgroundElement.style.backgroundPosition = 'center';
+                    backgroundElement.style.backgroundRepeat = 'no-repeat';
+                    // フォールバック用のCSS背景も設定
+                    backgroundElement.style.background = 'linear-gradient(135deg, #2e1065 0%, #000 50%, #2e1065 100%)';
+                    console.log(`✅ ブラウザ版秘密モード画像背景を設定: ${secretBackgroundPath}`);
+                    return;
+                }
+
+                // その他のシーン用のCSS背景（画像読み込み問題回避）
                 if (sceneId === 'victory') {
                     backgroundElement.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 50%, #1a1a2e 100%)';
                     console.log('🌙 ブラウザ版エンディング背景を設定');
-                } else if (this.game.gameState.isSecretMode) {
-                    backgroundElement.style.background = 'linear-gradient(135deg, #2e1065 0%, #000 50%, #2e1065 100%)';
-                    console.log('✅ ブラウザ版秘密モード背景を設定');
                 } else {
                     // 通常モード（living等）
                     backgroundElement.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #4a4a4a 50%, #1a1a2e 100%)';
@@ -283,10 +293,26 @@ class DialogueScene {
             // 秘めた想いモードでは直接背景を指定
             if (this.game.gameState.isSecretMode) {
                 const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
+
+                // 確実に背景を設定するための処理
+                backgroundElement.style.background = 'none'; // 既存背景をクリア
                 backgroundElement.style.backgroundImage = `url('${secretBackgroundPath}')`;
                 backgroundElement.style.backgroundSize = 'cover';
                 backgroundElement.style.backgroundPosition = 'center';
                 backgroundElement.style.backgroundRepeat = 'no-repeat';
+
+                // 画像読み込み確認のための処理
+                const img = new Image();
+                img.onload = () => {
+                    console.log(`✅ 秘密背景画像読み込み成功: ${secretBackgroundPath}`);
+                };
+                img.onerror = () => {
+                    console.error(`❌ 秘密背景画像読み込み失敗: ${secretBackgroundPath}`);
+                    // フォールバック背景を設定
+                    backgroundElement.style.background = 'linear-gradient(135deg, #2e1065 0%, #4b1a7d 50%, #2e1065 100%)';
+                };
+                img.src = secretBackgroundPath;
+
                 console.log(`✅ 秘密モード背景を強制設定: ${secretBackgroundPath}`);
                 return;
             }
