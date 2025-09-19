@@ -2142,7 +2142,7 @@ body {
 
 .debug-panel {
     position: absolute;
-    top: 20px;
+    top: -205px;
     right: 20px;
     background: rgba(0, 0, 0, 0.9);
     border: 2px solid #ff6b7d;
@@ -2150,6 +2150,8 @@ body {
     padding: 20px;
     min-width: 280px;
     max-width: 350px;
+    max-height: 85vh;
+    overflow-y: auto;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
     z-index: 9999;
@@ -2276,4 +2278,85 @@ body {
         padding: 8px 12px;
         font-size: 0.8rem;
     }
+
+    .debug-section {
+        margin-bottom: 10px;
+    }
+
+    .debug-section-title {
+        font-size: 0.7rem;
+        margin-bottom: 5px;
+    }
+
+    .debug-mode-buttons {
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+    }
+
+    .debug-btn-small {
+        padding: 6px 8px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Debug Panel Section Styles */
+.debug-section {
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 107, 125, 0.2);
+}
+
+.debug-section:last-child {
+    border-bottom: none;
+}
+
+.debug-section-title {
+    color: #7ed6c4;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-align: center;
+    opacity: 0.9;
+}
+
+.debug-mode-status {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+#debug-mode-indicator {
+    background: rgba(255, 107, 125, 0.2);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid #ff6b7d;
+}
+
+.debug-mode-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.debug-btn-small {
+    background: linear-gradient(135deg, #7ed6c4 0%, #5fb3a3 100%);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.debug-btn-small:hover {
+    background: linear-gradient(135deg, #5fb3a3 0%, #4a9088 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(126, 214, 196, 0.3);
 }

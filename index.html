@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>2人の秘密、野球拳。</title>
-    <link rel="stylesheet" href="./src/styles/main.css?v=2025091502">
+    <link rel="stylesheet" href="./src/styles/main.css?v=2025091512">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
@@ -229,15 +229,52 @@
                             <h3>🔧 Development Debug Panel</h3>
                             <p>Scene Jump & State Testing</p>
                         </div>
-                        <div class="debug-buttons">
-                            <button class="debug-btn" id="debug-dialogue">📝 会話シーン</button>
-                            <button class="debug-btn" id="debug-battle">⚔️ 野球拳バトル</button>
-                            <button class="debug-btn" id="debug-battle-mid">🎯 バトル中盤 (3勝2敗)</button>
-                            <button class="debug-btn" id="debug-ending-talk">🏆 エンディングトーク</button>
-                            <button class="debug-btn" id="debug-game-over">💔 ゲームオーバー</button>
-                            <button class="debug-btn" id="debug-reset-state">🔄 状態リセット</button>
-                            <button class="debug-btn" id="debug-gallery-reset">🗑️ ギャラリーリセット</button>
+
+                        <!-- モード状態表示・切り替えセクション -->
+                        <div class="debug-section">
+                            <div class="debug-section-title">🔮 Mode Control</div>
+                            <div class="debug-mode-status">
+                                <span id="debug-mode-indicator">🌸 通常モード</span>
+                            </div>
+                            <div class="debug-mode-buttons">
+                                <button class="debug-btn debug-btn-small" id="debug-toggle-mode">🔄 モード切り替え</button>
+                                <button class="debug-btn debug-btn-small" id="debug-mode-info">📊 状態確認</button>
+                            </div>
                         </div>
+
+                        <!-- 通常モード用デバッグボタン -->
+                        <div class="debug-section">
+                            <div class="debug-section-title">🌸 通常モード</div>
+                            <div class="debug-buttons">
+                                <button class="debug-btn" id="debug-dialogue">📝 会話シーン</button>
+                                <button class="debug-btn" id="debug-battle">⚔️ 野球拳バトル</button>
+                                <button class="debug-btn" id="debug-battle-mid">🎯 バトル中盤 (3勝2敗)</button>
+                                <button class="debug-btn" id="debug-ending-talk">🏆 エンディングトーク</button>
+                                <button class="debug-btn" id="debug-game-over">💔 ゲームオーバー</button>
+                            </div>
+                        </div>
+
+                        <!-- 秘めた想いモード用デバッグボタン -->
+                        <div class="debug-section">
+                            <div class="debug-section-title">🔒 秘めた想いモード</div>
+                            <div class="debug-buttons">
+                                <button class="debug-btn" id="debug-secret-dialogue">💕 秘密会話シーン</button>
+                                <button class="debug-btn" id="debug-secret-battle">🌙 秘密野球拳バトル</button>
+                                <button class="debug-btn" id="debug-secret-ending">✨ 秘密エンディング</button>
+                                <button class="debug-btn" id="debug-secret-special">🎭 特別シーン</button>
+                            </div>
+                        </div>
+
+                        <!-- 共通機能 -->
+                        <div class="debug-section">
+                            <div class="debug-section-title">⚙️ System Control</div>
+                            <div class="debug-buttons">
+                                <button class="debug-btn" id="debug-reset-state">🔄 状態リセット</button>
+                                <button class="debug-btn" id="debug-gallery-reset">🗑️ ギャラリーリセット</button>
+                                <button class="debug-btn" id="debug-secret-gallery-reset">🗑️ 秘密ギャラリーリセット</button>
+                            </div>
+                        </div>
+
                         <div class="debug-info">
                             <p><small>Ctrl+D: Toggle Panel | ESC: Hide Panel</small></p>
                         </div>
@@ -439,7 +476,7 @@
     <script src="src/systems/AudioManager.js?v=2025091503"></script>
     <script src="src/systems/ClickSoundManager.js?v=2025091503"></script>
     <script src="src/systems/CostumeSystem.js?v=2025091503"></script>
-    <script src="src/scenes/TitleScene.js?v=2025091511"></script>
+    <script src="src/scenes/TitleScene.js?v=2025091512"></script>
     <script src="src/scenes/DialogueScene.js?v=2025091510"></script>
     <script src="src/scenes/GameScene.js?v=2025091503"></script>
     <script src="src/scenes/EndingScene.js?v=2025091503"></script>

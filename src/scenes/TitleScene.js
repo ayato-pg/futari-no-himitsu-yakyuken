@@ -1375,7 +1375,63 @@ class TitleScene {
             });
         }
 
-        console.log('🔧 デバッグボタン設定完了');
+        // モード切り替えボタン
+        const toggleModeBtn = document.getElementById('debug-toggle-mode');
+        if (toggleModeBtn) {
+            toggleModeBtn.addEventListener('click', () => {
+                this.toggleSecretMode();
+            });
+        }
+
+        // モード状態確認ボタン
+        const modeInfoBtn = document.getElementById('debug-mode-info');
+        if (modeInfoBtn) {
+            modeInfoBtn.addEventListener('click', () => {
+                this.showModeInfo();
+            });
+        }
+
+        // 秘密会話シーンボタン
+        const secretDialogueBtn = document.getElementById('debug-secret-dialogue');
+        if (secretDialogueBtn) {
+            secretDialogueBtn.addEventListener('click', () => {
+                this.jumpToSecretDialogue();
+            });
+        }
+
+        // 秘密野球拳バトルボタン
+        const secretBattleBtn = document.getElementById('debug-secret-battle');
+        if (secretBattleBtn) {
+            secretBattleBtn.addEventListener('click', () => {
+                this.jumpToSecretBattle();
+            });
+        }
+
+        // 秘密エンディングボタン
+        const secretEndingBtn = document.getElementById('debug-secret-ending');
+        if (secretEndingBtn) {
+            secretEndingBtn.addEventListener('click', () => {
+                this.jumpToSecretEnding();
+            });
+        }
+
+        // 特別シーンボタン
+        const secretSpecialBtn = document.getElementById('debug-secret-special');
+        if (secretSpecialBtn) {
+            secretSpecialBtn.addEventListener('click', () => {
+                this.jumpToSecretSpecial();
+            });
+        }
+
+        // 秘密ギャラリーリセットボタン
+        const secretGalleryResetBtn = document.getElementById('debug-secret-gallery-reset');
+        if (secretGalleryResetBtn) {
+            secretGalleryResetBtn.addEventListener('click', () => {
+                this.resetSecretGalleryData();
+            });
+        }
+
+        console.log('🔧 デバッグボタン設定完了（秘めた想いモード対応）');
     }
 
     /**
@@ -1404,7 +1460,10 @@ class TitleScene {
         this.debugPanel.classList.add('show');
         this.debugPanel.classList.remove('hide');
 
-        console.log('🔧 デバッグパネル表示');
+        // モード状態インジケーターを更新
+        this.updateModeIndicator();
+
+        console.log('🔧 デバッグパネル表示（秘めた想いモード対応）');
     }
 
     /**
@@ -1611,6 +1670,244 @@ class TitleScene {
             console.error('❌ ギャラリーリセット中にエラーが発生:', error);
             alert('❌ ギャラリーリセットに失敗しました\n\nエラー: ' + error.message);
         }
+    }
+
+    // ========== 秘めた想いモード デバッグ機能 ==========
+
+    /**
+     * 秘めた想いモードの切り替え
+     */
+    toggleSecretMode() {
+        console.log('🔧 [DEBUG] 秘めた想いモード切り替え');
+
+        const currentMode = this.game.gameState?.isSecretMode || false;
+        const newMode = !currentMode;
+
+        if (newMode) {
+            // 秘めた想いモードに切り替え
+            this.game.gameState.isSecretMode = true;
+            this.game.csvLoader.isSecretMode = true;
+            console.log('🔒 秘めた想いモードに切り替えました');
+        } else {
+            // 通常モードに切り替え
+            this.game.gameState.isSecretMode = false;
+            this.game.csvLoader.isSecretMode = false;
+            console.log('🌸 通常モードに切り替えました');
+        }
+
+        // UI表示を更新
+        this.updateModeIndicator();
+
+        // 確認メッセージ
+        const modeText = newMode ? '🔒 秘めた想いモード' : '🌸 通常モード';
+        alert(`モードを切り替えました\n\n現在のモード: ${modeText}`);
+    }
+
+    /**
+     * モード状態表示インジケーターを更新
+     */
+    updateModeIndicator() {
+        const indicator = document.getElementById('debug-mode-indicator');
+        if (!indicator) return;
+
+        const isSecretMode = this.game.gameState?.isSecretMode || false;
+
+        if (isSecretMode) {
+            indicator.textContent = '🔒 秘めた想いモード';
+            indicator.style.background = 'rgba(126, 214, 196, 0.3)';
+            indicator.style.borderColor = '#7ed6c4';
+        } else {
+            indicator.textContent = '🌸 通常モード';
+            indicator.style.background = 'rgba(255, 107, 125, 0.2)';
+            indicator.style.borderColor = '#ff6b7d';
+        }
+    }
+
+    /**
+     * モード状態詳細情報を表示
+     */
+    showModeInfo() {
+        console.log('🔧 [DEBUG] モード状態確認');
+
+        const gameState = this.game.gameState;
+        const csvLoader = this.game.csvLoader;
+
+        const info = `📊 ゲーム状態詳細情報\n\n` +
+            `🎮 GameState:\n` +
+            `  - isSecretMode: ${gameState?.isSecretMode || false}\n` +
+            `  - currentPhase: ${gameState?.currentPhase || 'unknown'}\n` +
+            `  - isGameActive: ${gameState?.isGameActive || false}\n` +
+            `  - isEndingMode: ${gameState?.isEndingMode || false}\n\n` +
+            `📁 CSVLoader:\n` +
+            `  - isSecretMode: ${csvLoader?.isSecretMode || false}\n` +
+            `  - 読み込み済みCSV数: ${Object.keys(csvLoader?.csvData || {}).length}\n\n` +
+            `💾 SaveSystem:\n` +
+            `  - secretMode: ${this.game.saveSystem?.isSecretMode || false}`;
+
+        alert(info);
+        console.log('📊 モード状態詳細:', {
+            gameState: gameState,
+            csvLoader: {
+                isSecretMode: csvLoader?.isSecretMode,
+                csvDataKeys: Object.keys(csvLoader?.csvData || {})
+            }
+        });
+    }
+
+    /**
+     * 秘密会話シーンへジャンプ
+     */
+    jumpToSecretDialogue() {
+        console.log('🔧 [DEBUG] 秘密会話シーンへジャンプ');
+
+        // 秘めた想いモードに設定
+        this.enableSecretMode();
+
+        this.hideDebugPanel();
+        this.hide();
+
+        // 秘密モードでダイアログ開始
+        if (this.game.scenes.dialogue) {
+            this.game.gameState.isEndingMode = false;
+            this.game.scenes.dialogue.show('secret_prologue');
+        }
+    }
+
+    /**
+     * 秘密野球拳バトルへジャンプ
+     */
+    jumpToSecretBattle() {
+        console.log('🔧 [DEBUG] 秘密野球拳バトルへジャンプ');
+
+        // 秘めた想いモードに設定
+        this.enableSecretMode();
+        this.resetGameState();
+
+        // バトル用状態設定
+        if (this.game.scenes.game) {
+            this.game.scenes.game.playerWins = 0;
+            this.game.scenes.game.misakiWins = 0;
+        }
+
+        if (this.game.gameState) {
+            this.game.gameState.playerWins = 0;
+            this.game.gameState.misakiWins = 0;
+        }
+
+        this.hideDebugPanel();
+        this.hide();
+        this.game.scenes.game.show();
+    }
+
+    /**
+     * 秘密エンディングへジャンプ
+     */
+    jumpToSecretEnding() {
+        console.log('🔧 [DEBUG] 秘密エンディングへジャンプ');
+
+        // 秘めた想いモードに設定
+        this.enableSecretMode();
+        this.resetGameState();
+
+        // 勝利状態を設定
+        if (this.game.scenes.game) {
+            this.game.scenes.game.playerWins = 5;
+            this.game.scenes.game.misakiWins = 4;
+        }
+
+        if (this.game.gameState) {
+            this.game.gameState.playerWins = 5;
+            this.game.gameState.misakiWins = 4;
+        }
+
+        this.hideDebugPanel();
+        this.hide();
+
+        // 秘密エンディングトークを開始
+        if (this.game.scenes.dialogue) {
+            this.game.gameState.isEndingMode = true;
+            this.game.scenes.dialogue.show('secret_victory');
+        }
+    }
+
+    /**
+     * 特別シーンへジャンプ
+     */
+    jumpToSecretSpecial() {
+        console.log('🔧 [DEBUG] 特別シーンへジャンプ');
+
+        // 秘めた想いモードに設定
+        this.enableSecretMode();
+
+        this.hideDebugPanel();
+        this.hide();
+
+        // 特別シーンを開始（実装に応じて調整）
+        if (this.game.scenes.dialogue) {
+            this.game.gameState.isEndingMode = false;
+            this.game.scenes.dialogue.show('secret_special');
+        }
+    }
+
+    /**
+     * 秘密ギャラリーデータをリセット
+     */
+    resetSecretGalleryData() {
+        console.log('🔧 [DEBUG] 秘密ギャラリーデータリセット要求');
+
+        // 確認ダイアログを表示
+        const confirmResult = confirm(
+            '🗑️ 秘密ギャラリーデータをリセットしますか？\n\n' +
+            '・秘めた想いモードで獲得した立ち絵データがすべて削除されます\n' +
+            '・秘密モード専用の総勝利数もリセットされます\n' +
+            '・この操作は元に戻せません\n\n' +
+            '本当にリセットしますか？'
+        );
+
+        if (!confirmResult) {
+            console.log('🚫 秘密ギャラリーリセットがキャンセルされました');
+            return;
+        }
+
+        try {
+            // 現在の秘密ギャラリーデータを取得
+            const saveSystem = this.game.saveSystem;
+
+            // 秘密モードに一時的に切り替えてリセット
+            const originalMode = saveSystem.isSecretMode;
+            saveSystem.isSecretMode = true;
+
+            // 秘密ギャラリーをリセット
+            saveSystem.resetGallery();
+            console.log('✅ 秘密ギャラリーデータをリセットしました');
+
+            // 元のモードに戻す
+            saveSystem.isSecretMode = originalMode;
+
+            // 成功メッセージを表示
+            alert('🗑️ 秘密ギャラリーデータをリセットしました！\n\n' +
+                  '・秘めた想いモードの獲得立ち絵: 全て削除されました\n' +
+                  '・秘密モード総勝利数: 0回にリセット\n' +
+                  '・秘密モード閲覧済みエンディング: 全てリセット\n\n' +
+                  '秘めた想いモードでゲームをプレイして立ち絵を再獲得してください。');
+
+            console.log('🎯 秘密ギャラリーリセット完了');
+
+        } catch (error) {
+            console.error('❌ 秘密ギャラリーリセット中にエラーが発生:', error);
+            alert('❌ 秘密ギャラリーリセットに失敗しました\n\nエラー: ' + error.message);
+        }
+    }
+
+    /**
+     * 秘めた想いモードを有効化（ヘルパーメソッド）
+     */
+    enableSecretMode() {
+        this.game.gameState.isSecretMode = true;
+        this.game.csvLoader.isSecretMode = true;
+        this.game.saveSystem.isSecretMode = true;
+        this.updateModeIndicator();
+        console.log('🔒 秘めた想いモードを有効化しました');
     }
 }
 
