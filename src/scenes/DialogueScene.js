@@ -272,9 +272,14 @@ class DialogueScene {
                 }
 
                 // その他のシーン用のCSS背景（画像読み込み問題回避）
-                if (sceneId === 'victory') {
+                // Gemini提案: secret_victoryにも対応
+                if (sceneId === 'victory' || sceneId === 'secret_victory') {
                     // エンディングトークでも秘めた想いモードをチェック
-                    if (this.game.gameState.isSecretMode) {
+                    // 根本原因対策: secret_victoryの場合は強制的に秘密モードとして扱う
+                    const isSecretMode = this.game.gameState.isSecretMode || sceneId === 'secret_victory';
+                    console.log(`🔍 ブラウザ版エンディング背景判定: sceneId=${sceneId}, isSecretMode=${this.game.gameState.isSecretMode}, 強制判定=${isSecretMode}`);
+
+                    if (isSecretMode) {
                         const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
                         const backgroundStyle = `url('${secretBackgroundPath}') center / cover no-repeat fixed`;
                         backgroundElement.style.setProperty('background', backgroundStyle, 'important');
@@ -299,10 +304,15 @@ class DialogueScene {
 
         // Electron環境での画像背景処理
         // victoryシーン（エンディングトーク）の場合は専用背景
-        if (sceneId === 'victory') {
+        // Gemini提案: secret_victoryにも対応
+        if (sceneId === 'victory' || sceneId === 'secret_victory') {
             if (backgroundElement) {
                 // 秘めた想いモードかどうかで背景を分岐
-                if (this.game.gameState.isSecretMode) {
+                // 根本原因対策: secret_victoryの場合は強制的に秘密モードとして扱う
+                const isSecretMode = this.game.gameState.isSecretMode || sceneId === 'secret_victory';
+                console.log(`🔍 エンディング背景判定: sceneId=${sceneId}, isSecretMode=${this.game.gameState.isSecretMode}, 強制判定=${isSecretMode}`);
+
+                if (isSecretMode) {
                     console.log('🌙 秘密エンディングトーク背景: bg_secret_living.png');
                     const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
 
