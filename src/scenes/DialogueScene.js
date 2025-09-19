@@ -246,13 +246,18 @@ class DialogueScene {
                 // 秘めた想いモードの場合は画像背景を試行
                 if (this.game.gameState.isSecretMode) {
                     const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
-                    backgroundElement.style.backgroundImage = `url('${secretBackgroundPath}')`;
-                    backgroundElement.style.backgroundSize = 'cover';
-                    backgroundElement.style.backgroundPosition = 'center';
-                    backgroundElement.style.backgroundRepeat = 'no-repeat';
-                    // フォールバック用のCSS背景も設定
-                    backgroundElement.style.background = 'linear-gradient(135deg, #2e1065 0%, #000 50%, #2e1065 100%)';
-                    console.log(`✅ ブラウザ版秘密モード画像背景を設定: ${secretBackgroundPath}`);
+
+                    // CSS固定設定を上書きするため!importantを使用
+                    backgroundElement.style.setProperty('background-image', `url('${secretBackgroundPath}')`, 'important');
+                    backgroundElement.style.setProperty('background-size', 'cover', 'important');
+                    backgroundElement.style.setProperty('background-position', 'center', 'important');
+                    backgroundElement.style.setProperty('background-repeat', 'no-repeat', 'important');
+                    backgroundElement.style.setProperty('background-attachment', 'fixed', 'important');
+
+                    // フォールバック用のCSS背景も設定（!important）
+                    backgroundElement.style.setProperty('background', 'linear-gradient(135deg, #2e1065 0%, #000 50%, #2e1065 100%)', 'important');
+
+                    console.log(`✅ ブラウザ版秘密モード画像背景を強制設定: ${secretBackgroundPath}`);
                     return;
                 }
 
@@ -294,22 +299,30 @@ class DialogueScene {
             if (this.game.gameState.isSecretMode) {
                 const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
 
-                // 確実に背景を設定するための処理
-                backgroundElement.style.background = 'none'; // 既存背景をクリア
-                backgroundElement.style.backgroundImage = `url('${secretBackgroundPath}')`;
-                backgroundElement.style.backgroundSize = 'cover';
-                backgroundElement.style.backgroundPosition = 'center';
-                backgroundElement.style.backgroundRepeat = 'no-repeat';
+                // 確実に背景を設定するための処理（!important使用）
+                backgroundElement.style.setProperty('background', 'none', 'important'); // 既存背景をクリア
+                backgroundElement.style.setProperty('background-image', `url('${secretBackgroundPath}')`, 'important');
+                backgroundElement.style.setProperty('background-size', 'cover', 'important');
+                backgroundElement.style.setProperty('background-position', 'center', 'important');
+                backgroundElement.style.setProperty('background-repeat', 'no-repeat', 'important');
 
                 // 画像読み込み確認のための処理
+                console.log(`🔍 画像読み込み開始: ${secretBackgroundPath}`);
                 const img = new Image();
                 img.onload = () => {
                     console.log(`✅ 秘密背景画像読み込み成功: ${secretBackgroundPath}`);
+                    console.log(`📏 画像サイズ: ${img.width}x${img.height}`);
+
+                    // 読み込み成功時に再度背景を設定（確実性のため）
+                    backgroundElement.style.setProperty('background-image', `url('${secretBackgroundPath}')`, 'important');
+                    console.log(`🔄 背景画像を再設定完了`);
                 };
                 img.onerror = () => {
                     console.error(`❌ 秘密背景画像読み込み失敗: ${secretBackgroundPath}`);
-                    // フォールバック背景を設定
-                    backgroundElement.style.background = 'linear-gradient(135deg, #2e1065 0%, #4b1a7d 50%, #2e1065 100%)';
+                    console.error(`🚨 画像パスを確認してください: ${secretBackgroundPath}`);
+                    // フォールバック背景を設定（!important使用）
+                    backgroundElement.style.setProperty('background', 'linear-gradient(135deg, #2e1065 0%, #4b1a7d 50%, #2e1065 100%)', 'important');
+                    console.log(`🛡️ フォールバック背景を適用`);
                 };
                 img.src = secretBackgroundPath;
 
