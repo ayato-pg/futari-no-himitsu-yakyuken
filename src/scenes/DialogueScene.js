@@ -928,7 +928,7 @@ class DialogueScene {
         console.log(`🔍 モード判定: isSecretMode=${this.game.gameState.isSecretMode}, sceneId=${sceneId}`);
 
         // 秘めた想いモードの場合はsecret_prologue.csvから読み込み
-        if (this.game.gameState.isSecretMode && sceneId === 'living') {
+        if (this.game.gameState.isSecretMode && (sceneId === 'living' || sceneId === 'secret_prologue')) {
             console.log('🔒 秘めた想いモード: secret_prologue.csvから読み込み中...');
             this.dialogueQueue = await this.loadSecretPrologueData();
             console.log(`🎉 秘密プロローグデータを使用: ${this.dialogueQueue.length} 件`);
@@ -1496,14 +1496,22 @@ class DialogueScene {
      */
     onDialogueComplete() {
         console.log('会話が完了しました');
-        
+
         // エンディングモードの場合はゲームに戻らない
         if (this.game.gameState.isEndingMode) {
             console.log('🎉 エンディングトーク完了：ゲーム終了');
             this.showEndingOptions();
             return;
         }
-        
+
+        // 秘めた想いモードの秘密プロローグ完了の場合はバトル画面へ遷移
+        if (this.game.gameState.isSecretMode) {
+            console.log('🔒 秘めた想いモード：秘密プロローグ完了 → バトル画面へ');
+            this.hide();
+            this.game.startBattlePhase();
+            return;
+        }
+
         // 通常モード：ゲーム画面へ遷移
         this.hide();
         this.game.startBattlePhase();
