@@ -194,8 +194,10 @@ class EndingScene {
             console.warn('⚠️ bad_end.csvが見つかりません。フォールバック使用');
             const fallbackData = {
                 ending_id: 'bad_end',
-                ending_name: 'GAME　OVER',  // CSVと同じ値（全角スペース→半角スペース）
-                title_text: 'また今度ね♪',
+                ending_name: 'ゲーム終了',  // 表示される実際のタイトル
+                title_text: 'お疲れさまでした！',  // 表示される実際のメッセージ
+                opening_text: '今日はここまでだね♪',
+                defeat_reaction: 'またじゃんけんしてあげてもいーよー？',
                 special_text: '',
                 bg_image: 'bg_night.png',
                 bgm_file: 'bgm_ending_bad.mp3',
@@ -233,14 +235,14 @@ class EndingScene {
             },
             'bad_end': {
                 ending_id: 'bad_end',
-                ending_name: 'BAD ENDING',
-                title_text: 'また今度ね♪',
+                ending_name: 'ゲーム終了',
+                title_text: 'お疲れさまでした！',
+                opening_text: '今日はここまでだね♪',
+                defeat_reaction: 'またじゃんけんしてあげてもいーよー？',
                 bg_image: 'bg_night.png',
                 bgm_file: 'bgm_ending_bad.mp3',
                 cg_image: 'cg_bad.png',
                 special_text: '',
-                opening_text: '今日はここまでだね♪',
-                defeat_reaction: 'またじゃんけんしてあげてもいーよー？',
                 childhood_reflection: '',
                 future_invitation: '',
                 final_impression: ''

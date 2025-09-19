@@ -1532,9 +1532,9 @@ class DialogueScene {
             z-index: 1000;
         `;
         
-        // CSVからゲーム終了メッセージを取得
-        let titleText = 'ゲーム終了';
-        let messageText = 'お疲れさまでした！';
+        // CSVからゲーム終了メッセージを取得（完全なデフォルト値）
+        let titleText = 'ゲームクリア！';
+        let messageText = 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
         let button1Text = 'もう一度プレイ';
         let button2Text = 'タイトルに戻る';
         
@@ -1542,29 +1542,52 @@ class DialogueScene {
         if (this.game.gameState && this.game.gameState.playerWins >= 5) {
             console.log('🎯 勝利状態を検出、CSVから勝利メッセージを適用');
 
-            // CSVから勝利メッセージを取得
+            // まず確実にフォールバック値を設定
+            titleText = 'ゲームクリア！';
+            messageText = 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
+            button1Text = 'もう一度プレイ';
+            button2Text = 'タイトルに戻る';
+
+            // 勝利時は強制的にフォールバックデータを使用（CSV読み込み問題を回避）
+            console.log('🔧 勝利時：フォールバックデータを強制使用');
             const csvLoader = this.game.csvLoader;
-            const endMessages = csvLoader.getData('game_end_messages');
+            let endMessages = null;
+
+            // フォールバックデータを直接使用
+            if (csvLoader.fallbackData && csvLoader.fallbackData.game_end_messages) {
+                endMessages = csvLoader.fallbackData.game_end_messages;
+                console.log('✅ フォールバックデータを強制取得:', endMessages);
+                console.log('🔍 フォールバックデータ詳細:', JSON.stringify(endMessages, null, 2));
+            } else {
+                console.warn('⚠️ フォールバックデータが見つかりません');
+            }
 
             if (endMessages && Array.isArray(endMessages) && endMessages.length > 0) {
                 const victoryMessage = endMessages.find(msg => msg.scene_type === 'victory');
 
-                if (victoryMessage) {
-                    titleText = victoryMessage.title_text || 'ゲームクリア！';
-                    messageText = victoryMessage.message_text || 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
-                    button1Text = victoryMessage.button1_text || 'もう一度プレイ';
-                    button2Text = victoryMessage.button2_text || 'タイトルに戻る';
+                console.log('🔍 victoryMessage検索結果:', victoryMessage);
 
-                    console.log(`✅ CSVから勝利メッセージを適用: ${titleText}`);
+                if (victoryMessage) {
+                    console.log('📝 victoryMessage詳細:');
+                    console.log('  title_text:', victoryMessage.title_text);
+                    console.log('  message_text:', victoryMessage.message_text);
+                    console.log('  message_text length:', victoryMessage.message_text ? victoryMessage.message_text.length : 0);
+                    console.log('  button1_text:', victoryMessage.button1_text);
+                    console.log('  button2_text:', victoryMessage.button2_text);
+
+                    titleText = victoryMessage.title_text || titleText;
+                    messageText = victoryMessage.message_text || messageText;
+                    button1Text = victoryMessage.button1_text || button1Text;
+                    button2Text = victoryMessage.button2_text || button2Text;
+
+                    console.log(`✅ フォールバックデータから勝利メッセージを適用: ${titleText}`);
                 } else {
-                    console.warn('⚠️ 勝利メッセージがCSVに見つからないため、デフォルト値を使用');
+                    console.warn('⚠️ フォールバックデータに勝利メッセージが見つかりません');
                 }
             } else {
-                console.warn('⚠️ game_end_messages.csvが読み込まれていないため、デフォルト値を使用');
-            }
+                console.warn('⚠️ フォールバックデータが利用できません - ハードコード値を確実使用');
 
-            // デフォルト値を確実に設定（CSVが読み込まれていない場合のフォールバック）
-            if (!titleText || titleText === 'ゲーム終了') {
+                // 最終的な保険としてハードコード値を使用
                 titleText = 'ゲームクリア！';
                 messageText = 'ここまで遊んでいただきありがとうございます！\n最終トークまで辿り着いたので、\nシークレットギャラリーを獲得しました！\nタイトル画面でご確認ください！';
                 button1Text = 'もう一度プレイ';
@@ -1578,6 +1601,13 @@ class DialogueScene {
         title.style.cssText = 'margin-bottom: 20px; color: #FF6B7D;';
         
         const message = document.createElement('p');
+
+        // デバッグ用ログ
+        console.log('🎯 showEndingOptions: 最終的に使用されるメッセージ内容:');
+        console.log('  titleText:', titleText);
+        console.log('  messageText:', messageText);
+        console.log('  messageText length:', messageText.length);
+
         message.innerHTML = messageText.replace(/\n/g, '<br>');  // 改行をHTMLのbrタグに変換
         message.style.cssText = 'margin-bottom: 30px; font-size: 18px; line-height: 1.6;';
         

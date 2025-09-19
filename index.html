@@ -222,6 +222,25 @@
                         <button class="game-btn" id="btn-gallery">ギャラリー</button>
                         <button class="game-btn" id="btn-settings">設定</button>
                     </div>
+
+                    <!-- デバッグパネル（開発用・非表示） -->
+                    <div class="debug-panel" id="debug-panel" style="display: none;">
+                        <div class="debug-header">
+                            <h3>🔧 Development Debug Panel</h3>
+                            <p>Scene Jump & State Testing</p>
+                        </div>
+                        <div class="debug-buttons">
+                            <button class="debug-btn" id="debug-dialogue">📝 会話シーン</button>
+                            <button class="debug-btn" id="debug-battle">⚔️ 野球拳バトル</button>
+                            <button class="debug-btn" id="debug-battle-mid">🎯 バトル中盤 (3勝2敗)</button>
+                            <button class="debug-btn" id="debug-ending-talk">🏆 エンディングトーク</button>
+                            <button class="debug-btn" id="debug-game-over">💔 ゲームオーバー</button>
+                            <button class="debug-btn" id="debug-reset-state">🔄 状態リセット</button>
+                        </div>
+                        <div class="debug-info">
+                            <p><small>Ctrl+D: Toggle Panel | ESC: Hide Panel</small></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -414,13 +433,13 @@
 
     <!-- JavaScript -->
     <script src="assets/data/gallery_data.js?v=2025091503"></script>
-    <script src="src/systems/CSVLoader.js?v=2025091503"></script>
+    <script src="src/systems/CSVLoader.js?v=2025091507"></script>
     <script src="src/systems/SaveSystem.js?v=2025091503"></script>
     <script src="src/systems/AudioManager.js?v=2025091503"></script>
     <script src="src/systems/ClickSoundManager.js?v=2025091503"></script>
     <script src="src/systems/CostumeSystem.js?v=2025091503"></script>
     <script src="src/scenes/TitleScene.js?v=2025091503"></script>
-    <script src="src/scenes/DialogueScene.js?v=2025091505"></script>
+    <script src="src/scenes/DialogueScene.js?v=2025091507"></script>
     <script src="src/scenes/GameScene.js?v=2025091503"></script>
     <script src="src/scenes/EndingScene.js?v=2025091503"></script>
     <script src="src/scenes/GalleryScene.js?v=2025091503"></script>

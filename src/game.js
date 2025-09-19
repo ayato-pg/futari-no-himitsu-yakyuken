@@ -154,8 +154,16 @@ class GameController {
                 }
             }
             
-            // Ctrl + D で CSV デバッグ情報表示
+            // Ctrl + D で CSV デバッグ情報表示（タイトルシーン以外のみ）
             if (event.ctrlKey && event.key === 'd') {
+                // タイトルシーンが表示中の場合はTitleSceneのデバッグパネルを優先
+                const isTitleSceneActive = this.scenes?.title?.isActive || false;
+                if (isTitleSceneActive) {
+                    // TitleSceneのデバッグパネル処理に委ねる
+                    console.log('🔧 タイトルシーン表示中 - デバッグパネル処理に委ねます');
+                    return;
+                }
+
                 event.preventDefault();
                 event.stopPropagation();
                 console.log('🐛 デバッグ: CSV情報を表示');

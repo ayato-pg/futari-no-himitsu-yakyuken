@@ -2135,3 +2135,145 @@ body {
         font-size: 2rem;
     }
 }
+
+/* ===============================================
+   Debug Panel Styles (Development Only)
+   =============================================== */
+
+.debug-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #ff6b7d;
+    border-radius: 15px;
+    padding: 20px;
+    min-width: 280px;
+    max-width: 350px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+
+.debug-header {
+    text-align: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ff6b7d;
+    padding-bottom: 10px;
+}
+
+.debug-header h3 {
+    color: #ff6b7d;
+    margin: 0 0 5px 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.debug-header p {
+    color: #7ed6c4;
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.debug-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.debug-btn {
+    background: linear-gradient(135deg, #ff6b7d 0%, #ff8a9b 100%);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.debug-btn:hover {
+    background: linear-gradient(135deg, #7ed6c4 0%, #48a999 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(126, 214, 196, 0.4);
+}
+
+.debug-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(126, 214, 196, 0.3);
+}
+
+.debug-info {
+    border-top: 1px solid rgba(255, 107, 125, 0.3);
+    padding-top: 10px;
+    text-align: center;
+}
+
+.debug-info p {
+    margin: 0;
+    color: #7ed6c4;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+/* Debug Panel Animation */
+.debug-panel.show {
+    animation: debugPanelFadeIn 0.3s ease-out;
+}
+
+.debug-panel.hide {
+    animation: debugPanelFadeOut 0.3s ease-in;
+}
+
+@keyframes debugPanelFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes debugPanelFadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(20px) scale(0.9);
+    }
+}
+
+/* Mobile Debug Panel */
+@media (max-width: 768px) {
+    .debug-panel {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        min-width: auto;
+    }
+
+    .debug-buttons {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .debug-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+}

@@ -15,6 +15,10 @@ class TitleScene {
         this.titleScreen = null;
         this.misakiImage = null;
         this.menuButtonElements = [];
+
+        // デバッグ機能
+        this.debugPanel = null;
+        this.isDebugMode = false;
         
         this.initialize();
     }
@@ -33,6 +37,9 @@ class TitleScene {
             this.misakiImage.style.display = 'block';
             console.log('🎭 初期化時に美咲立ち絵を設定');
         }
+
+        // デバッグパネルの参照を取得
+        this.debugPanel = document.getElementById('debug-panel');
         
         // メニューボタンを取得
         this.menuButtonElements = [
@@ -44,6 +51,7 @@ class TitleScene {
 
         this.setupEventListeners();
         this.setupMenuButtons();
+        this.setupDebugButtons();
         
         console.log('TitleScene初期化完了');
     }
@@ -351,6 +359,20 @@ class TitleScene {
      * @param {KeyboardEvent} event - キーボードイベント
      */
     handleKeyInput(event) {
+        // デバッグキー (Ctrl+D) の検出
+        if (event.ctrlKey && event.code === 'KeyD') {
+            this.toggleDebugPanel();
+            event.preventDefault();
+            return;
+        }
+
+        // ESCでデバッグパネルを非表示
+        if (event.code === 'Escape' && this.isDebugMode) {
+            this.hideDebugPanel();
+            event.preventDefault();
+            return;
+        }
+
         switch (event.code) {
             case 'ArrowUp':
                 this.navigateMenu(-1);
@@ -363,6 +385,11 @@ class TitleScene {
                 this.selectCurrentMenu();
                 break;
             case 'Escape':
+                // デバッグパネルが表示中の場合は優先的に非表示
+                if (this.isDebugMode) {
+                    // デバッグパネル非表示処理は上で既に実行済み
+                    return;
+                }
                 // ESCでゲーム終了確認など
                 this.showExitConfirm();
                 break;
@@ -1284,6 +1311,224 @@ class TitleScene {
     cleanup() {
         // イベントリスナーの削除など
         console.log('TitleScene cleanup');
+    }
+
+    /**
+     * デバッグボタンの設定
+     */
+    setupDebugButtons() {
+        if (!this.debugPanel) return;
+
+        // 会話シーンボタン
+        const dialogueBtn = document.getElementById('debug-dialogue');
+        if (dialogueBtn) {
+            dialogueBtn.addEventListener('click', () => {
+                this.jumpToDialogue();
+            });
+        }
+
+        // 野球拳バトルボタン
+        const battleBtn = document.getElementById('debug-battle');
+        if (battleBtn) {
+            battleBtn.addEventListener('click', () => {
+                this.jumpToBattle();
+            });
+        }
+
+        // バトル中盤ボタン
+        const battleMidBtn = document.getElementById('debug-battle-mid');
+        if (battleMidBtn) {
+            battleMidBtn.addEventListener('click', () => {
+                this.jumpToBattleMid();
+            });
+        }
+
+        // エンディングトークボタン
+        const endingTalkBtn = document.getElementById('debug-ending-talk');
+        if (endingTalkBtn) {
+            endingTalkBtn.addEventListener('click', () => {
+                this.jumpToEndingTalk();
+            });
+        }
+
+        // ゲームオーバーボタン
+        const gameOverBtn = document.getElementById('debug-game-over');
+        if (gameOverBtn) {
+            gameOverBtn.addEventListener('click', () => {
+                this.jumpToGameOver();
+            });
+        }
+
+        // 状態リセットボタン
+        const resetBtn = document.getElementById('debug-reset-state');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.resetGameState();
+            });
+        }
+
+        console.log('🔧 デバッグボタン設定完了');
+    }
+
+    /**
+     * デバッグパネルの表示/非表示をトグル
+     */
+    toggleDebugPanel() {
+        if (!this.debugPanel) return;
+
+        this.isDebugMode = !this.isDebugMode;
+
+        if (this.isDebugMode) {
+            this.showDebugPanel();
+        } else {
+            this.hideDebugPanel();
+        }
+    }
+
+    /**
+     * デバッグパネルを表示
+     */
+    showDebugPanel() {
+        if (!this.debugPanel) return;
+
+        this.isDebugMode = true;
+        this.debugPanel.style.display = 'block';
+        this.debugPanel.classList.add('show');
+        this.debugPanel.classList.remove('hide');
+
+        console.log('🔧 デバッグパネル表示');
+    }
+
+    /**
+     * デバッグパネルを非表示
+     */
+    hideDebugPanel() {
+        if (!this.debugPanel) return;
+
+        this.isDebugMode = false;
+        this.debugPanel.classList.add('hide');
+        this.debugPanel.classList.remove('show');
+
+        setTimeout(() => {
+            this.debugPanel.style.display = 'none';
+        }, 300);
+
+        console.log('🔧 デバッグパネル非表示');
+    }
+
+    /**
+     * 会話シーンへジャンプ
+     */
+    jumpToDialogue() {
+        console.log('🔧 [DEBUG] 会話シーンへジャンプ');
+        this.resetGameState();
+        this.hideDebugPanel();
+        this.hide();
+        this.game.scenes.dialogue.show();
+    }
+
+    /**
+     * 野球拳バトルへジャンプ（初期状態）
+     */
+    jumpToBattle() {
+        console.log('🔧 [DEBUG] 野球拳バトルへジャンプ（初期状態）');
+        this.resetGameState();
+        this.hideDebugPanel();
+        this.hide();
+        this.game.scenes.game.show();
+    }
+
+    /**
+     * 野球拳バトル中盤へジャンプ（3勝2敗状態）
+     */
+    jumpToBattleMid() {
+        console.log('🔧 [DEBUG] 野球拳バトル中盤へジャンプ（3勝2敗）');
+        this.resetGameState();
+
+        // 中盤状態を設定
+        if (this.game.scenes.game) {
+            this.game.scenes.game.currentRound = 6;
+            this.game.scenes.game.playerWins = 3;
+            this.game.scenes.game.misakiWins = 2;
+            this.game.scenes.game.playerHP = 2;
+            this.game.scenes.game.misakiHP = 3;
+        }
+
+        this.hideDebugPanel();
+        this.hide();
+        this.game.scenes.game.show();
+    }
+
+    /**
+     * エンディングトークへジャンプ
+     */
+    jumpToEndingTalk() {
+        console.log('🔧 [DEBUG] エンディングトークへジャンプ');
+        this.resetGameState();
+
+        // 勝利状態を設定
+        if (this.game.scenes.game) {
+            this.game.scenes.game.playerWins = 5;
+            this.game.scenes.game.misakiWins = 4;
+        }
+
+        this.hideDebugPanel();
+        this.hide();
+
+        // エンディングトークシーンに遷移
+        if (this.game.scenes.dialogue) {
+            this.game.gameState.isEndingMode = true;
+            this.game.scenes.dialogue.show('victory');
+        }
+    }
+
+    /**
+     * ゲームオーバーへジャンプ
+     */
+    jumpToGameOver() {
+        console.log('🔧 [DEBUG] ゲームオーバーへジャンプ');
+        this.resetGameState();
+
+        // 敗北状態を設定
+        if (this.game.scenes.game) {
+            this.game.scenes.game.playerWins = 2;
+            this.game.scenes.game.misakiWins = 5;
+        }
+
+        this.hideDebugPanel();
+        this.hide();
+        this.game.scenes.ending.show('bad_end');
+    }
+
+    /**
+     * ゲーム状態をリセット
+     */
+    resetGameState() {
+        console.log('🔧 [DEBUG] ゲーム状態をリセット');
+
+        // ゲーム状態をリセット
+        this.game.gameState.currentPhase = 'title';
+        this.game.gameState.isGameActive = false;
+        this.game.gameState.isEndingMode = false;
+        this.game.gameState.canReturnToGame = true;
+        this.game.gameState.isSecretMode = false;
+
+        // ゲームシーンの状態をリセット
+        if (this.game.scenes.game) {
+            this.game.scenes.game.currentRound = 1;
+            this.game.scenes.game.maxRounds = 9;
+            this.game.scenes.game.playerHP = 5;
+            this.game.scenes.game.misakiHP = 5;
+            this.game.scenes.game.playerWins = 0;
+            this.game.scenes.game.misakiWins = 0;
+            this.game.scenes.game.playerHand = null;
+            this.game.scenes.game.misakiHand = null;
+            this.game.scenes.game.isPlayingRound = false;
+            this.game.scenes.game.lastRoundResult = null;
+            this.game.scenes.game.canMakeChoice = false;
+        }
+
+        console.log('✅ ゲーム状態リセット完了');
     }
 }
 
