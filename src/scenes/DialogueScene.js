@@ -273,8 +273,16 @@ class DialogueScene {
 
                 // その他のシーン用のCSS背景（画像読み込み問題回避）
                 if (sceneId === 'victory') {
-                    backgroundElement.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 50%, #1a1a2e 100%)';
-                    console.log('🌙 ブラウザ版エンディング背景を設定');
+                    // エンディングトークでも秘めた想いモードをチェック
+                    if (this.game.gameState.isSecretMode) {
+                        const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
+                        const backgroundStyle = `url('${secretBackgroundPath}') center / cover no-repeat fixed`;
+                        backgroundElement.style.setProperty('background', backgroundStyle, 'important');
+                        console.log('🌙 ブラウザ版秘密エンディング背景を設定');
+                    } else {
+                        backgroundElement.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 50%, #1a1a2e 100%)';
+                        console.log('🌙 ブラウザ版通常エンディング背景を設定');
+                    }
                 } else {
                     // 通常モード（living等）
                     backgroundElement.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #4a4a4a 50%, #1a1a2e 100%)';
@@ -292,13 +300,34 @@ class DialogueScene {
         // Electron環境での画像背景処理
         // victoryシーン（エンディングトーク）の場合は専用背景
         if (sceneId === 'victory') {
-            console.log('🌙 エンディングトーク背景: bg_living_night.png');
             if (backgroundElement) {
-                const imagePath = `./assets/images/backgrounds/bg_living_night.png`;
-                backgroundElement.style.backgroundImage = `url('${imagePath}')`;
-                backgroundElement.style.backgroundSize = 'cover';
-                backgroundElement.style.backgroundPosition = 'center';
-                backgroundElement.style.backgroundRepeat = 'no-repeat';
+                // 秘めた想いモードかどうかで背景を分岐
+                if (this.game.gameState.isSecretMode) {
+                    console.log('🌙 秘密エンディングトーク背景: bg_secret_living.png');
+                    const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
+
+                    // Gemini提案: backgroundショートハンドで一括設定（!important）
+                    const backgroundStyle = `url('${secretBackgroundPath}') center / cover no-repeat fixed`;
+                    backgroundElement.style.setProperty('background', backgroundStyle, 'important');
+
+                    // 画像読み込み確認
+                    const img = new Image();
+                    img.onload = () => {
+                        console.log('✅ 秘密エンディング背景画像読み込み成功');
+                        backgroundElement.style.setProperty('background', backgroundStyle, 'important');
+                    };
+                    img.onerror = () => {
+                        console.error('❌ 秘密エンディング背景画像読み込み失敗');
+                        const fallbackStyle = 'linear-gradient(135deg, #2e1065 0%, #000 50%, #2e1065 100%)';
+                        backgroundElement.style.setProperty('background', fallbackStyle, 'important');
+                    };
+                    img.src = secretBackgroundPath;
+                } else {
+                    console.log('🌙 通常エンディングトーク背景: bg_living_night.png');
+                    const imagePath = `./assets/images/backgrounds/bg_living_night.png`;
+                    const backgroundStyle = `url('${imagePath}') center / cover no-repeat fixed`;
+                    backgroundElement.style.setProperty('background', backgroundStyle, 'important');
+                }
             }
             return;
         }

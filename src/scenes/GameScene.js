@@ -527,24 +527,38 @@ class GameScene {
                 // ブラウザ環境でも背景画像を表示
                 if (this.game.gameState.isSecretMode) {
                     const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
-                    backgroundElement.style.backgroundImage = `url('${secretBackgroundPath}')`;
-                    console.log('✅ ブラウザ版秘密モードゲーム背景画像を設定');
+
+                    // Gemini提案: backgroundショートハンドで一括設定（!important）
+                    const backgroundStyle = `url('${secretBackgroundPath}') center / cover no-repeat fixed`;
+                    backgroundElement.style.setProperty('background', backgroundStyle, 'important');
+
+                    // 画像読み込み確認
+                    const img = new Image();
+                    img.onload = () => {
+                        console.log('✅ 秘密ゲーム背景画像読み込み成功');
+                        backgroundElement.style.setProperty('background', backgroundStyle, 'important');
+                    };
+                    img.onerror = () => {
+                        console.error('❌ 秘密ゲーム背景画像読み込み失敗');
+                        const fallbackStyle = 'linear-gradient(135deg, #2e1065 0%, #000 50%, #2e1065 100%)';
+                        backgroundElement.style.setProperty('background', fallbackStyle, 'important');
+                    };
+                    img.src = secretBackgroundPath;
+
+                    console.log('✅ ブラウザ版秘密モードゲーム背景画像をショートハンドで設定');
                 } else {
-                    // 通常モード（野球拳バトル）- bg_living_night.pngを設定
+                    // 通常モード（野球拳バトル）- bg_game_room.pngを設定
                     const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', 'game');
+                    let imagePath = './assets/images/backgrounds/bg_game_room.png'; // デフォルト
+
                     if (sceneData && sceneData.background_image) {
-                        const imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
-                        backgroundElement.style.backgroundImage = `url('${imagePath}')`;
-                        console.log(`✅ ブラウザ版通常モードゲーム背景画像を設定: ${imagePath}`);
-                    } else {
-                        // フォールバック - bg_living_night.pngを直接指定
-                        backgroundElement.style.backgroundImage = "url('./assets/images/backgrounds/bg_living_night.png')";
-                        console.log('✅ ブラウザ版フォールバック背景画像を設定: bg_living_night.png');
+                        imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
                     }
+
+                    const backgroundStyle = `url('${imagePath}') center / cover no-repeat fixed`;
+                    backgroundElement.style.setProperty('background', backgroundStyle, 'important');
+                    console.log(`✅ ブラウザ版通常モードゲーム背景画像をショートハンドで設定: ${imagePath}`);
                 }
-                backgroundElement.style.backgroundSize = 'cover';
-                backgroundElement.style.backgroundPosition = 'center';
-                backgroundElement.style.backgroundRepeat = 'no-repeat';
             } else {
                 console.warn('❌ ゲーム画面の背景要素が見つかりません');
             }
@@ -556,10 +570,24 @@ class GameScene {
             // 秘めた想いモードでは直接背景を指定
             if (this.game.gameState.isSecretMode) {
                 const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
-                backgroundElement.style.backgroundImage = `url('${secretBackgroundPath}')`;
-                backgroundElement.style.backgroundSize = 'cover';
-                backgroundElement.style.backgroundPosition = 'center';
-                backgroundElement.style.backgroundRepeat = 'no-repeat';
+
+                // Gemini提案を適用: backgroundショートハンドで一括設定
+                const backgroundStyle = `url('${secretBackgroundPath}') center / cover no-repeat fixed`;
+                backgroundElement.style.setProperty('background', backgroundStyle, 'important');
+
+                // 画像読み込み確認
+                const img = new Image();
+                img.onload = () => {
+                    console.log('✅ 秘密ゲーム背景画像読み込み成功（Electron）');
+                    backgroundElement.style.setProperty('background', backgroundStyle, 'important');
+                };
+                img.onerror = () => {
+                    console.error('❌ 秘密ゲーム背景画像読み込み失敗（Electron）');
+                    const fallbackStyle = 'linear-gradient(135deg, #2e1065 0%, #4b1a7d 50%, #2e1065 100%)';
+                    backgroundElement.style.setProperty('background', fallbackStyle, 'important');
+                };
+                img.src = secretBackgroundPath;
+
                 console.log(`✅ 秘密モードゲーム背景を強制設定: ${secretBackgroundPath}`);
             } else {
                 // 通常モードの場合はCSVから読み込み
