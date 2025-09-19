@@ -1367,6 +1367,14 @@ class TitleScene {
             });
         }
 
+        // ギャラリーリセットボタン
+        const galleryResetBtn = document.getElementById('debug-gallery-reset');
+        if (galleryResetBtn) {
+            galleryResetBtn.addEventListener('click', () => {
+                this.resetGalleryData();
+            });
+        }
+
         console.log('🔧 デバッグボタン設定完了');
     }
 
@@ -1445,13 +1453,23 @@ class TitleScene {
         console.log('🔧 [DEBUG] 野球拳バトル中盤へジャンプ（3勝2敗）');
         this.resetGameState();
 
-        // 中盤状態を設定
+        // 中盤状態を設定（gameStateとgameSceneの両方に設定）
         if (this.game.scenes.game) {
             this.game.scenes.game.currentRound = 6;
             this.game.scenes.game.playerWins = 3;
             this.game.scenes.game.misakiWins = 2;
             this.game.scenes.game.playerHP = 2;
             this.game.scenes.game.misakiHP = 3;
+        }
+
+        // gameStateにも勝敗数を設定（一貫性のため）
+        if (this.game.gameState) {
+            this.game.gameState.playerWins = 3;
+            this.game.gameState.misakiWins = 2;
+            console.log('🎯 gameStateに中盤状態を設定:', {
+                playerWins: this.game.gameState.playerWins,
+                misakiWins: this.game.gameState.misakiWins
+            });
         }
 
         this.hideDebugPanel();
@@ -1466,10 +1484,20 @@ class TitleScene {
         console.log('🔧 [DEBUG] エンディングトークへジャンプ');
         this.resetGameState();
 
-        // 勝利状態を設定
+        // 勝利状態を設定（gameStateとgameSceneの両方に設定）
         if (this.game.scenes.game) {
             this.game.scenes.game.playerWins = 5;
             this.game.scenes.game.misakiWins = 4;
+        }
+
+        // gameStateにも勝利数を設定（DialogueSceneで参照されるため）
+        if (this.game.gameState) {
+            this.game.gameState.playerWins = 5;
+            this.game.gameState.misakiWins = 4;
+            console.log('🎯 gameStateに勝利数を設定:', {
+                playerWins: this.game.gameState.playerWins,
+                misakiWins: this.game.gameState.misakiWins
+            });
         }
 
         this.hideDebugPanel();
@@ -1489,10 +1517,20 @@ class TitleScene {
         console.log('🔧 [DEBUG] ゲームオーバーへジャンプ');
         this.resetGameState();
 
-        // 敗北状態を設定
+        // 敗北状態を設定（gameStateとgameSceneの両方に設定）
         if (this.game.scenes.game) {
             this.game.scenes.game.playerWins = 2;
             this.game.scenes.game.misakiWins = 5;
+        }
+
+        // gameStateにも勝敗数を設定（一貫性のため）
+        if (this.game.gameState) {
+            this.game.gameState.playerWins = 2;
+            this.game.gameState.misakiWins = 5;
+            console.log('🎯 gameStateに敗北数を設定:', {
+                playerWins: this.game.gameState.playerWins,
+                misakiWins: this.game.gameState.misakiWins
+            });
         }
 
         this.hideDebugPanel();
@@ -1529,6 +1567,50 @@ class TitleScene {
         }
 
         console.log('✅ ゲーム状態リセット完了');
+    }
+
+    /**
+     * ギャラリーデータをリセット（デバッグ用）
+     */
+    resetGalleryData() {
+        console.log('🔧 [DEBUG] ギャラリーデータリセット要求');
+
+        // 確認ダイアログを表示
+        const confirmResult = confirm(
+            '🗑️ ギャラリーデータをリセットしますか？\n\n' +
+            '・獲得した立ち絵データがすべて削除されます\n' +
+            '・総勝利数もリセットされます\n' +
+            '・この操作は元に戻せません\n\n' +
+            '本当にリセットしますか？'
+        );
+
+        if (!confirmResult) {
+            console.log('🚫 ギャラリーリセットがキャンセルされました');
+            return;
+        }
+
+        try {
+            // SaveSystemからギャラリーデータを取得
+            const currentGalleryData = this.game.saveSystem.getGalleryData();
+            console.log('📊 リセット前のギャラリーデータ:', currentGalleryData);
+
+            // SaveSystemの既存resetGallery()メソッドを使用
+            this.game.saveSystem.resetGallery();
+            console.log('✅ ギャラリーデータをリセットしました（完全初期化）');
+
+            // 成功メッセージを表示
+            alert('🗑️ ギャラリーデータをリセットしました！\n\n' +
+                  '・獲得した立ち絵: 全て削除されました\n' +
+                  '・総勝利数: 0回にリセット\n' +
+                  '・閲覧済みエンディング: 全てリセット\n\n' +
+                  'ゲームをプレイして立ち絵を再獲得してください。');
+
+            console.log('🎯 ギャラリーリセット完了');
+
+        } catch (error) {
+            console.error('❌ ギャラリーリセット中にエラーが発生:', error);
+            alert('❌ ギャラリーリセットに失敗しました\n\nエラー: ' + error.message);
+        }
     }
 }
 

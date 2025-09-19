@@ -1654,8 +1654,14 @@ class DialogueScene {
         
         // 作成後に再度CSVからメッセージを更新（確実に反映させるため）
         if (this.game.gameState && this.game.gameState.playerWins >= 5) {
+            console.log('🎯 勝利状態確認完了 - updateEndingMessage呼び出し');
+            console.log('  playerWins:', this.game.gameState.playerWins);
             // CSVデータを確実に取得する処理
             this.updateEndingMessage(title, message, restartButton, titleButton);
+        } else {
+            console.log('⚠️ 勝利状態ではない、またはgameStateが不正');
+            console.log('  gameState:', this.game.gameState);
+            console.log('  playerWins:', this.game.gameState?.playerWins);
         }
         
         // 音響効果
@@ -1667,6 +1673,7 @@ class DialogueScene {
      */
     async updateEndingMessage(title, message, restartButton, titleButton) {
         console.log('🔄 エンディングメッセージの更新を開始...');
+        console.log('🎯 updateEndingMessage: シークレットギャラリー解放処理を含む更新開始');
 
         try {
             const csvLoader = this.game.csvLoader;
@@ -1724,13 +1731,14 @@ class DialogueScene {
         }
 
         // フォールバック: デフォルトメッセージを設定（CSVが読み込めなかった場合のみ）
-        console.log('📝 CSVが読み込めなかったため、デフォルトメッセージを適用');
+        console.log('📝 CSVが読み込めなかったため、フォールバックメッセージを適用');
         title.textContent = 'ゲームクリア！';
-        message.innerHTML = 'お疲れさまでした！<br>ゲームをプレイしていただき、ありがとうございます！';
+        message.innerHTML = 'ここまで遊んでいただきありがとうございます！<br>最終トークまで辿り着いたので、<br>シークレットギャラリーを獲得しました！<br>タイトル画面でご確認ください！';
         restartButton.textContent = 'もう一度プレイ';
         titleButton.textContent = 'タイトルに戻る';
 
-        // シークレットギャラリー画像を解放
+        // シークレットギャラリー画像を解放（フォールバック時）
+        console.log('🎊 フォールバック時：シークレットギャラリー解放を実行');
         this.unlockSecretGallery();
     }
 
@@ -1753,8 +1761,11 @@ class DialogueScene {
 
             // 既に解放済みかチェック
             if (saveSystem.isImageUnlocked(secretImageName, secretStage)) {
-                console.log('✅ シークレット画像は既に解放済みです');
+                console.log('✅ シークレット画像は既に解放済みです - アニメーション表示をスキップ');
+                console.log(`🔍 isImageUnlocked(${secretImageName}, ${secretStage}) = true`);
                 return;
+            } else {
+                console.log(`🔍 isImageUnlocked(${secretImageName}, ${secretStage}) = false - 新規解放処理続行`);
             }
 
             // 新規解放
@@ -1764,7 +1775,9 @@ class DialogueScene {
                 console.log(`🎊 シークレットギャラリー解放成功: ${secretImageName}`);
 
                 // 解放通知を表示（通常のギャラリー解放と同じスタイル）
+                console.log('🎊 シークレットギャラリー解放アニメーション表示開始');
                 this.showGalleryUnlockNotification(7);
+                console.log('✅ showGalleryUnlockNotification(7) 実行完了');
             } else {
                 console.log('⚠️ シークレットギャラリーの解放に失敗しました');
             }
@@ -1779,6 +1792,8 @@ class DialogueScene {
      * @param {number} stage - 解放されたステージ番号
      */
     showGalleryUnlockNotification(stage) {
+        console.log(`🎬 showGalleryUnlockNotification開始 - stage: ${stage}`);
+
         // 通知要素を作成
         const notification = document.createElement('div');
         notification.className = 'gallery-unlock-notification';
@@ -1847,6 +1862,7 @@ class DialogueScene {
         }
 
         document.body.appendChild(notification);
+        console.log('✅ ギャラリー解放通知をDOMに追加完了');
 
         // 3秒後にフェードアウトして削除
         setTimeout(() => {
