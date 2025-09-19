@@ -197,12 +197,12 @@ class AudioManager {
      */
     loadFallbackBGMSettings() {
         const fallbackSettings = {
-            'title': { bgm_file: 'bgm_title.mp3', volume: 0.4, loop: true, fade_in_time: 2.0, fade_out_time: 1.0 },
-            'dialogue': { bgm_file: 'bgm_dialogue.mp3', volume: 0.3, loop: true, fade_in_time: 2.5, fade_out_time: 2.0 },
-            'game': { bgm_file: 'bgm_battle_tension.mp3', volume: 0.45, loop: true, fade_in_time: 1.5, fade_out_time: 1.5 },
-            'ending_true': { bgm_file: 'bgm_ending_true.mp3', volume: 0.4, loop: true, fade_in_time: 3.0, fade_out_time: 2.0 },
-            'ending_bad': { bgm_file: 'bgm_ending_bad.mp3', volume: 0.3, loop: false, fade_in_time: 2.0, fade_out_time: 0 },
-            'loading': { bgm_file: 'bgm_title.mp3', volume: 0.25, loop: true, fade_in_time: 1.0, fade_out_time: 1.0 }
+            'title': { bgm_file: 'bgm_title.mp3', volume: 0.4, loop: true, fade_in_time: 3.0, fade_out_time: 2.5 },
+            'dialogue': { bgm_file: 'bgm_dialogue.mp3', volume: 0.3, loop: true, fade_in_time: 3.5, fade_out_time: 3.0 },
+            'game': { bgm_file: 'bgm_battle_tension.mp3', volume: 0.45, loop: true, fade_in_time: 3.0, fade_out_time: 2.5 },
+            'ending_true': { bgm_file: 'bgm_ending_true.mp3', volume: 0.4, loop: true, fade_in_time: 4.0, fade_out_time: 3.0 },
+            'ending_bad': { bgm_file: 'bgm_ending_bad.mp3', volume: 0.3, loop: false, fade_in_time: 3.0, fade_out_time: 1.0 },
+            'loading': { bgm_file: 'bgm_title.mp3', volume: 0.25, loop: true, fade_in_time: 2.0, fade_out_time: 1.5 }
         };
 
         for (const [sceneId, settings] of Object.entries(fallbackSettings)) {
@@ -629,18 +629,48 @@ class AudioManager {
     fadeIn(audio, targetVolume, duration) {
         if (!audio) return;
 
+        // 引数の検証（最小フェード時間を1秒に設定）
+        const safeDuration = Math.max(parseFloat(duration) || 2.0, 1.0);
+        const safeTargetVolume = Math.max(Math.min(parseFloat(targetVolume) || 0.5, 1.0), 0);
+
+        console.log(`🔊 フェードイン開始: 0 → ${safeTargetVolume.toFixed(3)} (${safeDuration}秒)`);
+
+        const startTime = Date.now();
         const startVolume = 0;
-        const volumeStep = targetVolume / (duration * 60); // 60fps想定
-        
         audio.volume = startVolume;
-        
-        const fadeInterval = setInterval(() => {
-            if (audio.volume < targetVolume) {
-                audio.volume = Math.min(audio.volume + volumeStep, targetVolume);
-            } else {
-                clearInterval(fadeInterval);
+
+        let logCount = 0;
+        const maxLogs = 10; // フェード中のログ制限
+
+        const fadeStep = () => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const progress = Math.min(elapsed / safeDuration, 1.0);
+
+            // より線形に近いフェード（イージング削除）
+            const currentVolume = startVolume + (safeTargetVolume - startVolume) * progress;
+
+            // 音量を設定（安全な範囲内で）
+            const clampedVolume = Math.max(Math.min(currentVolume, 1.0), 0);
+
+            // 実際の音量設定
+            const previousVolume = audio.volume;
+            audio.volume = clampedVolume;
+
+            // 進行状況を詳細ログ（制限付き）
+            if (logCount < maxLogs && (logCount % 2 === 0 || progress >= 1.0)) {
+                console.log(`📊 フェードイン進行: ${(progress * 100).toFixed(1)}% | 音量: ${previousVolume.toFixed(3)} → ${clampedVolume.toFixed(3)}`);
+                logCount++;
             }
-        }, 1000 / 60);
+
+            if (progress < 1.0) {
+                requestAnimationFrame(fadeStep);
+            } else {
+                audio.volume = safeTargetVolume;
+                console.log(`✅ フェードイン完了: 最終音量 ${safeTargetVolume.toFixed(3)}`);
+            }
+        };
+
+        requestAnimationFrame(fadeStep);
     }
 
     /**
@@ -655,21 +685,9 @@ class AudioManager {
             return;
         }
 
-        // 📊 音量値と継続時間の検証・修正
-        let startVolume = parseFloat(audio.volume) || 0;
-        let fadeDuration = parseFloat(duration) || 1.0;
-
-        // 異常値のチェックと修正
-        if (!isFinite(startVolume) || startVolume < 0) {
-            console.warn('⚠️ 異常な開始音量を検出、修正:', startVolume, '→ 0');
-            startVolume = 0;
-            audio.volume = 0;
-        }
-
-        if (!isFinite(fadeDuration) || fadeDuration <= 0) {
-            console.warn('⚠️ 異常なフェード時間を検出、修正:', fadeDuration, '→ 1.0');
-            fadeDuration = 1.0;
-        }
+        // 引数の検証・修正（最小フェード時間を1秒に設定）
+        const startVolume = Math.max(parseFloat(audio.volume) || 0, 0);
+        const safeDuration = Math.max(parseFloat(duration) || 2.0, 1.0);
 
         // 開始音量が0以下の場合は即座に終了
         if (startVolume <= 0) {
@@ -678,39 +696,43 @@ class AudioManager {
             return;
         }
 
-        const volumeStep = startVolume / (fadeDuration * 60); // 60fps想定
+        console.log(`🔊 フェードアウト開始: ${startVolume.toFixed(3)} → 0 (${safeDuration}秒)`);
 
-        // volumeStepの有効性を確認
-        if (!isFinite(volumeStep) || volumeStep <= 0) {
-            console.warn('⚠️ 異常な音量ステップを検出、即座にフェードアウト完了:', volumeStep);
-            audio.volume = 0;
-            audio.pause();
-            if (callback) callback();
-            return;
-        }
+        const startTime = Date.now();
+        let logCount = 0;
+        const maxLogs = 10; // フェード中のログ制限
 
-        console.log(`🔊 フェードアウト開始: ${startVolume.toFixed(3)} → 0 (${fadeDuration}秒, step=${volumeStep.toFixed(6)})`);
+        const fadeStep = () => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            const progress = Math.min(elapsed / safeDuration, 1.0);
 
-        const fadeInterval = setInterval(() => {
-            const currentVolume = parseFloat(audio.volume) || 0;
+            // より線形に近いフェード（イージング削除）
+            const currentVolume = startVolume * (1.0 - progress);
 
-            if (currentVolume > 0 && isFinite(currentVolume)) {
-                const newVolume = Math.max(currentVolume - volumeStep, 0);
+            // 音量を設定（安全な範囲内で）
+            const clampedVolume = Math.max(Math.min(currentVolume, 1.0), 0);
 
-                // 新しい音量値の有効性を確認
-                if (isFinite(newVolume) && newVolume >= 0) {
-                    audio.volume = newVolume;
-                } else {
-                    console.warn('⚠️ 異常な新音量値を検出、0に設定:', newVolume);
-                    audio.volume = 0;
-                }
+            // 実際の音量設定
+            const previousVolume = audio.volume;
+            audio.volume = clampedVolume;
+
+            // 進行状況を詳細ログ（制限付き）
+            if (logCount < maxLogs && (logCount % 2 === 0 || progress >= 1.0)) {
+                console.log(`📊 フェードアウト進行: ${(progress * 100).toFixed(1)}% | 音量: ${previousVolume.toFixed(3)} → ${clampedVolume.toFixed(3)}`);
+                logCount++;
+            }
+
+            if (progress < 1.0 && audio.volume > 0.001) {
+                requestAnimationFrame(fadeStep);
             } else {
-                clearInterval(fadeInterval);
+                audio.volume = 0;
                 audio.pause();
-                console.log('✅ フェードアウト完了');
+                console.log(`✅ フェードアウト完了: 最終音量 0.000`);
                 if (callback) callback();
             }
-        }, 1000 / 60);
+        };
+
+        requestAnimationFrame(fadeStep);
     }
 
     /**
