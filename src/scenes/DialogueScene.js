@@ -234,7 +234,37 @@ class DialogueScene {
      */
     setupBackground(sceneId) {
         const backgroundElement = document.getElementById('dialogue-bg');
-        
+
+        // ブラウザ環境検出（CORS問題回避）
+        const isElectron = !!(window.electronAPI || window.require) ||
+                          (typeof process !== 'undefined' && process.versions && process.versions.electron);
+        const isBrowser = !isElectron;
+
+        if (isBrowser) {
+            console.log('🌐 ブラウザ環境検出 - CSS背景で代替');
+            if (backgroundElement) {
+                // ブラウザ環境用のCSS背景（画像読み込み問題回避）
+                if (sceneId === 'victory') {
+                    backgroundElement.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 50%, #1a1a2e 100%)';
+                    console.log('🌙 ブラウザ版エンディング背景を設定');
+                } else if (this.game.gameState.isSecretMode) {
+                    backgroundElement.style.background = 'linear-gradient(135deg, #2e1065 0%, #000 50%, #2e1065 100%)';
+                    console.log('✅ ブラウザ版秘密モード背景を設定');
+                } else {
+                    // 通常モード（living等）
+                    backgroundElement.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #4a4a4a 50%, #1a1a2e 100%)';
+                    console.log('✅ ブラウザ版通常モード背景を設定');
+                }
+                backgroundElement.style.backgroundSize = 'cover';
+                backgroundElement.style.backgroundPosition = 'center';
+                backgroundElement.style.backgroundRepeat = 'no-repeat';
+                // 背景画像の設定をクリア
+                backgroundElement.style.backgroundImage = '';
+            }
+            return;
+        }
+
+        // Electron環境での画像背景処理
         // victoryシーン（エンディングトーク）の場合は専用背景
         if (sceneId === 'victory') {
             console.log('🌙 エンディングトーク背景: bg_living_night.png');
@@ -247,7 +277,7 @@ class DialogueScene {
             }
             return;
         }
-        
+
         // 通常シーンの背景処理
         if (backgroundElement) {
             // 秘めた想いモードでは直接背景を指定
@@ -261,7 +291,7 @@ class DialogueScene {
                 return;
             }
 
-            // 通常モードの場合はCSVから読み込み
+            // 通常モードの場合はCSVから読み込み（フォールバック付き）
             const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', sceneId);
 
             console.log(`🎭 DialogueScene 通常モード背景設定:`);
@@ -273,9 +303,16 @@ class DialogueScene {
                 backgroundElement.style.backgroundImage = `url('${imagePath}')`;
                 console.log(`✅ 通常モード背景を設定: ${imagePath}`);
             } else {
-                // デフォルト背景
-                backgroundElement.style.background = 'linear-gradient(135deg, #2c2c2c 0%, #1a1a2e 100%)';
-                console.log(`⚠️ デフォルト背景を設定`);
+                // CSVが読み込めない場合の直接指定フォールバック
+                if (sceneId === 'living') {
+                    const fallbackImagePath = './assets/images/backgrounds/bg_living_night.png';
+                    backgroundElement.style.backgroundImage = `url('${fallbackImagePath}')`;
+                    console.log(`✅ 通常モード背景を直接設定（フォールバック）: ${fallbackImagePath}`);
+                } else {
+                    // デフォルト背景
+                    backgroundElement.style.background = 'linear-gradient(135deg, #2c2c2c 0%, #1a1a2e 100%)';
+                    console.log(`⚠️ デフォルト背景を設定`);
+                }
             }
         }
     }

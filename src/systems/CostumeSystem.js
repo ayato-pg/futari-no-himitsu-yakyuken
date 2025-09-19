@@ -161,14 +161,26 @@ class CostumeSystem {
      * @param {string} emotion - 表情
      */
     changeCostumeImage(imageElement, costumeData, emotion) {
+        // ブラウザ環境検出（CORS問題回避）
+        const isElectron = !!(window.electronAPI || window.require) ||
+                          (typeof process !== 'undefined' && process.versions && process.versions.electron);
+        const isBrowser = !isElectron;
+
+        if (isBrowser) {
+            console.log(`🌐 ブラウザ環境検出 - ${costumeData.costume_name}_${emotion}をプレースホルダーで代替`);
+            this.createCostumePlaceholder(imageElement, costumeData);
+            return;
+        }
+
+        // Electron環境での画像処理
         // 画像ファイル名を生成（表情付き）
         const baseName = costumeData.costume_image.replace('.png', '');
         const imageName = `${baseName}_${emotion}.png`;
         const imagePath = `./assets/images/characters/misaki/${imageName}`;
-        
+
         // 画像を変更
         imageElement.src = imagePath;
-        
+
         // 画像が存在しない場合のフォールバック
         imageElement.onerror = () => {
             console.warn(`衣装画像が見つかりません: ${imageName}`);
