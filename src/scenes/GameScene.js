@@ -515,6 +515,43 @@ class GameScene {
      */
     setupBackground() {
         const backgroundElement = document.getElementById('game-bg');
+
+        // ブラウザ環境検出（CORS問題回避）
+        const isElectron = !!(window.electronAPI || window.require) ||
+                          (typeof process !== 'undefined' && process.versions && process.versions.electron);
+        const isBrowser = !isElectron;
+
+        if (isBrowser) {
+            console.log('🌐 ブラウザ環境検出 - ゲーム画面背景画像を設定');
+            if (backgroundElement) {
+                // ブラウザ環境でも背景画像を表示
+                if (this.game.gameState.isSecretMode) {
+                    const secretBackgroundPath = './assets/images/secret/backgrounds/bg_secret_living.png';
+                    backgroundElement.style.backgroundImage = `url('${secretBackgroundPath}')`;
+                    console.log('✅ ブラウザ版秘密モードゲーム背景画像を設定');
+                } else {
+                    // 通常モード（野球拳バトル）- bg_living_night.pngを設定
+                    const sceneData = this.game.csvLoader.findData('scenes', 'scene_id', 'game');
+                    if (sceneData && sceneData.background_image) {
+                        const imagePath = `./assets/images/backgrounds/${sceneData.background_image}`;
+                        backgroundElement.style.backgroundImage = `url('${imagePath}')`;
+                        console.log(`✅ ブラウザ版通常モードゲーム背景画像を設定: ${imagePath}`);
+                    } else {
+                        // フォールバック - bg_living_night.pngを直接指定
+                        backgroundElement.style.backgroundImage = "url('./assets/images/backgrounds/bg_living_night.png')";
+                        console.log('✅ ブラウザ版フォールバック背景画像を設定: bg_living_night.png');
+                    }
+                }
+                backgroundElement.style.backgroundSize = 'cover';
+                backgroundElement.style.backgroundPosition = 'center';
+                backgroundElement.style.backgroundRepeat = 'no-repeat';
+            } else {
+                console.warn('❌ ゲーム画面の背景要素が見つかりません');
+            }
+            return;
+        }
+
+        // Electron環境での画像背景処理
         if (backgroundElement) {
             // 秘めた想いモードでは直接背景を指定
             if (this.game.gameState.isSecretMode) {

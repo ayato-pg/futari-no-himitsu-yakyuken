@@ -357,7 +357,7 @@ class CSVLoader {
             scenes: [
                 { scene_id: 'title', scene_name: 'タイトル画面', background_image: 'bg_title_adult.png', bgm_file: 'bgm_title.mp3' },
                 { scene_id: 'living', scene_name: 'リビング', background_image: 'bg_living_night.png', bgm_file: 'bgm_dialogue.mp3' },
-                { scene_id: 'game', scene_name: 'じゃんけんバトル', background_image: 'bg_game_room.png', bgm_file: 'bgm_battle_tension.mp3' }
+                { scene_id: 'game', scene_name: 'じゃんけんバトル', background_image: 'bg_living_night.png', bgm_file: 'bgm_battle_tension.mp3' }
             ],
             characters: [
                 { character_id: 'misaki', name: '美咲', default_image: 'misaki_adult_normal.png', age: '25' },
