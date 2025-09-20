@@ -351,8 +351,22 @@ class CSVLoader {
      * @returns {Array} ダミーデータ配列
      */
     createFallbackData(tableName) {
-        console.log(`${tableName} のフォールバックデータを使用中（ゲームは正常に動作します）`);
-        
+        const modeText = this.isSecretMode ? '秘めた想いモード' : '通常モード';
+        console.log(`${tableName} のフォールバックデータを使用中（${modeText}）（ゲームは正常に動作します）`);
+
+        // 秘めた想いモード用の追加データ
+        const secretDialogues = this.isSecretMode ? [
+            { dialogue_id: 'secret_gi001', scene_type: 'game_intro', trigger_condition: 'round_1', character: 'misaki', text: '今夜は、この二人だけの時間だよ…', priority: '1', emotion: 'smile' },
+            { dialogue_id: 'secret_gs001', scene_type: 'game_start', trigger_condition: 'game_start', character: 'misaki', text: 'さあ…いつもの遊びを始めようか…', priority: '1', emotion: 'teasing' },
+            { dialogue_id: 'secret_jp001', scene_type: 'janken', trigger_condition: 'janken_start', character: 'misaki', text: '行くよ…', priority: '1', emotion: 'focused' },
+            { dialogue_id: 'secret_mr010', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'ふふ…私の勝ちね♪', priority: '1', emotion: 'happy' },
+            { dialogue_id: 'secret_vw001', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_1', character: 'misaki', text: 'あ…もう負けちゃった…こんなの恥ずかしい…', priority: '1', emotion: 'surprised' },
+            { dialogue_id: 'secret_vw002', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_2', character: 'misaki', text: 'ちょっと…本気だったのに…もう見ないで…', priority: '1', emotion: 'shocked' },
+            { dialogue_id: 'secret_vw003', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_3', character: 'misaki', text: 'もう…こんなにまで…でも約束だから…', priority: '1', emotion: 'disbelief' },
+            { dialogue_id: 'secret_vw004', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_4', character: 'misaki', text: '恥ずかしい…でも…あなたになら…', priority: '1', emotion: 'panic' },
+            { dialogue_id: 'secret_vw005', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_5', character: 'misaki', text: 'あなたの前では…隠し事なんてできないね…', priority: '1', emotion: 'defeated' }
+        ] : [];
+
         const fallbackData = {
             scenes: [
                 { scene_id: 'title', scene_name: 'タイトル画面', background_image: 'bg_title_adult.png', bgm_file: 'bgm_title.mp3' },
@@ -364,6 +378,10 @@ class CSVLoader {
                 { character_id: 'player', name: 'あなた', age: '22' }
             ],
             dialogues: [
+                // 通常モード共通のダイアログ
+                { dialogue_id: 'gi001', scene_type: 'game_intro', trigger_condition: 'round_1', character: 'misaki', text: 'じゃ、じゃあ始めるよ？…', priority: '1', emotion: 'smile' },
+                { dialogue_id: 'gs001', scene_type: 'game_start', trigger_condition: 'game_start', character: 'misaki', text: '最初はグー！じゃんけん...', priority: '1', emotion: 'teasing' },
+                { dialogue_id: 'jp001', scene_type: 'janken', trigger_condition: 'janken_start', character: 'misaki', text: 'ぽん！', priority: '1', emotion: 'focused' },
                 { dialogue_id: 'd001', scene_type: 'game_intro', trigger_condition: 'round_1', character: 'misaki', text: '久しぶりね。大学生活はどう？', priority: '1', emotion: 'smile' },
                 { dialogue_id: 'd002', scene_type: 'game_start', trigger_condition: 'game_start', character: 'misaki', text: '昔みたいにお姉ちゃんって呼んでよ', priority: '1', emotion: 'teasing' },
                 { dialogue_id: 'mr010', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'やったぁ！勝った！', priority: '1', emotion: 'happy' },
@@ -375,7 +393,9 @@ class CSVLoader {
                 { dialogue_id: 'vw002', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_2', character: 'misaki', text: 'うっ…いつもすぐ負けるくせにぃ…。まぐれだよね？', priority: '1', emotion: 'shocked' },
                 { dialogue_id: 'vw003', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_3', character: 'misaki', text: 'こ、こんなはずじゃ…恥ずかしい…。ここから先は…もうやめておかない？…', priority: '1', emotion: 'disbelief' },
                 { dialogue_id: 'vw004', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_4', character: 'misaki', text: 'や、やばい…。。。隠してもいいでしょ！！早く次はじめるよ！ジロジロ見ないの！', priority: '1', emotion: 'panic' },
-                { dialogue_id: 'vw005', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_5', character: 'misaki', text: 'あ、あぁ…負けちゃった…。そんなに見ないでよ…。野球拳だと強すぎない…？', priority: '1', emotion: 'defeated' }
+                { dialogue_id: 'vw005', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_5', character: 'misaki', text: 'あ、あぁ…負けちゃった…。そんなに見ないでよ…。野球拳だと強すぎない…？', priority: '1', emotion: 'defeated' },
+                // 秘めた想いモード専用データを結合
+                ...secretDialogues
             ],
             misaki_costumes: [
                 { level: '1', costume_image: 'misaki_suit.png', costume_name: 'OLスーツ', hp_required: '5' },
@@ -426,12 +446,52 @@ class CSVLoader {
                 { scene_id: 'title', bgm_file: 'bgm_title.mp3', volume: '0.7', loop: 'TRUE', fade_in_time: '2', fade_out_time: '1', description: 'タイトル画面BGM - ノスタルジックな夏の思い出' },
                 { scene_id: 'dialogue', bgm_file: 'bgm_dialogue.mp3', volume: '0.6', loop: 'TRUE', fade_in_time: '2.5', fade_out_time: '2', description: 'バトル前トーク画面BGM - 穏やかな会話シーン' },
                 { scene_id: 'game', bgm_file: 'bgm_battle_tension.mp3', volume: '0.8', loop: 'TRUE', fade_in_time: '1.5', fade_out_time: '1.5', description: 'バトル画面BGM - 緊張感のある野球拳バトル' },
+                { scene_id: 'secret_game', bgm_file: 'bgm_secret_battle.mp3', volume: '0.7', loop: 'TRUE', fade_in_time: '2', fade_out_time: '2', description: '秘めた想いモードバトルBGM - 大人の雰囲気' },
                 { scene_id: 'ending_true', bgm_file: 'bgm_ending_true.mp3', volume: '0.7', loop: 'TRUE', fade_in_time: '3', fade_out_time: '2', description: '真エンディングBGM - 感動的な勝利シーン' },
                 { scene_id: 'ending_bad', bgm_file: 'bgm_ending_bad.mp3', volume: '0.5', loop: 'FALSE', fade_in_time: '2', fade_out_time: '0', description: 'BADエンディングBGM - 物悲しい敗北シーン' },
                 { scene_id: 'loading', bgm_file: 'bgm_gentle_piano.mp3', volume: '0.4', loop: 'TRUE', fade_in_time: '1', fade_out_time: '1', description: 'ローディング画面BGM - 静かなピアノ' }
+            ],
+            // プロローグデータ（通常と秘めた想いモード両対応）
+            prologue: this.isSecretMode ? [
+                { dialogue_id: 'd001', scene_id: 'living', character_id: 'sound_effect', text: 'ピンポーン', emotion: '', costume: '', voice_file: 'v_001.mp3', next_id: 'd002', sprite_file: '' },
+                { dialogue_id: 'd002', scene_id: 'living', character_id: 'player_thought', text: '玄関を開けるとみさきが立っていて、びっくりした。', emotion: 'intimate', costume: 'casual', voice_file: '', next_id: 'd003', sprite_file: 'secret/characters/misaki/misaki_secret_talk_visit.png' },
+                { dialogue_id: 'd003', scene_id: 'living', character_id: 'player_thought', text: '美咲とは前のじゃんけん以来で目が合わせられない。', emotion: '', costume: '', voice_file: '', next_id: 'd004', sprite_file: '' },
+                { dialogue_id: 'd004', scene_id: 'living', character_id: 'misaki', text: '弟に風邪って聞いたけど大丈夫？おじさんとおばさん2人ともいないんでしょ？', emotion: '', costume: '', voice_file: '', next_id: 'd005', sprite_file: '' },
+                { dialogue_id: 'd005', scene_id: 'living', character_id: 'player', text: 'え、うん、、心配して来てくれた感じ？', emotion: 'seductive', costume: 'casual', voice_file: 'v_004.mp3', next_id: 'd006', sprite_file: '' },
+                { dialogue_id: 'd006', scene_id: 'living', character_id: 'misaki', text: '熱高いって聞いたから心配して来ちゃった、、、', emotion: '', costume: '', voice_file: '', next_id: 'd007', sprite_file: '' },
+                { dialogue_id: 'd007', scene_id: 'living', character_id: 'player', text: 'もう熱はある程度下がったんだよ(笑)。にしても、その大荷物何？', emotion: '', costume: '', voice_file: '', next_id: 'd008', sprite_file: '' },
+                { dialogue_id: 'd008', scene_id: 'living', character_id: 'misaki', text: 'え、そうなの⁈  看病ついでに泊まろうと思って！', emotion: 'teasing', costume: 'casual', voice_file: '', next_id: 'd009', sprite_file: '' },
+                { dialogue_id: 'd009', scene_id: 'living', character_id: 'misaki', text: 'あ、家には友達の家に泊まるって言ってるから内緒ね！ それより中に入れてよ！', emotion: '', costume: '', voice_file: '', next_id: 'd010', sprite_file: '' },
+                { dialogue_id: 'd010', scene_id: 'living', character_id: 'player', text: 'お、おう。', emotion: '', costume: '', voice_file: '', next_id: 'd011', sprite_file: '' },
+                { dialogue_id: 'd011', scene_id: 'living', character_id: 'player_thought', text: '泊まるって、、え、、ほんと？。風邪の為か分からないが体が熱い。', emotion: 'shy', costume: 'casual', voice_file: '', next_id: 'd012', sprite_file: '' },
+                { dialogue_id: 'd012', scene_id: 'living', character_id: 'misaki', text: 'おじゃましまーす！家来るのひっさしぶりだなー！', emotion: 'confident', costume: 'casual', voice_file: '', next_id: 'd013', sprite_file: 'secret/characters/misaki/misaki_secret_talk_greeting.png' },
+                { dialogue_id: 'd013', scene_id: 'living', character_id: 'player_thought', text: '玄関に置かれた大きなバッグ。中からスポドリ、ゼリー、おかゆパック、体温計、ブランケットが次々と出てくる。', emotion: '', costume: '', voice_file: '', next_id: 'd014', sprite_file: '' },
+                { dialogue_id: 'd014', scene_id: 'living', character_id: 'player_thought', text: '本当に泊まる気満々だ…（笑）', emotion: 'playful', costume: 'casual', voice_file: '', next_id: 'd015', sprite_file: '' },
+                { dialogue_id: 'd015', scene_id: 'living', character_id: 'misaki', text: '元気になったか確認してあげる♪', emotion: '', costume: '', voice_file: '', next_id: 'd016', sprite_file: '' },
+                { dialogue_id: 'd016', scene_id: 'living', character_id: 'player', text: '何するの？', emotion: 'vulnerable', costume: 'casual', voice_file: '', next_id: 'd017', sprite_file: '' },
+                { dialogue_id: 'd017', scene_id: 'living', character_id: 'misaki', text: 'また、、じゃ、じゃんけんする、、？この前の続き、、。', emotion: '', costume: '', voice_file: '', next_id: 'd018', sprite_file: 'secret/characters/misaki/misaki_secret_talk_proposal.png' },
+                { dialogue_id: 'd018', scene_id: 'living', character_id: 'player', text: 'え？この前のって野球拳？？', emotion: 'intimate', costume: 'casual', voice_file: '', next_id: 'd019', sprite_file: '' },
+                { dialogue_id: 'd019', scene_id: 'living', character_id: 'misaki', text: 'や、、やっぱりやめとこ、、', emotion: '', costume: '', voice_file: '', next_id: 'd020', sprite_file: '' },
+                { dialogue_id: 'd020', scene_id: 'living', character_id: 'player', text: 'やる！すぐやる！！', emotion: '', costume: '', voice_file: '', next_id: 'd021', sprite_file: '' },
+                { dialogue_id: 'd021', scene_id: 'living', character_id: 'player_thought', text: 'やばい、食い気味に返事してしまった。既に元気になった気がする。', emotion: '', costume: '', voice_file: 'game_start', next_id: '', sprite_file: '' }
+            ] : [
+                { dialogue_id: 'd001', scene_id: 'living', character_id: 'player', text: 'よっ、美咲! 今日もプリン作ったー？', emotion: '', costume: '', voice_file: 'v_001.mp3', next_id: 'd002', sprite_file: 'misaki_dialogue_normal.png' },
+                { dialogue_id: 'd002', scene_id: 'living', character_id: 'misaki', text: '作ったけど、あげるかどうかは気分次第かな～♪', emotion: '', costume: '', voice_file: '', next_id: 'd003', sprite_file: '' },
+                { dialogue_id: 'd003', scene_id: 'living', character_id: 'player_thought', text: '美咲は小学校の頃から家族ぐるみで付き合いのある"親友の姉"。', emotion: '', costume: '', voice_file: '', next_id: 'd004', sprite_file: '' },
+                { dialogue_id: 'd004', scene_id: 'living', character_id: 'player_thought', text: '面倒見がよくて、ちょっとだけ意地悪だ。今は学校の先生をやっている。――親友はまだ帰って来てないようだ。', emotion: '', costume: '', voice_file: '', next_id: 'd005', sprite_file: '' },
+                { dialogue_id: 'd005', scene_id: 'living', character_id: 'misaki', text: 'ねぇ、あ～んする？', emotion: 'teasing', costume: 'casual', voice_file: 'v_004.mp3', next_id: 'd006', sprite_file: 'misaki_dialogue_casual_teasing.png' },
+                { dialogue_id: 'd006', scene_id: 'living', character_id: 'player_thought', text: '急に来た問いに戸惑ってしまう。', emotion: '', costume: '', voice_file: '', next_id: 'd007', sprite_file: '' },
+                { dialogue_id: 'd007', scene_id: 'living', character_id: 'player_thought', text: '昔、1つのプリンを美咲と二人で食べていたころが懐かしい。鼻先をかすめた甘い匂いは、あの頃と同じだ。', emotion: '', costume: '', voice_file: '', next_id: 'd008', sprite_file: '' },
+                { dialogue_id: 'd008', scene_id: 'living', character_id: 'player', text: '...何か勝負で勝てたら、ちゃんと"あ～ん"して。', emotion: '', costume: '', voice_file: '', next_id: 'd008a', sprite_file: '' },
+                { dialogue_id: 'd029', scene_id: 'living', character_id: 'player', text: 'やる！やります！やらせていただきます！', emotion: '', costume: '', voice_file: 'game_start', next_id: '', sprite_file: '' }
             ]
         };
-        
+
+        // secret_prologueテーブル要求時はprologueデータを返す
+        if (tableName === 'secret_prologue') {
+            return fallbackData['prologue'] || [];
+        }
+
         return fallbackData[tableName] || [];
     }
 
@@ -531,6 +591,16 @@ class CSVLoader {
         delete this.csvData[tableName];
         await this.loadCSV(filename);
         console.log(`✅ ${filename} のリロードが完了しました`);
+    }
+
+    /**
+     * 特定のテーブルを強制リロード（後方互換性のため）
+     * @param {string} tableName - テーブル名
+     */
+    async loadTable(tableName) {
+        console.log(`🔄 loadTable('${tableName}') 呼び出し - forceReloadCSVに転送`);
+        const filename = tableName.endsWith('.csv') ? tableName : `${tableName}.csv`;
+        await this.forceReloadCSV(filename);
     }
 
     /**

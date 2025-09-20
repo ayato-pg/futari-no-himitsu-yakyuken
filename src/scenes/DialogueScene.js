@@ -26,7 +26,10 @@ class DialogueScene {
         
         // 前回指定されたsprite_file名を記録（継続使用のため）
         this.lastSpecifiedSprite = '';
-        
+
+        // sound_effect後フラグ（立ち絵フラッシュ防止）
+        this.afterSoundEffect = false;
+
         // DOM要素への参照
         this.dialogueScreen = null;
         this.misakiDisplay = null;
@@ -195,8 +198,20 @@ class DialogueScene {
                 console.log('🏆 エンディングトーク: stage6立ち絵を直接設定');
                 this.changeMisakiSpriteDirectly('misaki_game_stage6.png');
             } else {
-                // 通常シーンの立ち絵設定
-                this.setupMisakiDisplay();
+                // Claude簡易案：最初のダイアログがsound_effectなら初期表示スキップ
+                const firstDialogue = this.dialogueQueue[0];
+                if (firstDialogue && firstDialogue.character_id === 'sound_effect') {
+                    console.log('🚫 最初がsound_effectのため初期立ち絵表示をスキップ');
+                    // 立ち絵要素は準備するが表示しない
+                    if (this.misakiDisplay) {
+                        this.misakiDisplay.style.display = 'none';
+                        this.misakiDisplay.style.opacity = '0';
+                        this.misakiDisplay.style.visibility = 'hidden';
+                    }
+                } else {
+                    // 通常シーンの立ち絵設定
+                    this.setupMisakiDisplay();
+                }
             }
             
             // 最初の会話を表示（アニメーション完了待ち）
@@ -484,12 +499,15 @@ class DialogueScene {
      * @param {string} spriteName - 画像ファイル名（拡張子付き）
      */
     changeMisakiSpriteDirectly(spriteName) {
+        console.log(`🖼️ changeMisakiSpriteDirectly呼び出し: "${spriteName}"`);
+
         if (!this.misakiDisplay) {
             console.error(`❌ misakiDisplay要素が見つかりません`);
             return;
         }
 
         if (this.lastDisplayedImage === spriteName) {
+            console.log(`⏭️ 同じ画像のためスキップ: "${spriteName}"`);
             return;
         }
 
@@ -510,10 +528,43 @@ class DialogueScene {
 
         const tempImage = new Image();
         tempImage.onload = () => {
-            this.misakiDisplay.style.transition = '';
-            this.misakiDisplay.style.opacity = '';
-            this.misakiDisplay.classList.remove('misaki-costume-change');
-            this.misakiDisplay.src = tempImage.src;
+            // sound_effect後の場合：完全制御復帰フェードイン
+            if (this.afterSoundEffect) {
+                console.log(`🌟 Claude強化版復帰制御: ${spriteName}`);
+
+                // 完全に隠蔽された状態からの段階的復帰
+                this.misakiDisplay.style.display = 'none';      // DOM非描画維持
+                this.misakiDisplay.style.visibility = 'hidden'; // 非表示維持
+                this.misakiDisplay.style.opacity = '0';         // 透明維持
+                this.misakiDisplay.style.transition = 'none';   // アニメ停止
+                this.misakiDisplay.src = tempImage.src;         // 画像設定
+                this.misakiDisplay.classList.remove('misaki-costume-change');
+
+                // 多段階復帰：display→visibility→opacity の順序制御
+                requestAnimationFrame(() => {
+                    this.misakiDisplay.style.display = 'block';     // DOM描画復帰
+                    requestAnimationFrame(() => {
+                        this.misakiDisplay.style.visibility = 'visible'; // 表示復帰
+                        this.misakiDisplay.style.transition = 'opacity 0.3s ease';
+                        requestAnimationFrame(() => {
+                            this.misakiDisplay.style.opacity = '1';     // 透明度復帰
+                        });
+                    });
+                });
+
+                this.afterSoundEffect = false; // フラグをリセット
+            } else {
+                // 通常のGemini推奨Opacityフェードイン
+                this.misakiDisplay.style.opacity = '0';
+                this.misakiDisplay.style.transition = 'opacity 0.3s ease';
+                this.misakiDisplay.classList.remove('misaki-costume-change');
+                this.misakiDisplay.src = tempImage.src;
+
+                // 画像設定後にフェードイン
+                requestAnimationFrame(() => {
+                    this.misakiDisplay.style.opacity = '1';
+                });
+            }
 
             requestAnimationFrame(() => {
                 this.misakiDisplay.classList.add('misaki-costume-change');
@@ -709,6 +760,7 @@ class DialogueScene {
         this.misakiDisplay.src = placeholder;
         console.log('⚠️ 美咲のプレースホルダーを表示しました');
     }
+
 
     /**
      * 5回勝利後の専用トークデータを読み込み（堅牢版）
@@ -1081,23 +1133,23 @@ class DialogueScene {
         console.log('🛡️ 秘密プロローグフォールバックデータを使用');
         return [
             { dialogue_id: 'd001', scene_id: 'living', character_id: 'sound_effect', text: 'ピンポーン', emotion: '', costume: '', voice_file: 'v_001.mp3', next_id: 'd002', sprite_file: '' },
-            { dialogue_id: 'd002', scene_id: 'living', character_id: 'player_thought', text: '玄関を開けるとみさきが立っていて、びっくりした。美咲とは前のじゃんけん以来で目が合わせられない。', emotion: 'intimate', costume: 'casual', voice_file: '', next_id: 'd003', sprite_file: 'secret/characters/misaki/misaki_secret_intimate.png' },
+            { dialogue_id: 'd002', scene_id: 'living', character_id: 'player_thought', text: '玄関を開けるとみさきが立っていて、びっくりした。美咲とは前のじゃんけん以来で目が合わせられない。', emotion: 'intimate', costume: 'casual', voice_file: '', next_id: 'd003', sprite_file: 'secret/characters/misaki/misaki_secret_talk_visit.png' },
             { dialogue_id: 'd003', scene_id: 'living', character_id: 'misaki', text: '弟に風邪って聞いたけど大丈夫？おじさんとおばさん2人ともいないんでしょ？', emotion: '', costume: '', voice_file: '', next_id: 'd004', sprite_file: '' },
             { dialogue_id: 'd004', scene_id: 'living', character_id: 'player', text: 'え、うん、、心配して来てくれた感じ？', emotion: '', costume: '', voice_file: '', next_id: 'd005', sprite_file: '' },
-            { dialogue_id: 'd005', scene_id: 'living', character_id: 'misaki', text: '熱高いって聞いたから心配して来ちゃった、、、', emotion: 'seductive', costume: 'casual', voice_file: 'v_004.mp3', next_id: 'd006', sprite_file: 'secret/characters/misaki/misaki_secret_seductive.png' },
+            { dialogue_id: 'd005', scene_id: 'living', character_id: 'misaki', text: '熱高いって聞いたから心配して来ちゃった、、、', emotion: 'seductive', costume: 'casual', voice_file: 'v_004.mp3', next_id: 'd006', sprite_file: '' },
             { dialogue_id: 'd006', scene_id: 'living', character_id: 'player', text: 'もう熱はある程度下がったんだよ(笑)。にしても、その大荷物何？', emotion: '', costume: '', voice_file: '', next_id: 'd007', sprite_file: '' },
-            { dialogue_id: 'd007', scene_id: 'living', character_id: 'misaki', text: 'え、そうなの⁈  看病ついでに泊まろうと思って！あ、家には友達の家に泊まるって言ってるから内緒ね！ それより中に入れてよ！', emotion: '', costume: '', voice_file: '', next_id: 'd008', sprite_file: '' },
-            { dialogue_id: 'd008', scene_id: 'living', character_id: 'player', text: 'お、おう。', emotion: 'teasing', costume: 'casual', voice_file: '', next_id: 'd009', sprite_file: 'secret/characters/misaki/misaki_secret_teasing.png' },
+            { dialogue_id: 'd007', scene_id: 'living', character_id: 'misaki', text: 'え、そうなの⁈  看病ついでに泊まろうと思って！あ、家には友達の家に泊まるって言ってるから内緒ね！ それより中に入れてよ！', emotion: '', costume: '', voice_file: '', next_id: 'd008', sprite_file: 'secret/characters/misaki/misaki_secret_talk_greeting.png' },
+            { dialogue_id: 'd008', scene_id: 'living', character_id: 'player', text: 'お、おう。', emotion: 'teasing', costume: 'casual', voice_file: '', next_id: 'd009', sprite_file: '' },
             { dialogue_id: 'd009', scene_id: 'living', character_id: 'player_thought', text: '泊まるって、、え、、ほんと？。風邪の為か分からないが体が熱い。', emotion: '', costume: '', voice_file: '', next_id: 'd010', sprite_file: '' },
             { dialogue_id: 'd010', scene_id: 'living', character_id: 'misaki', text: 'おじゃましまーす！家来るのひっさしぶりだなー！', emotion: '', costume: '', voice_file: '', next_id: 'd011', sprite_file: '' },
-            { dialogue_id: 'd011', scene_id: 'living', character_id: 'player_thought', text: '玄関に置かれた大きなバッグ。中からスポドリ、ゼリー、おかゆパック、体温計、ブランケットが次々と出てくる。', emotion: 'shy', costume: 'casual', voice_file: '', next_id: 'd012', sprite_file: 'secret/characters/misaki/misaki_secret_shy.png' },
-            { dialogue_id: 'd012', scene_id: 'living', character_id: 'player_thought', text: '本当に泊まる気満々だ…（笑）', emotion: 'confident', costume: 'casual', voice_file: '', next_id: 'd013', sprite_file: 'secret/characters/misaki/misaki_secret_confident.png' },
+            { dialogue_id: 'd011', scene_id: 'living', character_id: 'player_thought', text: '玄関に置かれた大きなバッグ。中からスポドリ、ゼリー、おかゆパック、体温計、ブランケットが次々と出てくる。', emotion: 'shy', costume: 'casual', voice_file: '', next_id: 'd012', sprite_file: '' },
+            { dialogue_id: 'd012', scene_id: 'living', character_id: 'player_thought', text: '本当に泊まる気満々だ…（笑）', emotion: 'confident', costume: 'casual', voice_file: '', next_id: 'd013', sprite_file: '' },
             { dialogue_id: 'd013', scene_id: 'living', character_id: 'misaki', text: '元気になったか確認してあげる♪', emotion: '', costume: '', voice_file: '', next_id: 'd014', sprite_file: '' },
-            { dialogue_id: 'd014', scene_id: 'living', character_id: 'player', text: '何するの？', emotion: 'playful', costume: 'casual', voice_file: '', next_id: 'd015', sprite_file: 'secret/characters/misaki/misaki_secret_playful.png' },
-            { dialogue_id: 'd015', scene_id: 'living', character_id: 'misaki', text: 'また、、じゃ、じゃんけんする、、？この前の続き、、。', emotion: '', costume: '', voice_file: '', next_id: 'd016', sprite_file: '' },
-            { dialogue_id: 'd016', scene_id: 'living', character_id: 'player', text: 'え？この前のって野球拳？？', emotion: 'vulnerable', costume: 'casual', voice_file: '', next_id: 'd017', sprite_file: 'secret/characters/misaki/misaki_secret_vulnerable.png' },
+            { dialogue_id: 'd014', scene_id: 'living', character_id: 'player', text: '何するの？', emotion: 'playful', costume: 'casual', voice_file: '', next_id: 'd015', sprite_file: '' },
+            { dialogue_id: 'd015', scene_id: 'living', character_id: 'misaki', text: 'また、、じゃ、じゃんけんする、、？この前の続き、、。', emotion: '', costume: '', voice_file: '', next_id: 'd016', sprite_file: 'secret/characters/misaki/misaki_secret_talk_proposal.png' },
+            { dialogue_id: 'd016', scene_id: 'living', character_id: 'player', text: 'え？この前のって野球拳？？', emotion: 'vulnerable', costume: 'casual', voice_file: '', next_id: 'd017', sprite_file: '' },
             { dialogue_id: 'd017', scene_id: 'living', character_id: 'misaki', text: 'や、、やっぱりやめとこ、、', emotion: '', costume: '', voice_file: '', next_id: 'd018', sprite_file: '' },
-            { dialogue_id: 'd018', scene_id: 'living', character_id: 'player', text: 'やる！すぐやる！！', emotion: 'intimate', costume: 'casual', voice_file: '', next_id: 'd019', sprite_file: 'secret/characters/misaki/misaki_secret_intimate.png' },
+            { dialogue_id: 'd018', scene_id: 'living', character_id: 'player', text: 'やる！すぐやる！！', emotion: 'intimate', costume: 'casual', voice_file: '', next_id: 'd019', sprite_file: '' },
             { dialogue_id: 'd019', scene_id: 'living', character_id: 'player_thought', text: 'やばい、食い気味に返事してしまった。既に元気になった気がする。', emotion: '', costume: '', voice_file: 'game_start', next_id: '', sprite_file: '' }
         ];
     }
@@ -1214,7 +1266,8 @@ class DialogueScene {
         const dialogue = this.dialogueQueue[this.currentDialogueIndex];
         console.log(`📢 次の会話表示 - dialogue_id:${dialogue ? dialogue.dialogue_id : 'undefined'}`);
         console.log(`📝 テキスト内容: "${dialogue ? dialogue.text.substring(0, 30) : 'undefined'}..."`);
-        
+
+
         // ダイアログデータが存在しない場合の緊急処理
         if (!dialogue) {
             console.error('🚨 dialogue データが null または undefined');
@@ -1241,11 +1294,39 @@ class DialogueScene {
      * @param {Object} dialogue - 会話データ
      */
     displayDialogue(dialogue) {
+        console.log(`🔍 displayDialogue開始: ID=${dialogue?.dialogue_id}, character_id=${dialogue?.character_id}, text="${dialogue?.text?.substring(0, 20)}..."`);
+
         if (!dialogue) {
             console.error('❌ dialogueデータが空です');
             return;
         }
-        
+
+        // 🎯 Claude根本解決：sound_effect時は継続表示を完全停止
+        if (dialogue.character_id === 'sound_effect') {
+            console.log(`⚡ sound_effect検出: ${dialogue.dialogue_id} - 継続表示停止`);
+            // 根本解決：継続表示ロジックを無効化（フラッシュ防止）
+            this.lastSpecifiedSprite = '';
+
+            if (this.misakiDisplay) {
+                this.misakiDisplay.style.display = 'none';
+                this.misakiDisplay.style.opacity = '0';
+                this.misakiDisplay.style.visibility = 'hidden';
+                this.misakiDisplay.style.transition = 'none';
+            }
+
+            // sound_effect後フラグを設定
+            this.afterSoundEffect = true;
+
+            // キャラクター名を空に設定
+            if (this.characterName) {
+                this.characterName.textContent = '';
+            }
+
+            // テキスト表示ロジックにジャンプ
+            this.handleSoundEffectDisplay(dialogue);
+            return;
+        }
+
         console.log(`💬 ${dialogue.dialogue_id}: ${dialogue.character_id} - "${dialogue.text.substring(0, 30)}..."`);
         if (dialogue.sprite_file) {
             console.log(`🎨 立ち絵: ${dialogue.sprite_file}`);
@@ -1294,15 +1375,49 @@ class DialogueScene {
                 console.log('🏆 勝利モード: stage6立ち絵を表示');
                 this.changeMisakiSpriteDirectly(stage6Sprite);
             }
-        } else if (dialogue.sprite_file && dialogue.sprite_file.trim() !== '') {
+        }
+
+        // 立ち絵処理：sprite_fileが指定されている場合
+        if (dialogue.sprite_file && dialogue.sprite_file.trim() !== '') {
             const spriteName = dialogue.sprite_file.trim();
             this.lastSpecifiedSprite = spriteName;
+            console.log(`🎨 立ち絵変更: ${dialogue.dialogue_id} -> ${spriteName}`);
             this.changeMisakiSpriteDirectly(spriteName);
+        } else {
+            // sound_effect以外では立ち絵を表示（ただしafterSoundEffectフラグ考慮）
+            if (!this.afterSoundEffect) {
+                const misakiDialogue = document.querySelector('#misaki-dialogue');
+                if (misakiDialogue) {
+                    misakiDialogue.style.removeProperty('display');
+                    misakiDialogue.style.removeProperty('visibility');
+                    misakiDialogue.style.removeProperty('opacity');
+                    misakiDialogue.style.display = 'block';
+                }
+            }
+
+            // 🚨 強制立ち絵表示（段階的デバッグ解決）
+            if (dialogue.dialogue_id === 'd002' && this.game.gameState.isSecretMode) {
+                const forcedSprite = 'secret/characters/misaki/misaki_secret_talk_visit.png';
+                console.log(`🚨 強制立ち絵表示: ${dialogue.dialogue_id} -> ${forcedSprite}`);
+                this.lastSpecifiedSprite = forcedSprite;
+                this.changeMisakiSpriteDirectly(forcedSprite);
+            }
+            else if (dialogue.dialogue_id === 'd012' && this.game.gameState.isSecretMode) {
+                const forcedSprite = 'secret/characters/misaki/misaki_secret_talk_greeting.png';
+                console.log(`🚨 強制立ち絵表示: ${dialogue.dialogue_id} -> ${forcedSprite}`);
+                this.lastSpecifiedSprite = forcedSprite;
+                this.changeMisakiSpriteDirectly(forcedSprite);
+            }
+            else if (dialogue.dialogue_id === 'd017' && this.game.gameState.isSecretMode) {
+                const forcedSprite = 'secret/characters/misaki/misaki_secret_talk_proposal.png';
+                console.log(`🚨 強制立ち絵表示: ${dialogue.dialogue_id} -> ${forcedSprite}`);
+                this.lastSpecifiedSprite = forcedSprite;
+                this.changeMisakiSpriteDirectly(forcedSprite);
+            }
+            else if (this.lastSpecifiedSprite !== '' && !this.afterSoundEffect) {
+                this.changeMisakiSpriteDirectly(this.lastSpecifiedSprite);
+            }
         }
-        else if (this.lastSpecifiedSprite !== '') {
-            this.changeMisakiSpriteDirectly(this.lastSpecifiedSprite);
-        }
-        
 
         // 効果音テキストの判定と特殊スタイル適用
         const isSoundEffect = this.isSoundEffectText(dialogue.text);
@@ -1346,6 +1461,41 @@ class DialogueScene {
                 }
             }, this.autoPlayDelay);
         }
+    }
+
+    /**
+     * sound_effect専用のテキスト表示処理（立ち絵処理なし）
+     * @param {Object} dialogue - 会話データ
+     */
+    handleSoundEffectDisplay(dialogue) {
+        console.log(`🎵 sound_effect専用表示: ${dialogue.dialogue_id} - "${dialogue.text}"`);
+
+        // 効果音テキストの判定と特殊スタイル適用
+        const isSoundEffect = this.isSoundEffectText(dialogue.text);
+        if (isSoundEffect) {
+            this.dialogueText.classList.add('sound-effect');
+        } else {
+            this.dialogueText.classList.remove('sound-effect');
+        }
+
+        // テキストアニメーション表示
+        this.animateText(dialogue.text);
+
+        // オートプレイ処理
+        if (this.autoPlay) {
+            // 既存のタイマーをクリア
+            if (this.autoPlayTimer) {
+                clearTimeout(this.autoPlayTimer);
+            }
+
+            this.autoPlayTimer = setTimeout(() => {
+                if (this.autoPlay && !this.isTextAnimating) {
+                    this.showNextDialogue();
+                }
+            }, this.autoPlayDelay);
+        }
+
+        console.log(`✅ sound_effect表示完了: ${dialogue.dialogue_id}`);
     }
 
     /**

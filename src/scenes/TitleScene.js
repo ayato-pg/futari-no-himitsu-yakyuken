@@ -1399,14 +1399,6 @@ class TitleScene {
             });
         }
 
-        // 秘密野球拳バトルボタン
-        const secretBattleBtn = document.getElementById('debug-secret-battle');
-        if (secretBattleBtn) {
-            secretBattleBtn.addEventListener('click', () => {
-                this.jumpToSecretBattle();
-            });
-        }
-
         // 秘密エンディングボタン
         const secretEndingBtn = document.getElementById('debug-secret-ending');
         if (secretEndingBtn) {
@@ -1415,11 +1407,11 @@ class TitleScene {
             });
         }
 
-        // 特別シーンボタン
+        // 秘めた想いモードの野球拳バトルボタン（旧：特別シーン）
         const secretSpecialBtn = document.getElementById('debug-secret-special');
         if (secretSpecialBtn) {
             secretSpecialBtn.addEventListener('click', () => {
-                this.jumpToSecretSpecial();
+                this.jumpToSecretBattle();
             });
         }
 
@@ -1904,7 +1896,15 @@ class TitleScene {
      */
     enableSecretMode() {
         this.game.gameState.isSecretMode = true;
-        this.game.csvLoader.isSecretMode = true;
+
+        // CSVLoaderの秘めた想いモードを有効化（データ再読み込みを含む）
+        if (this.game.csvLoader && this.game.csvLoader.setSecretMode) {
+            this.game.csvLoader.setSecretMode(true);
+        } else {
+            // フォールバック：プロパティを直接設定
+            this.game.csvLoader.isSecretMode = true;
+        }
+
         this.game.saveSystem.isSecretMode = true;
         this.updateModeIndicator();
         console.log('🔒 秘めた想いモードを有効化しました');

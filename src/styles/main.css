@@ -516,6 +516,7 @@ body {
     }
 }
 
+
 /* 衣装変更時のアニメーション（タイトル画面と同じ） */
 .misaki-costume-change {
     animation: misakiCostumeChange 1.2s ease-out forwards !important;

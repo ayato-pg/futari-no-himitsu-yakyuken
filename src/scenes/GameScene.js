@@ -103,8 +103,20 @@ class GameScene {
      * @param {number} playerWins - プレイヤーの勝利数 (0-5)
      */
     updateMisakiSprite(playerWins) {
+        // 秘めた想いモードチェック
+        const isSecretMode = this.game.gameState && this.game.gameState.isSecretMode;
+
         // 勝利数に応じた立ち絵マッピング（6段階）
-        const spriteMapping = {
+        const spriteMapping = isSecretMode ? {
+            // 秘めた想いモード用の立ち絵（暫定的に既存画像を使用）
+            0: 'assets/images/secret/characters/misaki/misaki_secret_suit.png',
+            1: 'assets/images/secret/characters/misaki/misaki_secret_suit.png',
+            2: 'assets/images/secret/characters/misaki/misaki_secret_normal.png',
+            3: 'assets/images/secret/characters/misaki/misaki_secret_normal.png',
+            4: 'assets/images/secret/characters/misaki/misaki_secret_normal.png',
+            5: 'assets/images/secret/characters/misaki/misaki_secret_normal.png'
+        } : {
+            // 通常モードの立ち絵
             0: 'assets/images/characters/misaki/misaki_game_stage1.png',  // 初期状態：自信満々
             1: 'assets/images/characters/misaki/misaki_game_stage2.png',  // 1勝：少し焦り始める
             2: 'assets/images/characters/misaki/misaki_game_stage3.png',  // 2勝：明確に焦る
@@ -364,25 +376,36 @@ class GameScene {
         
         console.log('ゲーム画面を表示');
         
-        // 🚨 強制的にCSVデータを再読み込み
+        // 🚨 強制的にCSVデータを再読み込み（秘めた想いモード対応）
         if (this.game.csvLoader) {
             console.log('🔄 CSVデータを強制再読み込み中...');
+
+            // 現在のモード表示
+            console.log(`🔍 現在のモード: ${this.game.gameState.isSecretMode ? '秘めた想いモード' : '通常モード'}`);
+            console.log(`🔍 CSVLoader モード: ${this.game.csvLoader.isSecretMode ? '秘めた想いモード' : '通常モード'}`);
+
             try {
                 await this.game.csvLoader.loadTable('dialogues');
                 console.log('✅ CSVデータ再読み込み完了');
-                
+
                 // 読み込み後の確認
                 const allData = this.game.csvLoader.getTableData('dialogues');
                 console.log(`📋 再読み込み後のダイアログ総数: ${allData.length}`);
-                
+
+                // 秘めた想いモード用データの確認
+                if (this.game.gameState.isSecretMode) {
+                    const secretData = allData.filter(d => d.dialogue_id && d.dialogue_id.startsWith('secret_'));
+                    console.log(`🔒 秘めた想いモード用データ数: ${secretData.length}`);
+                }
+
                 // intermediate_talk の確認
                 const intermediateCount = allData.filter(d => d.scene_type === 'intermediate_talk').length;
                 console.log(`🎭 intermediate_talk データ数: ${intermediateCount}`);
-                
-                // round_start の確認  
+
+                // round_start の確認
                 const roundStartCount = allData.filter(d => d.scene_type === 'round_start').length;
                 console.log(`🎯 round_start データ数: ${roundStartCount}`);
-                
+
             } catch (error) {
                 console.error('❌ CSV再読み込みエラー:', error);
             }
@@ -406,8 +429,10 @@ class GameScene {
             console.log('📋 Stage 1は既に解放済みです');
         }
         
-        // ゲームシーン専用BGMを再生
-        await this.game.audioManager.playSceneBGM('game', 1.5);
+        // ゲームシーン専用BGMを再生（モードに応じて切り替え）
+        const bgmScene = this.game.gameState.isSecretMode ? 'secret_game' : 'game';
+        console.log(`🎵 BGMシーン選択: ${this.game.gameState.isSecretMode ? '秘めた想いモード' : '通常モード'} → ${bgmScene}`);
+        await this.game.audioManager.playSceneBGM(bgmScene, 1.5);
         
         // 背景設定
         this.setupBackground();
@@ -622,13 +647,18 @@ class GameScene {
      */
     setupMisakiDisplay() {
         if (!this.misakiGameDisplay) return;
-        
-        // 現在のHPに基づいて衣装を設定
-        const costumeLevel = this.game.costumeSystem.calculateCostumeLevel(this.misakiHP);
-        const emotion = this.getEmotionByGameState();
-        
-        // 衣装システムを使用して表示を更新
-        this.game.costumeSystem.updateCostumeByHP(this.misakiHP, this.misakiGameDisplay, emotion);
+
+        // 秘めた想いモードの場合は専用の初期画像を設定
+        if (this.game.gameState.isSecretMode) {
+            this.updateMisakiSprite(this.playerWins || 0);
+        } else {
+            // 通常モード：現在のHPに基づいて衣装を設定
+            const costumeLevel = this.game.costumeSystem.calculateCostumeLevel(this.misakiHP);
+            const emotion = this.getEmotionByGameState();
+
+            // 衣装システムを使用して表示を更新
+            this.game.costumeSystem.updateCostumeByHP(this.misakiHP, this.misakiGameDisplay, emotion);
+        }
     }
 
     /**
@@ -931,7 +961,11 @@ class GameScene {
      * 導入セリフをタイプライター効果で表示（CSVから取得）
      */
     async setIntroDialogue() {
-        const targetText = this.getDialogueText('gi001') || 'じゃ、じゃあ始めるよ？…';
+        // getDialogueText()内で自動的にモード判定されるため、常にgi001を使用
+        const fallbackText = this.game.gameState.isSecretMode
+            ? '今夜は、この二人だけの時間だよ…'
+            : 'じゃ、じゃあ始めるよ？…';
+        const targetText = this.getDialogueText('gi001') || fallbackText;
         
         console.log('🎭 導入セリフをタイプライター効果で表示中...');
         
@@ -1064,7 +1098,11 @@ class GameScene {
             }
 
             // 「最初はグー！じゃんけん...」をタイプライター効果で表示
-            const gameStartText = this.getDialogueText('gs001') || '最初はグー！じゃんけん...';
+            // getDialogueText()内で自動的にモード判定されるため、常にgs001を使用
+            const startFallbackText = this.game.gameState.isSecretMode
+                ? 'さあ…いつもの遊びを始めようか…'
+                : '最初はグー！じゃんけん...';
+            const gameStartText = this.getDialogueText('gs001') || startFallbackText;
             await this.animateDialogueText(gameStartText);
             console.log('💬 タイプライター効果で「最初はグー！じゃんけん...」を表示完了');
             
@@ -2909,16 +2947,33 @@ class GameScene {
      */
     getDialogueText(dialogueId) {
         console.log(`🔍 getDialogueText() 呼び出し: dialogueId = "${dialogueId}"`);
-        
+
         if (!this.game.csvLoader) {
             console.error(`⚠️ CSVローダーが存在しません (dialogueId: ${dialogueId})`);
             return null;
         }
-        
+
         console.log(`🔍 CSVローダーが存在、データを検索中... (dialogueId: ${dialogueId})`);
-        
+
         try {
-            const dialogue = this.game.csvLoader.findData('dialogues', 'dialogue_id', dialogueId);
+            let dialogue = null;
+
+            // 秘めた想いモードの場合は secret_ プレフィックス付きを優先検索
+            if (this.game.gameState.isSecretMode && !dialogueId.startsWith('secret_')) {
+                const secretDialogueId = 'secret_' + dialogueId;
+                console.log(`🔒 秘めた想いモード優先検索: ${dialogueId} → ${secretDialogueId}`);
+                dialogue = this.game.csvLoader.findData('dialogues', 'dialogue_id', secretDialogueId);
+
+                if (dialogue) {
+                    console.log(`✅ 秘めた想いモード専用データを取得: ${secretDialogueId} = "${dialogue.text}"`);
+                    return dialogue.text;
+                } else {
+                    console.log(`🔍 秘めた想いモード専用データなし: ${secretDialogueId} → 通常データで再検索`);
+                }
+            }
+
+            // 通常検索または秘めた想いモード専用データが見つからない場合のフォールバック
+            dialogue = this.game.csvLoader.findData('dialogues', 'dialogue_id', dialogueId);
             
             if (dialogue) {
                 console.log(`✅ CSVからデータを取得成功: ${dialogueId} = "${dialogue.text}"`);
@@ -2953,7 +3008,7 @@ class GameScene {
      */
     getDialoguesByType(sceneType, triggerCondition) {
         if (!this.game.csvLoader) return [];
-        
+
         const dialogues = this.game.csvLoader.getTableData('dialogues');
         
         // デバッグログ追加
@@ -2962,16 +3017,38 @@ class GameScene {
         console.log(`  - triggerCondition: "${triggerCondition}"`);
         console.log(`  - 総データ数: ${dialogues.length}`);
         
-        const results = dialogues.filter(dialogue => {
-            const sceneMatch = dialogue.scene_type === sceneType;
-            const triggerMatch = dialogue.trigger_condition === triggerCondition;
-            
-            // マッチしたデータをログに出力
-            if (sceneMatch && triggerMatch) {
-                console.log(`  ✅ マッチ: ${dialogue.dialogue_id} - "${dialogue.text}"`);
+        let results = [];
+
+        // 秘めた想いモードの場合は secret_ プレフィックス付きを優先検索
+        if (this.game.gameState.isSecretMode && !sceneType.startsWith('secret_')) {
+            const secretSceneType = 'secret_' + sceneType;
+            console.log(`🔒 秘めた想いモード優先検索: ${sceneType} → ${secretSceneType}`);
+
+            results = dialogues.filter(dialogue => {
+                const sceneMatch = dialogue.scene_type === secretSceneType;
+                const triggerMatch = dialogue.trigger_condition === triggerCondition;
+                return sceneMatch && triggerMatch;
+            });
+
+            if (results.length > 0) {
+                console.log(`✅ 秘めた想いモード専用データを取得: ${results.length}件`);
+            } else {
+                console.log(`🔍 秘めた想いモード専用データなし: ${secretSceneType} → 通常データで再検索`);
             }
-            
-            return sceneMatch && triggerMatch;
+        }
+
+        // 通常検索または秘めた想いモード専用データが見つからない場合のフォールバック
+        if (results.length === 0) {
+            results = dialogues.filter(dialogue => {
+                const sceneMatch = dialogue.scene_type === sceneType;
+                const triggerMatch = dialogue.trigger_condition === triggerCondition;
+                return sceneMatch && triggerMatch;
+            });
+        }
+
+        // デバッグ用：マッチしたデータをログに出力
+        results.forEach(dialogue => {
+            console.log(`  ✅ マッチ: ${dialogue.dialogue_id} - "${dialogue.text}"`);
         });
         
         console.log(`🔍 検索結果: ${results.length}件`);
