@@ -30,6 +30,9 @@ class DialogueScene {
         // sound_effect後フラグ（立ち絵フラッシュ防止）
         this.afterSoundEffect = false;
 
+        // game_startフラグ（クリック待機用）
+        this.isGameStartPending = false;
+
         // DOM要素への参照
         this.dialogueScreen = null;
         this.misakiDisplay = null;
@@ -1429,14 +1432,11 @@ class DialogueScene {
 
         // ゲーム開始トリガーの検出
         if (dialogue.voice_file === 'game_start') {
-            console.log(`🎮 【ゲーム開始トリガー検出】${dialogue.dialogue_id}: game_start`);
-            // テキストを表示してから少し待ってゲームを開始
+            console.log(`🎮 【ゲーム開始トリガー検出】${dialogue.dialogue_id}: game_start - クリック待機モード`);
+            // フラグを設定してクリック待機
+            this.isGameStartPending = true;
+            // テキストだけ表示（自動遷移はしない）
             this.animateText(dialogue.text);
-            setTimeout(() => {
-                console.log('🎯 ゲーム画面に遷移します');
-                this.hide();
-                this.game.startBattlePhase();
-            }, 1500); // 1.5秒後にゲーム開始
             return; // 以降の処理をスキップ
         }
         
@@ -1547,7 +1547,7 @@ class DialogueScene {
      */
     onDialogueClick() {
         console.log(`🖱️ 会話ボックスクリック - isTextAnimating:${this.isTextAnimating}, currentIndex:${this.currentDialogueIndex}`);
-        
+
         if (this.isTextAnimating) {
             // テキストアニメーション中なら完了
             console.log('⚡ テキストアニメーション中 - 即座に完了');
@@ -1555,11 +1555,20 @@ class DialogueScene {
             this.game.audioManager.playSE('se_click.mp3', 0.5);
             this.completeTextAnimation();
         } else {
-            // 次の会話へ
-            console.log('➡️ 次の会話に進む');
-            // トーク進行時のクリック音のみ復活
-            this.game.audioManager.playSE('se_click.mp3', 0.6);
-            this.showNextDialogue();
+            // game_startフラグチェック
+            if (this.isGameStartPending) {
+                console.log('🎯 game_startペンディング - バトル画面に遷移');
+                this.isGameStartPending = false; // フラグをリセット
+                this.game.audioManager.playSE('se_click.mp3', 0.6);
+                this.hide();
+                this.game.startBattlePhase();
+            } else {
+                // 通常の次の会話へ
+                console.log('➡️ 次の会話に進む');
+                // トーク進行時のクリック音のみ復活
+                this.game.audioManager.playSE('se_click.mp3', 0.6);
+                this.showNextDialogue();
+            }
         }
     }
 
