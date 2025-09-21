@@ -1771,9 +1771,10 @@ class TitleScene {
     jumpToSecretBattle() {
         console.log('🔧 [DEBUG] 秘密野球拳バトルへジャンプ');
 
-        // 秘めた想いモードに設定
-        this.enableSecretMode();
+        // まずゲーム状態をリセット（isSecretModeもリセットされる）
         this.resetGameState();
+        // その後に秘めた想いモードに設定（resetの後に設定する順序が重要）
+        this.enableSecretMode();
 
         // バトル用状態設定
         if (this.game.scenes.game) {
@@ -1797,9 +1798,10 @@ class TitleScene {
     jumpToSecretEnding() {
         console.log('🔧 [DEBUG] 秘密エンディングへジャンプ');
 
-        // 秘めた想いモードに設定
-        this.enableSecretMode();
+        // まずゲーム状態をリセット（isSecretModeもリセットされる）
         this.resetGameState();
+        // その後に秘めた想いモードに設定（resetの後に設定する順序が重要）
+        this.enableSecretMode();
 
         // 勝利状態を設定
         if (this.game.scenes.game) {
