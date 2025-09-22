@@ -77,14 +77,21 @@ class CSVLoader {
     /**
      * 秘めた想いモードを設定
      * @param {boolean} isSecret - 秘めた想いモードかどうか
+     * @returns {Promise<boolean>} 読み込みが成功したかどうか
      */
-    setSecretMode(isSecret) {
+    async setSecretMode(isSecret) {
+        console.log(`[デバッグ] CSVLoader.setSecretMode: 呼び出されました。引数 isSecret = ${isSecret}`);
+        if (this.isSecretMode === isSecret) {
+            console.log(`[デバッグ] CSVLoader.setSecretMode: モード変更なし。処理をスキップします。`);
+            return true;
+        }
+        console.log(`[デバッグ] CSVLoader.setSecretMode: 変更前のフラグは isSecretMode = ${this.isSecretMode}`);
         console.log(`CSVLoader: モード切り替え - ${isSecret ? '秘めた想いモード' : '通常モード'}`);
         this.isSecretMode = isSecret;
 
         // モード切り替え時にデータをリセットして再読み込み
         this.csvData = {};
-        this.loadAllCSV(true);
+        return await this.loadAllCSV(true); // Promiseを返す
     }
 
     /**
@@ -216,6 +223,21 @@ class CSVLoader {
             const parsedData = this.parseCSV(csvText);
 
             this.csvData[tableName] = parsedData;
+
+            // dialoguesテーブルの詳細デバッグ
+            if (tableName === 'dialogues') {
+                console.log(`[デバッグ] CSVLoader.loadCSV: '${tableName}' テーブルが更新されました。`);
+                console.log(`[デバッグ] 読み込まれたファイルパス: ${filePath}`);
+                console.log(`[デバッグ] isSecretModeフラグ: ${this.isSecretMode}`);
+                if (parsedData.length > 0) {
+                    console.log('[デバッグ] dialoguesテーブルの最初の行:', parsedData[0]);
+                    console.log(`[デバッグ] 最初の台詞: ${parsedData[0].text}`);
+                    console.log(`[デバッグ] 最初のdialogue_id: ${parsedData[0].dialogue_id}`);
+                } else {
+                    console.log('[デバッグ] dialoguesテーブルは空です。');
+                }
+            }
+
             console.log(`✓ ${tableName} を読み込みました (${parsedData.length} 行)`);
             console.log(`📂 現在のテーブル数: ${Object.keys(this.csvData).length}`);
             console.log(`🗂️ テーブルリスト: ${Object.keys(this.csvData).join(', ')}`);

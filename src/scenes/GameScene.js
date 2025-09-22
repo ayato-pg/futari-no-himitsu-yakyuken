@@ -108,13 +108,13 @@ class GameScene {
 
         // 勝利数に応じた立ち絵マッピング（6段階）
         const spriteMapping = isSecretMode ? {
-            // 秘めた想いモード用の立ち絵（暫定的に既存画像を使用）
-            0: 'assets/images/secret/characters/misaki/misaki_secret_suit.png',
-            1: 'assets/images/secret/characters/misaki/misaki_secret_suit.png',
-            2: 'assets/images/secret/characters/misaki/misaki_secret_normal.png',
-            3: 'assets/images/secret/characters/misaki/misaki_secret_normal.png',
-            4: 'assets/images/secret/characters/misaki/misaki_secret_normal.png',
-            5: 'assets/images/secret/characters/misaki/misaki_secret_normal.png'
+            // 秘めた想いモード用の立ち絵（6段階）
+            0: 'assets/images/secret/characters/misaki/misaki_secret_stage1.png',
+            1: 'assets/images/secret/characters/misaki/misaki_secret_stage2.png',
+            2: 'assets/images/secret/characters/misaki/misaki_secret_stage3.png',
+            3: 'assets/images/secret/characters/misaki/misaki_secret_stage4.png',
+            4: 'assets/images/secret/characters/misaki/misaki_secret_stage5.png',
+            5: 'assets/images/secret/characters/misaki/misaki_secret_stage6.png'
         } : {
             // 通常モードの立ち絵
             0: 'assets/images/characters/misaki/misaki_game_stage1.png',  // 初期状態：自信満々
@@ -381,11 +381,23 @@ class GameScene {
             console.log('🔄 CSVデータを強制再読み込み中...');
 
             // 現在のモード表示
-            console.log(`🔍 現在のモード: ${this.game.gameState.isSecretMode ? '秘めた想いモード' : '通常モード'}`);
-            console.log(`🔍 CSVLoader モード: ${this.game.csvLoader.isSecretMode ? '秘めた想いモード' : '通常モード'}`);
+            const isSecretMode = this.game.gameState && this.game.gameState.isSecretMode;
+            console.log(`🔍 ゲーム状態モード: ${isSecretMode ? '秘めた想いモード' : '通常モード'}`);
+            console.log(`🔍 CSVLoader現在モード: ${this.game.csvLoader.isSecretMode ? '秘めた想いモード' : '通常モード'}`);
 
+            // 🔑 重要: CSVLoaderのモードを確実に設定し、完了を待つ
+            console.log(`🔧 CSVLoaderのモードを非同期で設定します (isSecretMode: ${isSecretMode})...`);
+
+            // setSecretModeがPromiseを返すため、awaitで完了を待つ
+            const loadResult = await this.game.csvLoader.setSecretMode(isSecretMode);
+
+            console.log(`[デバッグ] GameScene.show: await setSecretMode(${isSecretMode}) が完了しました。結果: ${loadResult}`);
+            console.log(`[デバッグ] GameScene.show: CSVLoaderのフラグは現在 isSecretMode = ${this.game.csvLoader.isSecretMode} です。`);
+            console.log(`✅ CSVLoaderのデータ再読み込みが完了しました。`);
+
+            // setSecretModeですべてのデータがリロードされるため、個別のloadTableは不要
             try {
-                await this.game.csvLoader.loadTable('dialogues');
+                console.log('✅ CSVデータはsetSecretModeによりリロード済みです。');
                 console.log('✅ CSVデータ再読み込み完了');
 
                 // 読み込み後の確認
@@ -1198,17 +1210,22 @@ class GameScene {
     getRoundStartMessage() {
         // CSVからラウンドごとのトークを取得
         const roundKey = `round_${this.currentRound}`;
-        
+
         console.log(`🔍 ラウンド開始トーク検索: scene_type=round_start, trigger_condition=${roundKey}`);
-        
+
         // CSVローダーが存在することを確認
         if (!this.game.csvLoader) {
             console.error('❌ CSVローダーが存在しません');
             return 'CSVローダーエラー';
         }
-        
-        // round_start系のデータのみ抽出してデバッグ表示
+
+        // dialoguesテーブルの現在状態をデバッグ
         const allDialogues = this.game.csvLoader.getTableData('dialogues');
+        const firstDialogue = allDialogues.length > 0 ? allDialogues[0] : {dialogue_id: 'データなし'};
+        console.log(`[デバッグ] getRoundStartMessage: 現在のdialoguesテーブルの最初のID: ${firstDialogue.dialogue_id}`);
+        console.log(`[デバッグ] getRoundStartMessage: 現在のCSVLoaderのisSecretMode: ${this.game.csvLoader.isSecretMode}`);
+
+        // round_start系のデータのみ抽出してデバッグ表示
         const allRoundStart = allDialogues.filter(d => d.scene_type === 'round_start');
         console.log(`🎭 round_start系データ数: ${allRoundStart.length}`);
         allRoundStart.forEach(d => {
