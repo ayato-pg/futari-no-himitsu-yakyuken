@@ -8,6 +8,8 @@ class CSVLoader {
     constructor() {
         this.csvData = {};
         this.isSecretMode = false; // 秘めた想いモードフラグ
+
+        // 通常モード用CSVファイルリスト
         this.csvFiles = [
             'scenes.csv',
             'characters.csv',
@@ -35,6 +37,18 @@ class CSVLoader {
             'gallery_images.csv',
             'gallery_images_keys.csv'
         ];
+
+        // 秘めた想いモード専用ファイル（これらが存在する場合のみ読み込み）
+        this.secretOnlyFiles = [
+            'secret_scenes.csv',
+            'secret_dialogues.csv'
+        ];
+
+        // 秘めた想いモードで置き換えられるファイルマッピング
+        this.secretReplacements = {
+            'scenes.csv': 'secret_scenes.csv',
+            'dialogues.csv': 'secret_dialogues.csv'
+        };
     }
 
     /**
@@ -95,6 +109,53 @@ class CSVLoader {
     }
 
     /**
+     * 現在のモードに応じた読み込み対象ファイルリストを生成
+     * @returns {Array<string>} 読み込み対象のCSVファイル名リスト
+     */
+    getActiveFileList() {
+        console.log(`🔍 [DEBUG] getActiveFileList() 呼び出し - isSecretMode: ${this.isSecretMode}`);
+
+        if (this.isSecretMode) {
+            console.log('🔒 秘めた想いモード用ファイルリストを生成中...');
+            console.log(`🔍 [DEBUG] secretReplacements:`, this.secretReplacements);
+            console.log(`🔍 [DEBUG] secretOnlyFiles:`, this.secretOnlyFiles);
+
+            const activeFiles = [];
+
+            // 通常ファイルを基準に、secret版があれば置き換え、なければ通常版を使用
+            for (const file of this.csvFiles) {
+                if (this.secretReplacements[file]) {
+                    // secret版が定義されている場合は置き換え
+                    activeFiles.push(this.secretReplacements[file]);
+                    console.log(`🔄 ファイル置き換え: ${file} → ${this.secretReplacements[file]}`);
+                } else {
+                    // secret版が定義されていない場合は通常版を使用
+                    activeFiles.push(file);
+                    console.log(`📂 通常ファイル使用: ${file}`);
+                }
+            }
+
+            // secret専用ファイルも追加（重複チェック）
+            for (const secretFile of this.secretOnlyFiles) {
+                if (!activeFiles.includes(secretFile)) {
+                    activeFiles.push(secretFile);
+                    console.log(`➕ 秘密専用ファイル追加: ${secretFile}`);
+                } else {
+                    console.log(`⚠️ 重複スキップ: ${secretFile}`);
+                }
+            }
+
+            console.log(`📋 秘めた想いモード読み込み対象ファイル数: ${activeFiles.length}`);
+            console.log(`🔍 [DEBUG] 最終的な activeFiles:`, activeFiles);
+            return activeFiles;
+        } else {
+            console.log('📂 通常モード用ファイルリストを使用');
+            console.log(`🔍 [DEBUG] 通常モードファイル数: ${this.csvFiles.length}`);
+            return [...this.csvFiles]; // 配列のコピーを返す
+        }
+    }
+
+    /**
      * すべてのCSVファイルを非同期で読み込み
      * @param {boolean} forceReload - 強制リロード
      */
@@ -108,8 +169,11 @@ class CSVLoader {
         } else {
             console.log('📂 CSVファイルの読み込みを開始します...');
         }
-        
-        const loadPromises = this.csvFiles.map(filename => 
+
+        // モードに応じたファイルリストを取得
+        const activeFiles = this.getActiveFileList();
+
+        const loadPromises = activeFiles.map(filename =>
             this.loadCSV(filename)
         );
 
@@ -137,17 +201,24 @@ class CSVLoader {
             filePath = customPath;
             tableName = filenameOrTableName;
         } else {
-            // 従来の方式：ファイル名のみ指定
-            // 秘めた想いモードの場合、secret_プレフィックスを追加
+            // 新方式：ファイル名は既に決定済み（getActiveFileList()による）
             let filename = filenameOrTableName;
-            if (this.isSecretMode && !filename.startsWith('secret_')) {
-                filename = `secret_${filename}`;
-                console.log(`🔒 秘めた想いモード: ${filenameOrTableName} → ${filename}`);
-            }
             filePath = `./assets/data/csv/${filename}`;
-            // テーブル名は元のファイル名を基準とする（secret_プレフィックスなし）
-            tableName = filenameOrTableName.replace('.csv', '');
-            console.log(`📊 CSVロード: ファイル=${filename}, テーブル名=${tableName}`);
+
+            // テーブル名の生成：secret_プレフィックスを除いた基本名を使用
+            if (filename.startsWith('secret_')) {
+                // secret_dialogues.csv → dialogues
+                tableName = filename.replace('secret_', '').replace('.csv', '');
+                console.log(`🔒 [DEBUG] 秘密ファイル: ${filename} → テーブル名: ${tableName}`);
+            } else {
+                // 通常ファイル: dialogues.csv → dialogues
+                tableName = filename.replace('.csv', '');
+                console.log(`📂 [DEBUG] 通常ファイル: ${filename} → テーブル名: ${tableName}`);
+            }
+
+            console.log(`🔍 [DEBUG] 最終ファイルパス: ${filePath}`);
+            console.log(`🔍 [DEBUG] 最終テーブル名: ${tableName}`);
+            console.log(`🔍 [DEBUG] 現在のisSecretModeフラグ: ${this.isSecretMode}`);
         }
         
         try {
@@ -222,7 +293,12 @@ class CSVLoader {
             // CSVデータをパース
             const parsedData = this.parseCSV(csvText);
 
+            console.log(`🔍 [DEBUG] CSVパース完了 - ファイル: ${filename}, テーブル: ${tableName}, 行数: ${parsedData.length}`);
+
             this.csvData[tableName] = parsedData;
+
+            console.log(`💾 [DEBUG] csvData[${tableName}] に保存完了`);
+            console.log(`🔍 [DEBUG] 現在のcsvDataキー:`, Object.keys(this.csvData));
 
             // dialoguesテーブルの詳細デバッグ
             if (tableName === 'dialogues') {
@@ -378,15 +454,34 @@ class CSVLoader {
 
         // 秘めた想いモード用の追加データ
         const secretDialogues = this.isSecretMode ? [
-            { dialogue_id: 'secret_gi001', scene_type: 'game_intro', trigger_condition: 'round_1', character: 'misaki', text: '今夜は、この二人だけの時間だよ…', priority: '1', emotion: 'smile' },
-            { dialogue_id: 'secret_gs001', scene_type: 'game_start', trigger_condition: 'game_start', character: 'misaki', text: 'さあ…いつもの遊びを始めようか…', priority: '1', emotion: 'teasing' },
-            { dialogue_id: 'secret_jp001', scene_type: 'janken', trigger_condition: 'janken_start', character: 'misaki', text: '行くよ…', priority: '1', emotion: 'focused' },
-            { dialogue_id: 'secret_mr010', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'ふふ…私の勝ちね♪', priority: '1', emotion: 'happy' },
-            { dialogue_id: 'secret_vw001', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_1', character: 'misaki', text: 'あ…もう負けちゃった…こんなの恥ずかしい…', priority: '1', emotion: 'surprised' },
-            { dialogue_id: 'secret_vw002', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_2', character: 'misaki', text: 'ちょっと…本気だったのに…もう見ないで…', priority: '1', emotion: 'shocked' },
-            { dialogue_id: 'secret_vw003', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_3', character: 'misaki', text: 'もう…こんなにまで…でも約束だから…', priority: '1', emotion: 'disbelief' },
-            { dialogue_id: 'secret_vw004', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_4', character: 'misaki', text: '恥ずかしい…でも…あなたになら…', priority: '1', emotion: 'panic' },
-            { dialogue_id: 'secret_vw005', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_5', character: 'misaki', text: 'あなたの前では…隠し事なんてできないね…', priority: '1', emotion: 'defeated' }
+            { dialogue_id: 'gi001', scene_type: 'game_intro', trigger_condition: 'round_1', character: 'misaki', text: '今日は私が勝つからねー！！…じゃあいくよ？', priority: '1', emotion: 'intimate', sprite_file: 'secret/characters/misaki/misaki_secret_intimate.png' },
+            { dialogue_id: 'gs001', scene_type: 'game_start', trigger_condition: 'game_start', character: 'misaki', text: '…最初はグー！じゃんけん…', priority: '1', emotion: 'gentle', sprite_file: 'secret/characters/misaki/misaki_secret_gentle.png' },
+            { dialogue_id: 'jp001', scene_type: 'janken_pon', trigger_condition: 'janken_pon', character: 'misaki', text: 'ぽん！', priority: '1', emotion: 'focused', sprite_file: 'secret/characters/misaki/misaki_secret_focused.png' },
+            { dialogue_id: 'mr010', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'やったぁ！…途中でやめるのはなしだよ？', priority: '1', emotion: 'affectionate', sprite_file: 'secret/characters/misaki/misaki_secret_affectionate.png' },
+            { dialogue_id: 'mr011', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'えへへ…私の勝ち♪途中でやめるのはだめだよ？', priority: '1', emotion: 'teasing', sprite_file: 'secret/characters/misaki/misaki_secret_teasing.png' },
+            { dialogue_id: 'mr012', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: '勝った～！このペースでいけば…', priority: '1', emotion: 'playful', sprite_file: 'secret/characters/misaki/misaki_secret_playful.png' },
+            { dialogue_id: 'mr013', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'か、勝てた…。ドキドキしちゃう…', priority: '1', emotion: 'confident', sprite_file: 'secret/characters/misaki/misaki_secret_confident.png' },
+            { dialogue_id: 'mr014', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'また勝っちゃった♪…まだ続けてよね？', priority: '1', emotion: 'relieved', sprite_file: 'secret/characters/misaki/misaki_secret_relieved.png' },
+            { dialogue_id: 'mr015', scene_type: 'reaction', trigger_condition: 'misaki_win_hp_high', character: 'misaki', text: 'やったぁ！…やっぱり弱いなぁ♪', priority: '1', emotion: 'hopeful', sprite_file: 'secret/characters/misaki/misaki_secret_hopeful.png' },
+            { dialogue_id: 'mr019', scene_type: 'reaction', trigger_condition: 'draw', character: 'misaki', text: 'あれ…あいこだ…', priority: '1', emotion: 'understanding', sprite_file: 'secret/characters/misaki/misaki_secret_understanding.png' },
+            { dialogue_id: 'mr020', scene_type: 'reaction', trigger_condition: 'draw', character: 'misaki', text: 'わざと、あいこにしてる…？', priority: '1', emotion: 'determined', sprite_file: 'secret/characters/misaki/misaki_secret_determined.png' },
+            { dialogue_id: 'mr021', scene_type: 'reaction', trigger_condition: 'draw', character: 'misaki', text: 'またあいこ…もう一回！', priority: '1', emotion: 'wondering', sprite_file: 'secret/characters/misaki/misaki_secret_wondering.png' },
+            { dialogue_id: 'mr022', scene_type: 'reaction', trigger_condition: 'draw', character: 'misaki', text: 'も、もう一回やるよ！', priority: '1', emotion: 'amused', sprite_file: 'secret/characters/misaki/misaki_secret_amused.png' },
+            { dialogue_id: 'nr001', scene_type: 'next_round', trigger_condition: 'prepare_next', character: 'misaki', text: '最初はグー！じゃんけん...', priority: '1', emotion: 'determined', sprite_file: 'secret/characters/misaki/misaki_secret_determined.png' },
+            { dialogue_id: 'vw001', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_1', character: 'misaki', text: 'あれ…負けちゃった…でも、まだ始まったばかりだからね！', priority: '1', emotion: 'composed', sprite_file: 'secret/characters/misaki/misaki_secret_suit.png' },
+            { dialogue_id: 'vw002', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_2', character: 'misaki', text: 'ほ…本気じゃん…でも、次は勝つから！', priority: '1', emotion: 'motivated', sprite_file: 'secret/characters/misaki/misaki_secret_jacket_off.png' },
+            { dialogue_id: 'vw003', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_3', character: 'misaki', text: 'こんなはずじゃ…、恥ずかしい…。', priority: '1', emotion: 'conflicted', sprite_file: 'secret/characters/misaki/misaki_secret_cardigan_off.png' },
+            { dialogue_id: 'vw004', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_4', character: 'misaki', text: 'や、やばい…。ちょっと…見すぎだよ…', priority: '1', emotion: 'vulnerable', sprite_file: 'secret/characters/misaki/misaki_secret_inner.png' },
+            { dialogue_id: 'vw005', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_5', character: 'misaki', text: 'あ、あぁ…負けちゃった…。ほんとに野球拳だと無敵なんじゃない…？', priority: '1', emotion: 'exposed', sprite_file: 'secret/characters/misaki/misaki_secret_finale.png' },
+            { dialogue_id: 'it001', scene_type: 'intermediate_talk', trigger_condition: 'round_2', character: 'misaki', text: '…いくよ？…準備はいい？', priority: '1', emotion: 'determined_intimate', sprite_file: 'secret/characters/misaki/misaki_secret_determined.png' },
+            { dialogue_id: 'it002', scene_type: 'intermediate_talk', trigger_condition: 'round_3', character: 'misaki', text: '緊張する…始めるよ？', priority: '1', emotion: 'inviting_shy', sprite_file: 'secret/characters/misaki/misaki_secret_inviting.png' },
+            { dialogue_id: 'it003', scene_type: 'intermediate_talk', trigger_condition: 'round_4', character: 'misaki', text: '二人きりだとドキドキするね…いくよ？', priority: '1', emotion: 'nervous_happy', sprite_file: 'secret/characters/misaki/misaki_secret_nervous.png' },
+            { dialogue_id: 'it004', scene_type: 'intermediate_talk', trigger_condition: 'round_5', character: 'misaki', text: '本気でいくからね！', priority: '1', emotion: 'wistful', sprite_file: 'secret/characters/misaki/misaki_secret_wistful.png' },
+            { dialogue_id: 'it005', scene_type: 'intermediate_talk', trigger_condition: 'round_6', character: 'misaki', text: 'え、えーと…始めるね…', priority: '1', emotion: 'dreamy', sprite_file: 'secret/characters/misaki/misaki_secret_dreamy.png' },
+            { dialogue_id: 'it006', scene_type: 'intermediate_talk', trigger_condition: 'round_7', character: 'misaki', text: 'そ、そろそろ本気出さなきゃ…', priority: '1', emotion: 'bittersweet', sprite_file: 'secret/characters/misaki/misaki_secret_bittersweet.png' },
+            { dialogue_id: 'it007', scene_type: 'intermediate_talk', trigger_condition: 'round_8', character: 'misaki', text: '油断したら私が勝っちゃうからねー！！', priority: '1', emotion: 'sentimental', sprite_file: 'secret/characters/misaki/misaki_secret_sentimental.png' },
+            { dialogue_id: 'it008', scene_type: 'intermediate_talk', trigger_condition: 'round_9', character: 'misaki', text: 'い、いくよ…！', priority: '1', emotion: 'climactic', sprite_file: 'secret/characters/misaki/misaki_secret_climactic.png' },
+            { dialogue_id: 'ak001', scene_type: 'aiko_continue', trigger_condition: 'aiko_de', character: 'misaki', text: 'あいこで…', priority: '1', emotion: 'focused', sprite_file: 'secret/characters/misaki/misaki_secret_focused.png' }
         ] : [];
 
         const fallbackData = {
@@ -399,8 +494,11 @@ class CSVLoader {
                 { character_id: 'misaki', name: '美咲', default_image: 'misaki_adult_normal.png', age: '25' },
                 { character_id: 'player', name: 'あなた', age: '22' }
             ],
-            dialogues: [
-                // 通常モード共通のダイアログ
+            dialogues: this.isSecretMode ? [
+                // 🔒 秘めた想いモード時：新しいデータのみ（古いデータは完全除外）
+                ...secretDialogues
+            ] : [
+                // 通常モード時：従来の通常データのみ
                 { dialogue_id: 'gi001', scene_type: 'game_intro', trigger_condition: 'round_1', character: 'misaki', text: 'じゃ、じゃあ始めるよ？…', priority: '1', emotion: 'smile' },
                 { dialogue_id: 'gs001', scene_type: 'game_start', trigger_condition: 'game_start', character: 'misaki', text: '最初はグー！じゃんけん...', priority: '1', emotion: 'teasing' },
                 { dialogue_id: 'jp001', scene_type: 'janken', trigger_condition: 'janken_start', character: 'misaki', text: 'ぽん！', priority: '1', emotion: 'focused' },
@@ -415,9 +513,7 @@ class CSVLoader {
                 { dialogue_id: 'vw002', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_2', character: 'misaki', text: 'うっ…いつもすぐ負けるくせにぃ…。まぐれだよね？', priority: '1', emotion: 'shocked' },
                 { dialogue_id: 'vw003', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_3', character: 'misaki', text: 'こ、こんなはずじゃ…恥ずかしい…。ここから先は…もうやめておかない？…', priority: '1', emotion: 'disbelief' },
                 { dialogue_id: 'vw004', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_4', character: 'misaki', text: 'や、やばい…。。。隠してもいいでしょ！！早く次はじめるよ！ジロジロ見ないの！', priority: '1', emotion: 'panic' },
-                { dialogue_id: 'vw005', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_5', character: 'misaki', text: 'あ、あぁ…負けちゃった…。そんなに見ないでよ…。野球拳だと強すぎない…？', priority: '1', emotion: 'defeated' },
-                // 秘めた想いモード専用データを結合
-                ...secretDialogues
+                { dialogue_id: 'vw005', scene_type: 'victory_sprite', trigger_condition: 'player_win_count_5', character: 'misaki', text: 'あ、あぁ…負けちゃった…。そんなに見ないでよ…。野球拳だと強すぎない…？', priority: '1', emotion: 'defeated' }
             ],
             misaki_costumes: [
                 { level: '1', costume_image: 'misaki_suit.png', costume_name: 'OLスーツ', hp_required: '5' },

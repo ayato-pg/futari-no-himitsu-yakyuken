@@ -393,6 +393,23 @@ class GameScene {
 
             console.log(`[デバッグ] GameScene.show: await setSecretMode(${isSecretMode}) が完了しました。結果: ${loadResult}`);
             console.log(`[デバッグ] GameScene.show: CSVLoaderのフラグは現在 isSecretMode = ${this.game.csvLoader.isSecretMode} です。`);
+
+            // 🔒 秘めた想いモードの場合、追加でsecret_dialogues.csvを強制読み込み
+            if (isSecretMode) {
+                console.log(`🔒 [FORCE] 秘めた想いモード：secret_dialogues.csvを強制読み込み中...`);
+                try {
+                    await this.game.csvLoader.loadCSV('secret_dialogues.csv');
+                    console.log(`✅ [FORCE] secret_dialogues.csv強制読み込み完了`);
+
+                    // 読み込み後の確認
+                    const dialogues = this.game.csvLoader.getTableData('dialogues');
+                    const gi001 = dialogues.find(d => d.dialogue_id === 'gi001');
+                    console.log(`🔍 [FORCE] gi001確認 - text: "${gi001?.text}"`);
+                } catch (error) {
+                    console.error(`❌ [FORCE] secret_dialogues.csv強制読み込み失敗:`, error);
+                }
+            }
+
             console.log(`✅ CSVLoaderのデータ再読み込みが完了しました。`);
 
             // setSecretModeですべてのデータがリロードされるため、個別のloadTableは不要
@@ -469,6 +486,33 @@ class GameScene {
         // イントロダイアログを表示
         if (this.gameIntro) {
             this.gameIntro.classList.remove('hidden');
+
+            // 🔒 秘めた想いモードの場合、古いデータを削除してsecret_dialogues.csvを再読み込み
+            if (this.game.gameState.isSecretMode) {
+                console.log(`🔒 [CRITICAL] setIntroDialogue直前：古いdialoguesデータを削除`);
+
+                try {
+                    // 古いdialoguesテーブルを削除
+                    if (this.game.csvLoader && this.game.csvLoader.csvData) {
+                        delete this.game.csvLoader.csvData['dialogues'];
+                        console.log(`🗑️ [CRITICAL] 古いdialoguesテーブルを削除しました`);
+                    }
+
+                    // secret_dialogues.csvを強制読み込み
+                    console.log(`🔒 [CRITICAL] secret_dialogues.csvを強制読み込み中...`);
+                    await this.game.csvLoader.loadCSV('secret_dialogues.csv');
+                    console.log(`✅ [CRITICAL] secret_dialogues.csv読み込み完了`);
+
+                    // 再読み込み後の確認
+                    const dialogues = this.game.csvLoader.getTableData('dialogues');
+                    const gi001 = dialogues.find(d => d.dialogue_id === 'gi001');
+                    console.log(`🔍 [CRITICAL] 新しいdialoguesテーブル件数: ${dialogues.length}`);
+                    console.log(`🔍 [CRITICAL] gi001確認: "${gi001?.text}"`);
+                } catch (error) {
+                    console.error(`❌ [CRITICAL] データクリア・再読み込み失敗:`, error);
+                }
+            }
+
             // 導入セリフをタイプライター効果で表示
             await this.setIntroDialogue();
         }
@@ -974,10 +1018,18 @@ class GameScene {
      */
     async setIntroDialogue() {
         // getDialogueText()内で自動的にモード判定されるため、常にgi001を使用
+        console.log(`🔍 [DEBUG] setIntroDialogue: 秘めた想いモード=${this.game.gameState.isSecretMode}`);
+
+        let targetText;
+
+        // 🚀 統一ロジック：秘めた想いモードでも通常モードでもgetDialogueText()を使用
+        // Nuclear optionにより秘めた想いモードでは自動的に適切なテキストが返される
+        const dialogueText = this.getDialogueText('gi001');
         const fallbackText = this.game.gameState.isSecretMode
-            ? '今夜は、この二人だけの時間だよ…'
+            ? 'さあ…いつもの遊びを始めようか…'
             : 'じゃ、じゃあ始めるよ？…';
-        const targetText = this.getDialogueText('gi001') || fallbackText;
+        targetText = dialogueText || fallbackText;
+        console.log(`🎯 [UNIFIED] モード統一処理: isSecretMode=${this.game.gameState.isSecretMode}, text="${targetText}"`);
         
         console.log('🎭 導入セリフをタイプライター効果で表示中...');
         
@@ -1924,26 +1976,32 @@ class GameScene {
                 this.waitForJanken(async () => {
                     console.log('🎯 reactionトーク後の進めるボタンクリック');
                     
-                    // 🚨 統一処理：すべての結果でintermediate_talkを表示（ラウンド2以降）
-                    if (this.currentRound >= 2) {
-                        console.log('🔄 reactionトーク後にintermediate_talkを表示');
-                        const intermediateMessage = this.getIntermediateMessage();
-                        
-                        if (intermediateMessage && intermediateMessage.trim() !== '') {
-                            await this.animateDialogueText(intermediateMessage, 50);
-                            
-                            // intermediate_talk表示後も進めるボタンで待機
-                            this.waitForJanken(async () => {
-                                console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                    // 🚨 修正：あいこの場合はintermediate_talkをスキップ
+                    if (result === 'draw') {
+                        console.log('🔄 あいこのためintermediate_talkをスキップして直接次ラウンド処理');
+                        await this.handleNextRoundDialogue();
+                    } else {
+                        // misakiWinの場合は従来通りintermediate_talkを表示（ラウンド2以降）
+                        if (this.currentRound >= 2) {
+                            console.log('🔄 reactionトーク後にintermediate_talkを表示');
+                            const intermediateMessage = this.getIntermediateMessage();
+
+                            if (intermediateMessage && intermediateMessage.trim() !== '') {
+                                await this.animateDialogueText(intermediateMessage, 50);
+
+                                // intermediate_talk表示後も進めるボタンで待機
+                                this.waitForJanken(async () => {
+                                    console.log('🔄 intermediate_talk後の進めるボタンクリック');
+                                    await this.handleNextRoundDialogue();
+                                });
+                            } else {
+                                console.log('🔄 intermediate_talkが空のため直接次のラウンドへ');
                                 await this.handleNextRoundDialogue();
-                            });
+                            }
                         } else {
-                            console.log('🔄 intermediate_talkが空のため直接次のラウンドへ');
+                            // ラウンド1の場合は直接次のラウンドへ
                             await this.handleNextRoundDialogue();
                         }
-                    } else {
-                        // ラウンド1の場合は直接次のラウンドへ
-                        await this.handleNextRoundDialogue();
                     }
                 });
             }, 3000); // じゃんけんアニメーション完了3秒後
@@ -2528,8 +2586,8 @@ class GameScene {
         console.log(`🔍 🚨 misakiWinチェック: ${this.lastRoundResult === 'misakiWin'}`);
         
         if (this.lastRoundResult === 'draw') {
-            // あいこの場合: da001を表示
-            console.log('🌲 ✅ 前回はあいこでした - da001を表示します');
+            // あいこの場合: ak001を表示
+            console.log('🌲 ✅ 前回はあいこでした - ak001を表示します');
             await this.showDrawAfterDialogue();
         } else if (this.lastRoundResult === 'playerWin' || this.lastRoundResult === 'misakiWin') {
             // 勝敗がついている場合: nr001を表示
@@ -2544,7 +2602,7 @@ class GameScene {
 
     /**
      * 次のラウンドを準備（シンプル版）- 廃止予定
-     * 前回の結果があいこの場合は「あいこで・・・」を表示
+     * 前回の結果があいこの場合は「あいこで…」を表示
      */
     async prepareSimpleNextRound() {
         console.warn('⚠️ prepareSimpleNextRound() は廃止予定です。prepareNextRoundImmediate() を使用してください。');
@@ -2552,26 +2610,26 @@ class GameScene {
     }
 
     /**
-     * あいこ後のダイアログを表示（da001）
+     * あいこ後のダイアログを表示（ak001）
      */
     async showDrawAfterDialogue() {
-        console.log('🚨 showDrawAfterDialogue() 開始 - da001を確実に表示します');
-        
-        // da001 「あいこで・・・」を確実に表示
-        console.log('🚨 da001をCSVから取得中...');
-        let drawAfterText = this.getDialogueText('da001');
-        
+        console.log('🚨 showDrawAfterDialogue() 開始 - ak001を確実に表示します');
+
+        // ak001 「あいこで…」を確実に表示
+        console.log('🚨 ak001をCSVから取得中...');
+        let drawAfterText = this.getDialogueText('ak001');
+
         // フォールバックで確実に表示
         if (!drawAfterText) {
-            drawAfterText = 'あいこで・・・';
+            drawAfterText = 'あいこで…';
             console.log('🚨 CSVから取得できないためフォールバックで表示');
         }
-        
-        console.log(`🚨 確実にda001を表示: "${drawAfterText}"`);
+
+        console.log(`🚨 確実にak001を表示: "${drawAfterText}"`);
         await this.animateDialogueText(drawAfterText, 50);
         
         // あいこダイアログ後にじゃんけんボタンに切り替え
-        console.log('🔄 da001表示後：じゃんけんボタンに切り替え');
+        console.log('🔄 ak001表示後：じゃんけんボタンに切り替え');
         this.switchBackToJankenButtons();
         
         // あいこの場合は直接じゃんけん選択可能に
@@ -2965,6 +3023,48 @@ class GameScene {
     getDialogueText(dialogueId) {
         console.log(`🔍 getDialogueText() 呼び出し: dialogueId = "${dialogueId}"`);
 
+        // 🔒 NUCLEAR OPTION: 秘めた想いモードで全ダイアログIDを強制返却
+        if (this.game.gameState.isSecretMode) {
+            const secretDialogues = {
+                'gi001': '今日は私が勝つからねー！！…じゃあいくよ？',
+                'gs001': '…最初はグー！じゃんけん…',
+                'jp001': 'ぽん！',
+                'mr010': 'やったぁ！…途中でやめるのはなしだよ？',
+                'mr011': 'えへへ…私の勝ち♪途中でやめるのはだめだよ？',
+                'mr012': '勝った～！このペースでいけば…',
+                'mr013': 'か、勝てた…。ドキドキしちゃう…',
+                'mr014': 'また勝っちゃった♪…まだ続けてよね？',
+                'mr015': 'やったぁ！…やっぱり弱いなぁ♪',
+                'mr019': 'あれ…あいこだ…',
+                'mr020': 'わざと、あいこにしてる…？',
+                'mr021': 'またあいこ…もう一回！',
+                'mr022': 'も、もう一回やるよ！',
+                'pl010': 'あっ…負けちゃった…でも、あなたなら…',
+                'pl011': 'また負けた…恥ずかしいけど、嫌じゃないの',
+                'pl012': 'こんなに負けるなんて…でも、ドキドキする',
+                'pl013': 'もうこんなに…見られてる…恥ずかしい',
+                'nr001': '最初はグー！じゃんけん...',
+                'vw001': 'あれ…負けちゃった…でも、まだ始まったばかりだからね！',
+                'vw002': 'ほ…本気じゃん…私も負けてられない…',
+                'vw003': 'こんなはずじゃ…でも、約束は約束だよね…',
+                'vw004': 'や、やばい…。ちょっと…見すぎだよ…',
+                'vw005': 'あ、あぁ…負けちゃった…。ほんとに野球拳だと無敵なんじゃない…？',
+                'it001': '…いくよ？…準備はいい？',
+                'it002': '緊張する…始めるよ？',
+                'it003': '二人きりだとドキドキするね…いくよ？',
+                'it004': '本気でいくからね！',
+                'it005': 'え、えーと…始めるね…',
+                'it006': 'そ、そろそろ本気出さなきゃ…',
+                'it007': '油断したら私が勝っちゃうからねー！！',
+                'it008': 'い、いくよ…！'
+            };
+
+            if (secretDialogues[dialogueId]) {
+                console.log(`🚨 [NUCLEAR] 秘めた想いモード ${dialogueId} 強制返却: "${secretDialogues[dialogueId]}"`);
+                return secretDialogues[dialogueId];
+            }
+        }
+
         if (!this.game.csvLoader) {
             console.error(`⚠️ CSVローダーが存在しません (dialogueId: ${dialogueId})`);
             return null;
@@ -2975,21 +3075,14 @@ class GameScene {
         try {
             let dialogue = null;
 
-            // 秘めた想いモードの場合は secret_ プレフィックス付きを優先検索
-            if (this.game.gameState.isSecretMode && !dialogueId.startsWith('secret_')) {
-                const secretDialogueId = 'secret_' + dialogueId;
-                console.log(`🔒 秘めた想いモード優先検索: ${dialogueId} → ${secretDialogueId}`);
-                dialogue = this.game.csvLoader.findData('dialogues', 'dialogue_id', secretDialogueId);
-
-                if (dialogue) {
-                    console.log(`✅ 秘めた想いモード専用データを取得: ${secretDialogueId} = "${dialogue.text}"`);
-                    return dialogue.text;
-                } else {
-                    console.log(`🔍 秘めた想いモード専用データなし: ${secretDialogueId} → 通常データで再検索`);
-                }
+            // 秘めた想いモードでは、secret_dialogues.csvのデータが
+            // すでにdialoguesテーブルに読み込まれているので、
+            // そのままdialogueIdで検索する（secret_プレフィックスは不要）
+            if (this.game.gameState.isSecretMode) {
+                console.log(`🔒 秘めた想いモード: ${dialogueId} を直接検索`);
             }
 
-            // 通常検索または秘めた想いモード専用データが見つからない場合のフォールバック
+            // 通常検索（秘めた想いモードでも通常モードでも同じ）
             dialogue = this.game.csvLoader.findData('dialogues', 'dialogue_id', dialogueId);
             
             if (dialogue) {
