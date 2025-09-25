@@ -509,8 +509,18 @@ class DialogueScene {
             return;
         }
 
-        if (this.lastDisplayedImage === spriteName) {
+        if (this.lastDisplayedImage === spriteName && !this.currentVictoryMode) {
             console.log(`⏭️ 同じ画像のためスキップ: "${spriteName}"`);
+            return;
+        }
+
+        // 勝利モード時は同じ画像でも表示状態を確保
+        if (this.currentVictoryMode && this.lastDisplayedImage === spriteName) {
+            console.log(`🏆 勝利モード：同じ画像でも表示状態確保 "${spriteName}"`);
+            // 表示状態を確実に設定
+            this.misakiDisplay.style.display = 'block';
+            this.misakiDisplay.style.visibility = 'visible';
+            this.misakiDisplay.style.opacity = '1';
             return;
         }
 
@@ -822,6 +832,8 @@ class DialogueScene {
                     character_id: talk.character,
                     text: talk.text,
                     emotion: talk.emotion,
+                    sprite_stage: talk.sprite_stage || '',
+                    sprite_file: talk.sprite_file || '',
                     voice_file: talk.voice_file || '',
                     next_id: talk.next_id || ''
                 }));
@@ -864,6 +876,8 @@ class DialogueScene {
                 character_id: 'misaki',
                 text: 'や、野球拳になった途端、強すぎじゃない...?',
                 emotion: 'surprised',
+                sprite_stage: '6',
+                sprite_file: 'misaki_game_stage6.png',
                 voice_file: 'v_victory_01.mp3',
                 next_id: 'vt002'
             },
@@ -873,6 +887,7 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: '美咲の顔が真っ赤になっている。まさか本当に勝ってしまうなんて...',
                 emotion: '',
+                sprite_file: '',
                 voice_file: '',
                 next_id: 'vt003'
             },
@@ -882,6 +897,8 @@ class DialogueScene {
                 character_id: 'misaki',
                 text: 'まさか本当に負けちゃうなんて思ってなかった...',
                 emotion: 'embarrassed',
+                sprite_stage: '6',
+                sprite_file: '',
                 voice_file: 'v_victory_02.mp3',
                 next_id: 'vt004'
             },
@@ -891,6 +908,7 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: '美咲の抜群のスタイルに言葉が出ない。',
                 emotion: '',
+                sprite_file: '',
                 voice_file: '',
                 next_id: 'vt005'
             },
@@ -900,6 +918,8 @@ class DialogueScene {
                 character_id: 'misaki',
                 text: 'そんなにジロジロ見ないでよ…',
                 emotion: 'resigned',
+                sprite_stage: '6',
+                sprite_file: '',
                 voice_file: 'v_victory_03.mp3',
                 next_id: 'vt006'
             },
@@ -909,6 +929,7 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: '美咲がこんなに恥ずかしそうにしているのを見るのは初めてだ。',
                 emotion: '',
+                sprite_file: '',
                 voice_file: '',
                 next_id: 'vt007'
             },
@@ -918,6 +939,8 @@ class DialogueScene {
                 character_id: 'player',
                 text: 'ご、ごめん…。',
                 emotion: 'nervous',
+                sprite_stage: '6',
+                sprite_file: '',
                 voice_file: 'v_victory_04.mp3',
                 next_id: 'vt008'
             },
@@ -927,6 +950,7 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: '急に照れ臭くなり目を背けてしまった。',
                 emotion: '',
+                sprite_file: '',
                 voice_file: '',
                 next_id: 'vt009'
             },
@@ -937,6 +961,7 @@ class DialogueScene {
                 text: 'も…もう服着るよ…?弟帰ってくるかもしれないから…',
                 emotion: 'hopeful',
                 sprite_stage: 'dressing',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: 'v_victory_05.mp3',
                 next_id: 'vt010'
             },
@@ -946,6 +971,7 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: 'この時間をずっと目に焼き付けておきたいが、たしかにあいつが返ってくるかも…',
                 emotion: '',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: '',
                 next_id: 'vt011'
             },
@@ -955,6 +981,8 @@ class DialogueScene {
                 character_id: 'player',
                 text: 'もうちょっと見ておきたいけど…わかった。',
                 emotion: 'impressed',
+                sprite_stage: '6',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: 'v_victory_06.mp3',
                 next_id: 'vt012'
             },
@@ -964,6 +992,7 @@ class DialogueScene {
                 character_id: 'misaki',
                 text: '見ておきたいとか言わないの！',
                 emotion: '',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: '',
                 next_id: 'vt013'
             },
@@ -973,6 +1002,8 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: '美咲との距離が縮まった気がする。こんな時間がずっと続けばいいのに。',
                 emotion: 'teasing',
+                sprite_stage: '6',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: 'v_victory_07.mp3',
                 next_id: 'vt014'
             },
@@ -982,6 +1013,7 @@ class DialogueScene {
                 character_id: 'sound_effect',
                 text: '――ガチャ！（玄関のドアが開く音）...ただいまー！！',
                 emotion: '',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: '',
                 next_id: 'vt015'
             },
@@ -991,6 +1023,8 @@ class DialogueScene {
                 character_id: 'misaki',
                 text: 'え？...ほんとに帰ってきちゃったよー！',
                 emotion: 'accepting',
+                sprite_stage: '6',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: 'v_victory_08.mp3',
                 next_id: 'vt016'
             },
@@ -1000,6 +1034,7 @@ class DialogueScene {
                 character_id: 'player',
                 text: 'ど、どうしよう…',
                 emotion: '',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: '',
                 next_id: 'vt017'
             },
@@ -1009,6 +1044,8 @@ class DialogueScene {
                 character_id: 'misaki',
                 text: 'お風呂場に隠れるから変なこと言わないでね！！',
                 emotion: 'curious',
+                sprite_stage: '6',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: 'v_victory_09.mp3',
                 next_id: 'vt018'
             },
@@ -1018,6 +1055,7 @@ class DialogueScene {
                 character_id: 'misaki',
                 text: 'ま、また勝負してあげてもいいよ…?',
                 emotion: '',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: '',
                 next_id: 'vt019'
             },
@@ -1027,6 +1065,8 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: '美咲の急な提案に戸惑いと嬉しさがこみ上げる。',
                 emotion: 'warning',
+                sprite_stage: '6',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: 'v_victory_10.mp3',
                 next_id: 'vt020'
             },
@@ -1036,6 +1076,7 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: '美咲が慌ててお風呂場へ走っていく。',
                 emotion: '',
+                sprite_file: 'misaki_dialogue_dressing.png',
                 voice_file: '',
                 next_id: 'vt021'
             },
@@ -1045,6 +1086,7 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: '今回の勝負で美咲との距離が縮まった気がする。',
                 emotion: '',
+                sprite_file: 'FADEOUT',
                 voice_file: '',
                 next_id: 'vt022'
             },
@@ -1054,6 +1096,8 @@ class DialogueScene {
                 character_id: 'player_thought',
                 text: 'こんな時間がずっと続けばいいのに…',
                 emotion: 'surprised',
+                sprite_stage: '6',
+                sprite_file: '',
                 voice_file: '',
                 next_id: ''
             }
@@ -1521,30 +1565,37 @@ class DialogueScene {
             return;
         }
 
-        // 🎯 Claude根本解決：sound_effect時は継続表示を完全停止
+        // 🎯 Claude根本解決：sound_effect時は継続表示を完全停止（勝利モード除く）
         if (dialogue.character_id === 'sound_effect') {
-            console.log(`⚡ sound_effect検出: ${dialogue.dialogue_id} - 継続表示停止`);
-            // 根本解決：継続表示ロジックを無効化（フラッシュ防止）
-            this.lastSpecifiedSprite = '';
+            console.log(`⚡ sound_effect検出: ${dialogue.dialogue_id}, 勝利モード=${this.currentVictoryMode}`);
 
-            if (this.misakiDisplay) {
-                this.misakiDisplay.style.display = 'none';
-                this.misakiDisplay.style.opacity = '0';
-                this.misakiDisplay.style.visibility = 'hidden';
-                this.misakiDisplay.style.transition = 'none';
+            // 勝利モード以外では立ち絵を非表示にする
+            if (!this.currentVictoryMode) {
+                // 根本解決：継続表示ロジックを無効化（フラッシュ防止）
+                this.lastSpecifiedSprite = '';
+
+                if (this.misakiDisplay) {
+                    this.misakiDisplay.style.display = 'none';
+                    this.misakiDisplay.style.opacity = '0';
+                    this.misakiDisplay.style.visibility = 'hidden';
+                    this.misakiDisplay.style.transition = 'none';
+                }
+
+                // sound_effect後フラグを設定
+                this.afterSoundEffect = true;
             }
-
-            // sound_effect後フラグを設定
-            this.afterSoundEffect = true;
 
             // キャラクター名を空に設定
             if (this.characterName) {
                 this.characterName.textContent = '';
             }
 
-            // テキスト表示ロジックにジャンプ
-            this.handleSoundEffectDisplay(dialogue);
-            return;
+            // 勝利モードでは立ち絵制御を継続、そうでなければ専用処理
+            if (!this.currentVictoryMode) {
+                this.handleSoundEffectDisplay(dialogue);
+                return;
+            }
+            // 勝利モードの場合は以降の立ち絵制御処理を継続
         }
 
         console.log(`💬 ${dialogue.dialogue_id}: ${dialogue.character_id} - "${dialogue.text.substring(0, 30)}..."`);
@@ -1584,31 +1635,83 @@ class DialogueScene {
         
         // 立ち絵制御
         if (this.currentVictoryMode) {
-            // プレイヤー勝利後のsprite_stage対応
-            if (dialogue.dialogue_id === 'vt009') {
-                // vt009: misaki_dialogue_dressing.pngに切り替え
-                console.log('👗 vt009: 着替え中立ち絵に切り替え');
-                this.changeMisakiSpriteDirectly('misaki_dialogue_dressing.png');
-                this.victoryDressingMode = true;  // 着替えモードフラグを設定
-            } else if (this.victoryDressingMode) {
-                // vt009以降: misaki_dialogue_dressing.png継続表示
-                console.log('👗 着替え中立ち絵を継続表示');
-                this.changeMisakiSpriteDirectly('misaki_dialogue_dressing.png');
+            // 秘めた想いモードかどうかで立ち絵を判定
+            const isSecretMode = this.game.gameState.isSecretMode;
+            console.log(`🏆 勝利モード立ち絵制御: ${dialogue.dialogue_id}, character=${dialogue.character_id}, 秘めた想い=${isSecretMode}`);
+
+            // 立ち絵表示を確実にするため、まず表示状態を保証
+            const misakiDialogue = document.querySelector('#misaki-dialogue');
+            if (misakiDialogue && !misakiDialogue.style.opacity.includes('0')) {
+                misakiDialogue.style.removeProperty('display');
+                misakiDialogue.style.removeProperty('visibility');
+                misakiDialogue.style.display = 'block';
+                misakiDialogue.style.visibility = 'visible';
+                if (!misakiDialogue.style.transition.includes('opacity')) {
+                    misakiDialogue.style.opacity = '1';
+                }
+            }
+
+            // sprite_fileが優先、なければsprite_stageを使用
+            if (dialogue.sprite_file && dialogue.sprite_file.trim() !== '') {
+                const spriteName = dialogue.sprite_file.trim();
+
+                if (spriteName === 'FADEOUT') {
+                    // 立ち絵フェードアウト処理
+                    console.log(`🌅 立ち絵フェードアウト: ${dialogue.dialogue_id}`);
+                    if (misakiDialogue) {
+                        misakiDialogue.style.transition = 'opacity 2.0s ease-out';
+                        misakiDialogue.style.opacity = '0';
+
+                        // フェードアウト完了後に非表示
+                        setTimeout(() => {
+                            misakiDialogue.style.display = 'none';
+                        }, 2000);
+                    }
+                } else {
+                    // sprite_fileが指定されている場合は最優先で使用（character_idに関係なく）
+                    console.log(`🎨 勝利モードsprite_file優先: ${dialogue.dialogue_id} (${dialogue.character_id}) -> ${spriteName}`);
+                    this.changeMisakiSpriteDirectly(spriteName);
+
+                    // dressingモードの判定
+                    if (spriteName.includes('dressing')) {
+                        this.victoryDressingMode = true;
+                    }
+                }
+            } else if (dialogue.sprite_stage && dialogue.sprite_stage !== '') {
+                // sprite_stageの値に基づく立ち絵表示
+                let spriteName;
+
+                if (dialogue.sprite_stage === 'dressing') {
+                    // 着替え中の立ち絵
+                    spriteName = isSecretMode ? 'secret/characters/misaki/misaki_secret_stage6.png' : 'misaki_dialogue_dressing.png';
+                    console.log(`👗 着替え中立ち絵: ${spriteName}`);
+                    this.victoryDressingMode = true;
+                } else if (dialogue.sprite_stage === '6') {
+                    // ステージ6の立ち絵
+                    spriteName = isSecretMode ? 'secret/characters/misaki/misaki_secret_stage6.png' : 'misaki_game_stage6.png';
+                    console.log(`🎯 ステージ6立ち絵: ${spriteName}`);
+                } else {
+                    // デフォルトはステージ6
+                    spriteName = isSecretMode ? 'secret/characters/misaki/misaki_secret_stage6.png' : 'misaki_game_stage6.png';
+                    console.log(`🏆 デフォルト勝利立ち絵: ${spriteName}`);
+                }
+
+                this.changeMisakiSpriteDirectly(spriteName);
             } else {
-                // vt001-vt008: stage6（完全敗北状態）の立ち絵を使用
-                const stage6Sprite = 'misaki_game_stage6.png';
-                console.log('🏆 勝利モード: stage6立ち絵を表示');
-                this.changeMisakiSpriteDirectly(stage6Sprite);
+                // sprite_fileもsprite_stageも指定されていない場合のデフォルト
+                const defaultSprite = isSecretMode ? 'secret/characters/misaki/misaki_secret_finale.png' : 'misaki_game_stage6.png';
+                console.log(`🏆 デフォルト勝利立ち絵: ${defaultSprite}`);
+                this.changeMisakiSpriteDirectly(defaultSprite);
             }
         }
 
-        // 立ち絵処理：sprite_fileが指定されている場合
-        if (dialogue.sprite_file && dialogue.sprite_file.trim() !== '') {
+        // 立ち絵処理：sprite_fileが指定されている場合（勝利モード以外）
+        if (!this.currentVictoryMode && dialogue.sprite_file && dialogue.sprite_file.trim() !== '') {
             const spriteName = dialogue.sprite_file.trim();
             this.lastSpecifiedSprite = spriteName;
             console.log(`🎨 立ち絵変更: ${dialogue.dialogue_id} -> ${spriteName}`);
             this.changeMisakiSpriteDirectly(spriteName);
-        } else {
+        } else if (!this.currentVictoryMode) {
             // sound_effect以外では立ち絵を表示（ただしafterSoundEffectフラグ考慮）
             if (!this.afterSoundEffect) {
                 const misakiDialogue = document.querySelector('#misaki-dialogue');
