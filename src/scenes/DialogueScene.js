@@ -770,11 +770,17 @@ class DialogueScene {
      */
     async loadVictoryDialogueData() {
         console.log('🏆 【緊急確実版】勝利後トークデータを読み込み中...');
-        
+
+        // 秘めた想いモードかどうかを判定
+        const isSecretMode = this.game.gameState && this.game.gameState.isSecretMode;
+        const csvFileName = isSecretMode ? 'secret_victory_talk.csv' : 'victory_talk.csv';
+        const cacheKey = isSecretMode ? 'secret_victory_talk' : 'victory_talk';
+        console.log(`🔍 モード判定: isSecretMode=${isSecretMode}, CSVファイル=${csvFileName}`);
+
         // 🚨 最優先：フォールバックデータを先に準備
-        const fallbackData = this.getFallbackVictoryData();
+        const fallbackData = isSecretMode ? this.getFallbackSecretVictoryData() : this.getFallbackVictoryData();
         console.log(`🛡️ フォールバックデータ準備完了: ${fallbackData.length}件`);
-        
+
         // CSVローダーが存在しない場合は即座にフォールバック
         if (!this.game.csvLoader) {
             console.warn('⚠️ CSVローダーがありません - フォールバック使用');
@@ -782,27 +788,27 @@ class DialogueScene {
             console.log(`✅ フォールバックデータ設定完了: ${this.dialogueQueue.length}件`);
             return;
         }
-        
+
         // CSV読み込みを試行（キャッシュクリア + 強制読み込み）
         let csvSuccess = false;
         try {
-            console.log('🔄 victory_talk.csvを強制読み込み中（キャッシュクリア）...');
-            
-            // 🚨 既存のvictory_talkキャッシュを削除
-            if (this.game.csvLoader.csvData['victory_talk']) {
-                delete this.game.csvLoader.csvData['victory_talk'];
-                console.log('🗑️ 古いvictory_talkキャッシュを削除');
+            console.log(`🔄 ${csvFileName}を強制読み込み中（キャッシュクリア）...`);
+
+            // 🚨 既存のキャッシュを削除
+            if (this.game.csvLoader.csvData[cacheKey]) {
+                delete this.game.csvLoader.csvData[cacheKey];
+                console.log(`🗑️ 古い${cacheKey}キャッシュを削除`);
             }
-            
+
             // 強制読み込み実行
-            await this.game.csvLoader.loadCSV('victory_talk.csv');
-            console.log('✅ victory_talk.csv強制読み込み完了');
+            await this.game.csvLoader.loadCSV(csvFileName);
+            console.log(`✅ ${csvFileName}強制読み込み完了`);
             
             // CSVデータ取得を試行
-            const victoryTalks = this.game.csvLoader.getTableData('victory_talk');
+            const victoryTalks = this.game.csvLoader.getTableData(cacheKey);
             console.log('🔍 読み込み後のCSVデータ確認:', victoryTalks ? victoryTalks.length : 'null');
             
-            if (victoryTalks && victoryTalks.length >= 22) {
+            if (victoryTalks && victoryTalks.length >= (isSecretMode ? 15 : 22)) {
                 // CSV読み込み成功（更新版エンディング）
                 console.log('✅ CSV読み込み成功！最新エンディングデータを使用');
                 
@@ -1049,6 +1055,207 @@ class DialogueScene {
                 text: 'こんな時間がずっと続けばいいのに…',
                 emotion: 'surprised',
                 voice_file: '',
+                next_id: ''
+            }
+        ];
+    }
+
+    /**
+     * 秘めた想いモード勝利後のフォールバックデータを取得
+     */
+    getFallbackSecretVictoryData() {
+        console.log('🚨 【緊急フォールバック】secret_victory_talk最新20件データを使用');
+        return [
+            {
+                dialogue_id: 'vt001',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'まさか…本当に負けちゃうなんて思わなかった…',
+                emotion: 'vulnerable',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_01.mp3',
+                next_id: 'vt002'
+            },
+            {
+                dialogue_id: 'vt002',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲がこんなに無防備な姿を見せてくれるなんて…心臓が激しく鼓動している。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt003'
+            },
+            {
+                dialogue_id: 'vt003',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'こんな姿…あなたにしか見せられないわ…',
+                emotion: 'intimate',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_02.mp3',
+                next_id: 'vt004'
+            },
+            {
+                dialogue_id: 'vt004',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲の言葉に胸が熱くなる。この特別な瞬間を大切にしたい。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt005'
+            },
+            {
+                dialogue_id: 'vt005',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'どう…？この私を見て、何か感じる？',
+                emotion: 'expectant',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_03.mp3',
+                next_id: 'vt006'
+            },
+            {
+                dialogue_id: 'vt006',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲の真剣な眼差しに、ただ頷くことしかできない。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt007'
+            },
+            {
+                dialogue_id: 'vt007',
+                scene_id: 'victory',
+                character_id: 'player',
+                text: '君は…本当に美しいよ。',
+                emotion: 'sincere',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_04.mp3',
+                next_id: 'vt008'
+            },
+            {
+                dialogue_id: 'vt008',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '素直な気持ちを伝えると、美咲の頬がさらに赤らんだ。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt009'
+            },
+            {
+                dialogue_id: 'vt009',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'そんなこと言われると…もっと恥ずかしくなっちゃう…',
+                emotion: 'bashful',
+                sprite_stage: 'dressing',
+                voice_file: 'v_secret_victory_05.mp3',
+                next_id: 'vt010'
+            },
+            {
+                dialogue_id: 'vt010',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲の可愛らしい反応に、この時間がずっと続けばいいのにと思う。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt011'
+            },
+            {
+                dialogue_id: 'vt011',
+                scene_id: 'victory',
+                character_id: 'player',
+                text: 'このまま二人だけの時間を…もう少し。',
+                emotion: 'hopeful',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_06.mp3',
+                next_id: 'vt012'
+            },
+            {
+                dialogue_id: 'vt012',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'そんなこと言って…でも私も…',
+                emotion: 'conflicted',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_07.mp3',
+                next_id: 'vt013'
+            },
+            {
+                dialogue_id: 'vt013',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲も同じ気持ちでいてくれるのかもしれない。この瞬間が愛おしい。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt014'
+            },
+            {
+                dialogue_id: 'vt014',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: '今日のことは…私たちだけの秘密よ',
+                emotion: 'conspiratorial',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_08.mp3',
+                next_id: 'vt015'
+            },
+            {
+                dialogue_id: 'vt015',
+                scene_id: 'victory',
+                character_id: 'player',
+                text: '約束するよ。君との秘密は、僕の宝物だから。',
+                emotion: 'devoted',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_09.mp3',
+                next_id: 'vt016'
+            },
+            {
+                dialogue_id: 'vt016',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: '宝物…なんて。そんなふうに言われたら…',
+                emotion: 'moved',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_10.mp3',
+                next_id: 'vt017'
+            },
+            {
+                dialogue_id: 'vt017',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲の表情が柔らかくなり、二人の距離がさらに縮まったような気がする。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt018'
+            },
+            {
+                dialogue_id: 'vt018',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: 'また…こんな時間を作ってくれる？',
+                emotion: 'hopeful',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_11.mp3',
+                next_id: 'vt019'
+            },
+            {
+                dialogue_id: 'vt019',
+                scene_id: 'victory',
+                character_id: 'player_thought',
+                text: '美咲からの誘いに、心の中で何度も頷いている。',
+                emotion: '',
+                voice_file: '',
+                next_id: 'vt020'
+            },
+            {
+                dialogue_id: 'vt020',
+                scene_id: 'victory',
+                character_id: 'player',
+                text: 'もちろん。君ともっと特別な時間を過ごしたい。',
+                emotion: 'committed',
+                sprite_stage: '6',
+                voice_file: 'v_secret_victory_12.mp3',
                 next_id: ''
             }
         ];

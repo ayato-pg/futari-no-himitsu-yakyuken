@@ -1415,6 +1415,14 @@ class TitleScene {
             });
         }
 
+        // 秘めた想いモードのエンディングトークボタン
+        const secretEndingTalkBtn = document.getElementById('debug-secret-ending-talk');
+        if (secretEndingTalkBtn) {
+            secretEndingTalkBtn.addEventListener('click', () => {
+                this.jumpToSecretEndingTalk();
+            });
+        }
+
         // 秘密ギャラリーリセットボタン
         const secretGalleryResetBtn = document.getElementById('debug-secret-gallery-reset');
         if (secretGalleryResetBtn) {
@@ -1790,6 +1798,42 @@ class TitleScene {
         this.hideDebugPanel();
         this.hide();
         this.game.scenes.game.show();
+    }
+
+    /**
+     * 秘めた想いモードのエンディングトークへジャンプ
+     */
+    jumpToSecretEndingTalk() {
+        console.log('🔧 [DEBUG] 秘めた想いエンディングトークへジャンプ');
+
+        // まずゲーム状態をリセット（isSecretModeもリセットされる）
+        this.resetGameState();
+        // その後に秘めた想いモードに設定（resetの後に設定する順序が重要）
+        this.enableSecretMode();
+
+        // 勝利状態を設定（プレイヤー勝利：5勝4敗）
+        if (this.game.scenes.game) {
+            this.game.scenes.game.playerWins = 5;
+            this.game.scenes.game.misakiWins = 4;
+        }
+
+        // gameStateにも勝利数を設定（DialogueSceneで参照されるため）
+        if (this.game.gameState) {
+            this.game.gameState.playerWins = 5;
+            this.game.gameState.misakiWins = 4;
+            console.log('🎯 秘めた想いモード - gameStateに勝利数を設定:', {
+                playerWins: this.game.gameState.playerWins,
+                misakiWins: this.game.gameState.misakiWins,
+                isSecretMode: this.game.gameState.isSecretMode
+            });
+        }
+
+        this.hideDebugPanel();
+        this.hide();
+
+        // エンディングトークシーンへ遷移（victoryシーンとして表示）
+        // DialogueSceneのshow('victory')を呼び出すことで勝利後トークが表示される
+        this.game.scenes.dialogue.show('victory');
     }
 
     /**
