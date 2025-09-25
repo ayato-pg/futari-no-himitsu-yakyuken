@@ -888,5 +888,7 @@ window.addEventListener('unhandledrejection', (event) => {
 
 // グローバルに公開（デバッグ用）
 window.gameController = gameController;
+window.game = gameController; // 短縮形でもアクセス可能にする
 
 console.log('game.js 読み込み完了');
+console.log('💡 デバッグ用: コンソールで「game」または「gameController」と入力してアクセスできます');

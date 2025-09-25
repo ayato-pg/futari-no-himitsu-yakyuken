@@ -110,9 +110,13 @@ function createWindow() {
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
 
-        // 開発環境の場合はDevToolsを開く
+        // デバッグのため開発者ツールを常に開く（一時的）
+        console.log('🔧 [DEBUG] 開発者ツールを開いています...');
+        mainWindow.webContents.openDevTools();
+
+        // 開発環境の場合はDevToolsを開く（元の機能）
         if (process.argv.includes('--dev')) {
-            mainWindow.webContents.openDevTools();
+            console.log('🔧 [DEBUG] --devフラグ検出、追加設定なし');
         }
 
         // 自動再生ポリシーの状態をログ出力
