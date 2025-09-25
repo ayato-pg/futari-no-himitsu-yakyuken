@@ -808,7 +808,7 @@ class DialogueScene {
             const victoryTalks = this.game.csvLoader.getTableData(cacheKey);
             console.log('🔍 読み込み後のCSVデータ確認:', victoryTalks ? victoryTalks.length : 'null');
             
-            if (victoryTalks && victoryTalks.length >= (isSecretMode ? 15 : 22)) {
+            if (victoryTalks && victoryTalks.length >= (isSecretMode ? 21 : 22)) {
                 // CSV読み込み成功（更新版エンディング）
                 console.log('✅ CSV読み込み成功！最新エンディングデータを使用');
                 
@@ -1064,13 +1064,13 @@ class DialogueScene {
      * 秘めた想いモード勝利後のフォールバックデータを取得
      */
     getFallbackSecretVictoryData() {
-        console.log('🚨 【緊急フォールバック】secret_victory_talk最新20件データを使用');
+        console.log('🚨 【緊急フォールバック】secret_victory_talk最新21件データを使用（恋愛告白版）');
         return [
             {
                 dialogue_id: 'vt001',
                 scene_id: 'victory',
                 character_id: 'misaki',
-                text: 'まさか…本当に負けちゃうなんて思わなかった…',
+                text: 'あ、あぁ…負けちゃった…。ほんとに野球拳だと無敵なんじゃない…？',
                 emotion: 'vulnerable',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_01.mp3',
@@ -1079,8 +1079,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt002',
                 scene_id: 'victory',
-                character_id: 'player_thought',
-                text: '美咲がこんなに無防備な姿を見せてくれるなんて…心臓が激しく鼓動している。',
+                character_id: 'misaki',
+                text: 'またこの姿になっちゃった…。恥ずかしい…。',
                 emotion: '',
                 voice_file: '',
                 next_id: 'vt003'
@@ -1088,8 +1088,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt003',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: 'こんな姿…あなたにしか見せられないわ…',
+                character_id: 'player_thought',
+                text: '相変わらずいいスタイルだ。思わず見とれてしまう。',
                 emotion: 'intimate',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_02.mp3',
@@ -1098,8 +1098,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt004',
                 scene_id: 'victory',
-                character_id: 'player_thought',
-                text: '美咲の言葉に胸が熱くなる。この特別な瞬間を大切にしたい。',
+                character_id: 'misaki',
+                text: 'ジロジロ見すぎだって！',
                 emotion: '',
                 voice_file: '',
                 next_id: 'vt005'
@@ -1107,8 +1107,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt005',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: 'どう…？この私を見て、何か感じる？',
+                character_id: 'player',
+                text: 'いや、スタイル良すぎない？',
                 emotion: 'expectant',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_03.mp3',
@@ -1117,8 +1117,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt006',
                 scene_id: 'victory',
-                character_id: 'player_thought',
-                text: '美咲の真剣な眼差しに、ただ頷くことしかできない。',
+                character_id: 'misaki',
+                text: 'そ、そんなことないし！変態かよ！…もう服着るね！',
                 emotion: '',
                 voice_file: '',
                 next_id: 'vt007'
@@ -1127,7 +1127,7 @@ class DialogueScene {
                 dialogue_id: 'vt007',
                 scene_id: 'victory',
                 character_id: 'player',
-                text: '君は…本当に美しいよ。',
+                text: 'まって！',
                 emotion: 'sincere',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_04.mp3',
@@ -1137,7 +1137,7 @@ class DialogueScene {
                 dialogue_id: 'vt008',
                 scene_id: 'victory',
                 character_id: 'player_thought',
-                text: '素直な気持ちを伝えると、美咲の頬がさらに赤らんだ。',
+                text: '反射的に答えてしまった。',
                 emotion: '',
                 voice_file: '',
                 next_id: 'vt009'
@@ -1145,8 +1145,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt009',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: 'そんなこと言われると…もっと恥ずかしくなっちゃう…',
+                character_id: 'player_thought',
+                text: '美咲ともっと深いところで親密になりたい…。美咲への想いを伝えよう。',
                 emotion: 'bashful',
                 sprite_stage: 'dressing',
                 voice_file: 'v_secret_victory_05.mp3',
@@ -1156,7 +1156,7 @@ class DialogueScene {
                 dialogue_id: 'vt010',
                 scene_id: 'victory',
                 character_id: 'player_thought',
-                text: '美咲の可愛らしい反応に、この時間がずっと続けばいいのにと思う。',
+                text: 'いやでも今か…？いや今だ！',
                 emotion: '',
                 voice_file: '',
                 next_id: 'vt011'
@@ -1165,7 +1165,7 @@ class DialogueScene {
                 dialogue_id: 'vt011',
                 scene_id: 'victory',
                 character_id: 'player',
-                text: 'このまま二人だけの時間を…もう少し。',
+                text: '美咲…。今言うことか分からないけど…。',
                 emotion: 'hopeful',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_06.mp3',
@@ -1174,8 +1174,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt012',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: 'そんなこと言って…でも私も…',
+                character_id: 'player',
+                text: '俺…美咲のこと小さい時から好きだったんだ！！',
                 emotion: 'conflicted',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_07.mp3',
@@ -1184,8 +1184,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt013',
                 scene_id: 'victory',
-                character_id: 'player_thought',
-                text: '美咲も同じ気持ちでいてくれるのかもしれない。この瞬間が愛おしい。',
+                character_id: 'misaki',
+                text: 'そんな冗談言わないの！今裸だから言ってるんでしょ♪',
                 emotion: '',
                 voice_file: '',
                 next_id: 'vt014'
@@ -1193,8 +1193,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt014',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: '今日のことは…私たちだけの秘密よ',
+                character_id: 'player',
+                text: '…',
                 emotion: 'conspiratorial',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_08.mp3',
@@ -1203,8 +1203,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt015',
                 scene_id: 'victory',
-                character_id: 'player',
-                text: '約束するよ。君との秘密は、僕の宝物だから。',
+                character_id: 'misaki',
+                text: 'え…ほんとに好きなの…？',
                 emotion: 'devoted',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_09.mp3',
@@ -1213,8 +1213,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt016',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: '宝物…なんて。そんなふうに言われたら…',
+                character_id: 'player',
+                text: 'う…うん…。',
                 emotion: 'moved',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_10.mp3',
@@ -1223,8 +1223,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt017',
                 scene_id: 'victory',
-                character_id: 'player_thought',
-                text: '美咲の表情が柔らかくなり、二人の距離がさらに縮まったような気がする。',
+                character_id: 'misaki',
+                text: 'そっかぁ、実は私もだったんだ～♪両想いだね♪',
                 emotion: '',
                 voice_file: '',
                 next_id: 'vt018'
@@ -1232,8 +1232,8 @@ class DialogueScene {
             {
                 dialogue_id: 'vt018',
                 scene_id: 'victory',
-                character_id: 'misaki',
-                text: 'また…こんな時間を作ってくれる？',
+                character_id: 'player',
+                text: '…美咲！！',
                 emotion: 'hopeful',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_11.mp3',
@@ -1243,7 +1243,7 @@ class DialogueScene {
                 dialogue_id: 'vt019',
                 scene_id: 'victory',
                 character_id: 'player_thought',
-                text: '美咲からの誘いに、心の中で何度も頷いている。',
+                text: '美咲に覆いかぶさり抱きしめた。美咲の香りとぬくもりが伝わってくる。',
                 emotion: '',
                 voice_file: '',
                 next_id: 'vt020'
@@ -1251,11 +1251,21 @@ class DialogueScene {
             {
                 dialogue_id: 'vt020',
                 scene_id: 'victory',
-                character_id: 'player',
-                text: 'もちろん。君ともっと特別な時間を過ごしたい。',
+                character_id: 'misaki',
+                text: '…びっくりした～。いきなりすぎだよ…。でもいいよ…。',
                 emotion: 'committed',
                 sprite_stage: '6',
                 voice_file: 'v_secret_victory_12.mp3',
+                next_id: 'vt021'
+            },
+            {
+                dialogue_id: 'vt021',
+                scene_id: 'victory',
+                character_id: 'misaki',
+                text: '一緒になろ…？',
+                emotion: '',
+                sprite_stage: '',
+                voice_file: '',
                 next_id: ''
             }
         ];
@@ -1549,7 +1559,12 @@ class DialogueScene {
                 this.characterName.style.color = '#ffb6c1';
                 this.characterName.style.fontStyle = 'normal';
             } else if (dialogue.character_id === 'player_thought') {
-                this.characterName.textContent = '心の声';
+                // vt019（抱きしめシーン）の場合は名前非表示
+                if (dialogue.dialogue_id === 'vt019') {
+                    this.characterName.textContent = '';
+                } else {
+                    this.characterName.textContent = '心の声';
+                }
                 this.characterName.style.color = '#ffd700';
                 this.characterName.style.fontStyle = 'italic';
             } else if (dialogue.character_id === 'misaki_thought') {
